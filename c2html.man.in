@@ -18,7 +18,7 @@ and C source code.
 .\" The general command line
 .BR c2html " [ "
 .BI "\-2hdr \-b " base_dir
-.RI " ] [ " "tagfile1 " ...
+.RI " ] [ " "tagfile1 " ... " ]"
 .SH DESCRIPTION
 .B c2html
 is an utility to generate cross referenced HTML pages from a collection of
