@@ -1,4 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
+dnl $Id: configure.in,v 0.10 1999/06/08 09:33:17 luis Exp $
+dnl Author: Luis.Colorado@SLUG.HispaLinux.ES
+dnl Copyright: GPL (C) 1999 Luis.Colorado@SLUG.HispaLinux.ES
+dnl 
+
 AC_INIT(c2html.c)
 
 dnl Checks for programs.
@@ -17,3 +22,5 @@ dnl Checks for library functions.
 AC_CHECK_FUNCS(strdup)
 
 AC_OUTPUT(Makefile)
+
+dnl $Id: configure.in,v 0.10 1999/06/08 09:33:17 luis Exp $
