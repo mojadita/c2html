@@ -1,8 +1,8 @@
-/* $Id: c2html.c,v 0.14 1999/06/14 23:57:51 luis Exp $
+/* $Id: c2html.c,v 0.15 1999/06/15 01:02:54 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
-
+ *
  *     C2HTML -- A program to convert C source code to cross referenced HTML.
  *     Copyright (c) 1999 Luis Colorado
  *
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.14 1999/06/14 23:57:51 luis Exp $";
+char *rcsId = "$Id: c2html.c,v 0.15 1999/06/15 01:02:54 luis Exp $";
 
 /* types */
 
@@ -222,13 +222,13 @@ int main (int argc, char **argv)
 		process(argv[0]);
 		argc--; argv++; /* shift */
 	} else {
-		process("tags"); /* process tags by default */
+		process(DEFAULT_TAGS); /* process tags by default */
 	}
 
 	/* print the results ---do the heavy work--- */
 	{	FileNode *f; CtagNode *c;
 		FILE *idx;
-		int i;
+		int i,acum, percent;
 
 		/* sort the filelist */
 		files_array = calloc(files_n, sizeof files_array[0]);
@@ -238,6 +238,7 @@ int main (int argc, char **argv)
 			(int (*)(const void *, const void *))files_cmp);
 
 		idx = html_create("index.html", "Index");
+		acum = files_n >> 1; percent = 0;
 		/* process each file in the database, in order */
 		for (i = 0; i < files_n; i++) {
 			char buffer [EXCMD_BUFSIZE];
@@ -249,7 +250,12 @@ int main (int argc, char **argv)
 				f->name, f->name);
 
 			/* Print the filename, as this is a lengthy process */
-			printf("%s (%d of %d)\n", f->name, i+1, files_n);
+			acum += 100;
+			if (acum >= files_n) {
+				percent += acum / files_n;
+				acum %= files_n;
+			}
+			printf("%s (%d of %d -- %d%%)\n", f->name, i+1, files_n, percent);
 
 			/* edit the file */
 			sprintf (buffer, EX_PATH" %s", f->name);
@@ -306,4 +312,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.14 1999/06/14 23:57:51 luis Exp $ */
+/* $Id: c2html.c,v 0.15 1999/06/15 01:02:54 luis Exp $ */
