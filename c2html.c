@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.9 1999/06/08 00:34:52 luis Exp $
+/* $Id: c2html.c,v 0.10 1999/06/08 07:43:32 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer: (c) Luis Colorado, 1999
@@ -363,7 +363,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.9 1999/06/08 00:34:52 luis Exp $";
+char *rcsId = "$Id: c2html.c,v 0.10 1999/06/08 07:43:32 luis Exp $";
 
 /* types */
 
@@ -374,6 +374,7 @@ HashTable syms_table, files_table;
 FileNode *files_first = NULL, *files_last = NULL;
 int files_n = 0;
 FileNode **files_array;
+char *base_slash = "";
 char *base_dir = "";
 
 /* functions */
@@ -529,7 +530,11 @@ int main (int argc, char **argv)
 		case 'h':
 		  do_usage(); exit(0);
 		case 'b':
-			base_dir = optarg; break;
+			base_dir = optarg;
+			base_slash = base_dir[0]
+				? (base_dir[strlen(base_dir)-1] == '/') ? "" : "/"
+				: "";
+			break;
 		default:
 		}
 	}
@@ -575,7 +580,7 @@ int main (int argc, char **argv)
 			f = files_array[i];
 			fprintf (idx,
 				"    <h2>File <A HREF=\"%s%s%s"EXT2"\">%s</a>:</h2>\n",
-				base_dir, strcmp(base_dir, "") ? "/" : "", f->name, f->name);
+				base_dir, base_slash, f->name, f->name);
 
 			/* Print the filename, as this is a lengthy process */
 			printf("%s\n", f->name);
@@ -595,8 +600,7 @@ int main (int argc, char **argv)
 			for (c = f->ctags_first; c; c = c->ctags_next) {
 				fprintf (idx,
 					"      <LI><A HREF=\"%s%s%s"EXT2"#%s\">%s</a>\n",
-					base_dir, strcmp(base_dir, "") ? "/" : "",
-					c->file, c->sym, c->sym);
+					base_dir, base_slash, c->file, c->sym, c->sym);
 				/* switch to the tag, using ex(1) */
 				fprintf (ex, "ta %s\n", c->sym);
 				/* insert a mark at the beggining of the line.
@@ -633,4 +637,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.9 1999/06/08 00:34:52 luis Exp $ */
+/* $Id: c2html.c,v 0.10 1999/06/08 07:43:32 luis Exp $ */

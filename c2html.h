@@ -1,8 +1,7 @@
-%{
-/* $Id: lexical.l,v 0.10 1999/06/08 07:43:09 luis Exp $
+/* $Id: c2html.h,v 0.10 1999/06/08 07:44:11 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
- * Date: Sat Jun  5 21:01:12 MEST 1999
- * Disclaimer:
+ * Date: Sat Jun  5 22:45:02 MEST 1999
+ * Disclaimer: (c) 1999 Luis Colorado <luis.colorado@SLUG.CTV.ES>
  * 		    GNU GENERAL PUBLIC LICENSE
  * 		       Version 2, June 1991
  * 
@@ -344,318 +343,58 @@
  * Public License instead of this License.
  */
 
-#define IN_LEXICAL_L
-
-/* Standard include files */
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <time.h>
-#include <errno.h>
-#include <multifree.h>
-#include <hashTable.h>
-#include "c2html.h"
-
+/* Do not include anything BEFORE the line below, as it would not be
+ * protected against double inclusion from other files
+ */
+#ifndef C2HTML_H
+#define C2HTML_H
 /* constants */
-#define PUSHSIZE		10
-#define PUSH(X)						\
-	if (pointer < PUSHSIZE) {		\
-		state[pointer++] = (X);		\
-		BEGIN (trace(X));			\
-	}
-#define POP()						\
-	if (--pointer > 0)				\
-		BEGIN trace(state[pointer-1]);
-static int state[PUSHSIZE];
-static int pointer = 0;
+#define PROGNAME	"c2html"
+#define EX_PATH	"/usr/bin/ex"
+#define EXCMD_BUFSIZE	1024
+#define EXT1	".temp"
+#define EXT2	".html"
+#define PFX1	"ta-"
+
+#define FLAG_MENU_CREATED	1
+
+#ifndef FALSE
+#define FALSE (1 == 0)
+#define TRUE	(!FALSE)
+#endif
+
+#undef TRACEON		/* 1 */
 
 /* types */
+typedef struct ctag_node {
+	unsigned int flags;
+	char *sym;  /* symbol */
+	char *file; /* file */
+	char *ctfile; /* ctag file */
+	struct ctag_node *ctags_next;
+	struct ctag_node *next;
+} CtagNode;
+
+typedef struct file_node {
+	char *name;
+	struct file_node *files_next;
+	struct ctag_node *ctags_first;
+	struct ctag_node *ctags_last;
+} FileNode;
 
 /* prototypes */
-void pr(FILE *, char *);
-void scanfile(char *, char *, char *);
-void createmenu(CtagNode *);
 
 /* variables */
-static FILE *OUTPUT;
+extern HashTable syms_table, files_table;
+extern FileNode *files_first, *files_last;
+extern char *base_dir;
+extern char *base_slash;
 
-/* gcc compiler allows \n in strings, so we allow them also */
-%}
-%x incomment
-%s indirective
-%x instring
-%x inchar
-%option noyywrap
-odig		([0-7])
-dig			([0-9])
-xdig		([0-9a-fA-F])
-lu			(([uUlL]|[uU][lL]|[lL][uU])?)
-
-mant		({dig}+\.{dig}*|{dig}*\.{dig}+)
-mant2		({dig}+)
-exp			([eE][+-]?{dig}+)
-fl			(([flFL]|[fF][lL]|[lL][fF])?)
-
-esc			(\\(.|\n|{odig}{odig}?{odig}?|[xX]{xdig}+))
-sp			([\ \t])
-
-alnum		([a-zA-Z\$_0-9])
-alpha		([a-zA-Z\$_])
-
-directive	(define|undef|include|if|ifdef|ifndef|else|elif|endif|error|pragma)
-%%
-"/*"					{	PUSH(incomment); fprintf(OUTPUT, "<I>/*"); }
-<incomment>\n			|
-<incomment>.			pr(OUTPUT, yytext);
-<incomment>TODO			|
-<incomment>FIXME		|
-<incomment>XXX			|
-<incomment>ARGSUSED		|
-<incomment>NEVERREACHED	fprintf(OUTPUT, "<U>%s</u>", yytext);
-<incomment>"*/"			{	fprintf(OUTPUT, "*/</i>"); POP(); }
-
-"#"{sp}*\n				fprintf(OUTPUT, "<B>%s</b>", yytext); 
-"#"{directive}			{	PUSH(indirective);
-							fprintf(OUTPUT, "<B>%s</b><I>", yytext);
-						}
-<indirective>defined	fprintf(OUTPUT, "<B>%s</b>", yytext);
-<indirective>\\\n		fputs("\\\n", OUTPUT);
-<indirective>\n			{	fputs("</i>\n", OUTPUT); POP(); }
-
-auto					|
-break					|
-case					|
-char					|
-const					|
-continue				|
-default					|
-do						|
-double					|
-else					|
-enum					|
-extern					|
-float					|
-for						|
-goto					|
-if						|
-int						|
-long					|
-register				|
-return					|
-short					|
-signed					|
-sizeof					|
-static					|
-struct					|
-switch					|
-typedef					|
-union					|
-unsigned				|
-void					|
-volatile				|
-while					fprintf(OUTPUT, "<B>%s</b>", yytext);
-
-0{odig}*{lu}			|
-[1-9]{dig}*{lu}			|
-0[xX]{xdig}*{lu}		|
-{mant}({exp})?{fl}		|
-{mant2}{exp}{fl}		fprintf(OUTPUT, "<B><I>%s</i></b>", yytext);
-
-\"						{	PUSH(instring); fputs("<B><I>\"", OUTPUT); }
-<instring>\"			{	fputs("\"</i></b>", OUTPUT); POP(); }
-<instring>{esc}			{	fputs("<U>", OUTPUT);pr(OUTPUT, yytext);
-							fputs("</u>", OUTPUT);
-						}
-<instring>\n			|
-<instring>.				pr(OUTPUT, yytext);
-
-\'						{	PUSH(inchar); fputs("<B><I>\'", OUTPUT); }
-<inchar>\'				{	fputs("\'</i></b>", OUTPUT); POP(); }
-<inchar>{esc}			{	fputs("<U>", OUTPUT);pr(OUTPUT, yytext);
-							fputs("</u>", OUTPUT);
-						}
-<inchar>\n				|
-<inchar>.				fputs(yytext, OUTPUT);
-
-"(@"[^@]*"@)"			fprintf(OUTPUT, "<%0.*s>", yyleng-4, yytext+2);
-
-[a-zA-Z_\$]{alnum}*		{	/* identifier */
-							HashEntry *he;
-							he = hashTableLookup(&syms_table, yytext);
-							if (!he) {
-								fprintf (stderr, PROGNAME": "__FILE__"(%d): "
-									"hashTableLookup: %s\n",
-									__LINE__, sys_errlist[errno]);
-								exit(EXIT_FAILURE);
-							}
-							if (he->data) {
-								CtagNode *ce = he->data;
-								if (!(ce->next)) {
-									fprintf(OUTPUT,
-										"<A HREF=\"%s%s%s"EXT2"#%s\">",
-										base_dir, base_slash,
-										ce->file, ce->sym);
-								} else {
-									fprintf(OUTPUT,
-										"<A HREF=\"%s%s"PFX1"%s"EXT2"\">",
-										base_dir, base_slash, ce->sym);
-									if (!(ce->flags & FLAG_MENU_CREATED)) {
-										createmenu(ce);
-									}
-								}
-							}
-							fprintf(OUTPUT, "%s", yytext);
-							if (he->data) {
-								fprintf(OUTPUT, "</a>");
-							}
-						}
-"..."					|
-"&&"					|
-"-="					|
-"~"						|
-"+"						|
-";"						|
-"<<="					|
-"&="					|
-"->"					|
-">>"					|
-"%"						|
-","						|
-"<"						|
-"^"						|
-">>="					|
-"*="					|
-"/="					|
-"^="					|
-"&"						|
-"-"						|
-"="						|
-"!="					|
-"++"					|
-"<<"					|
-"|="					|
-"."						|
-">"						|
-"|"						|
-"%="					|
-"+="					|
-"<="					|
-"||"					|
-"/"						|
-"?"						|
-"--"					|
-"=="					|
-"!"						|
-"*"						|
-":"						pr(OUTPUT, yytext);
-
-"["						|
-"]"						|
-"{"						|
-"}"						|
-"("						|
-")"						fputs(yytext, OUTPUT);
-
-\n						|
-.						fputs(yytext, OUTPUT);
-
-%%
 /* functions */
 
-void pr(FILE *f, char *s)
-{
-	while (*s) {
-		switch (*s) {
-		case '<': fprintf(f, "&lt;"); break;
-		case '>': fprintf(f, "&gt;"); break;
-		case '&': fprintf(f, "&amp;"); break;
-		default: fputc(*s, f); break;
-		}
-		s++;
-	} /* while */
-} /* pr */
+#endif /* C2HTML_H */
+/* Do not include anything AFTER the line above, as it would not be
+ * protected against double inclusion from other files.
+ */
 
-int trace(int s)
-{
-#if TRACEON
-	switch(s) {
-	case INITIAL:		fputs("<!-- INITIAL -->",		OUTPUT); break;
-	case incomment:		fputs("<!-- incomment -->",		OUTPUT); break;
-	case indirective:	fputs("<!-- indirective -->",	OUTPUT); break;
-	case instring:		fputs("<!-- instring -->",		OUTPUT); break;
-	case inchar:		fputs("<!-- inchar -->",		OUTPUT); break;
-	}
-#endif
-	return s;
-} /* trace */
-
-void createmenu(CtagNode *ce)
-{
-	FILE *outf;
-	char buffer[1024];
-
-	sprintf (buffer, PFX1"%s"EXT2, ce->sym);
-#if 0
-	fprintf (stderr, PROGNAME": creating menu %s\n", buffer);
-#endif
-	outf = fopen(buffer, "w");
-	if (!outf) {
-		fprintf(stderr,
-			PROGNAME": Cannot create menu for symbol %s: %s\n",
-			ce->sym, sys_errlist[errno]);
-		exit(EXIT_FAILURE);
-	}
-	fprintf(outf, "<HTML>\n");
-	fprintf(outf, "  <HEAD>\n");
-	fprintf(outf, "    <TITLE>%s</title>\n", ce->sym);
-	fprintf(outf, "  </head>\n");
-	fprintf(outf, "  <BODY>\n");
-	fprintf(outf, "    <H1>%s</h1>\n", ce->sym);
-	fprintf(outf, "	<HR>\n");
-	fprintf(outf, "	<UL>\n");
-	for (;ce; ce = ce->next) {
-		fprintf(outf, "      <LI><A HREF=\"%s%s%s"EXT2"#%s\">%s</a>\n",
-			base_dir, base_slash, ce->file, ce->sym, ce->file);
-		ce->flags |= FLAG_MENU_CREATED;
-	}
-	fprintf(outf, "	</ul>\n");
-	fprintf(outf, "  </body>\n");
-	fprintf(outf, "</html>\n");
-	fclose(outf);
-} /* createmenu */
-		
-
-void scanfile (char *fn, char *fin, char *fout)
-{
-	FILE *INPUT;
-	YY_BUFFER_STATE bs;
-
-	INPUT = fopen (fin, "r");
-	OUTPUT = fopen (fout, "w");
-	bs = yy_create_buffer (INPUT, YY_BUF_SIZE);
-	yy_switch_to_buffer (bs);
-	fprintf(OUTPUT, "<HTML>\n");
-	fprintf(OUTPUT, "  <HEAD>\n");
-	fprintf(OUTPUT, "    <TITLE>%s</title>\n", fn);
-	fprintf(OUTPUT, "  </head>\n");
-	fprintf(OUTPUT, "  <BODY BGCOLOR=\"#ffffff\">\n");
-	fprintf(OUTPUT, "    <H1>%s</h1>\n", fn);
-	fprintf(OUTPUT, "    <HR>\n");
-	fprintf(OUTPUT, "    <PRE>\n");
-	pointer=0;
-	PUSH(INITIAL);
-	yylex();
-	fprintf(OUTPUT, "    </pre>\n");
-	fprintf(OUTPUT, "  </body>\n");
-	fprintf(OUTPUT, "</html>\n");
-	fclose (INPUT);
-	fclose (OUTPUT);
-	yy_delete_buffer(bs);
-} /* scanfile */
-
-/* $Id: lexical.l,v 0.10 1999/06/08 07:43:09 luis Exp $ */
+/* $Id: c2html.h,v 0.10 1999/06/08 07:44:11 luis Exp $ */
