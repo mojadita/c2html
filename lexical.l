@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.15 1999/06/22 20:08:38 luis Exp $
+/* $Id: lexical.l,v 0.16 1999/06/22 22:41:44 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * 
@@ -282,8 +282,15 @@ char *relfilename(char *fmt, char *fdest, char *fsour)
 	/* we have eliminated the common part, now construct the output string */
 	{	char *p, *q = outname;
 		while (p = strchr(fsour, '/')) {
-			q += sprintf (q, "../");
-			fsour = p+1;
+			*p++ = '\0';
+			if (!strcmp(fsour, "..")) {
+				fprintf(stderr,
+					PROGNAME": "__FILE__"(%d): \"..\" in path, output can be damaged\n",
+					__LINE__);
+			}
+			if (strcmp(fsour, "."))  /* . implies NO OPERATION */
+				q += sprintf (q, "../");
+			fsour = p;
 		}
 		q += sprintf (q, "%s", fdest);
 	}
@@ -366,4 +373,4 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.15 1999/06/22 20:08:38 luis Exp $ */
+/* $Id: lexical.l,v 0.16 1999/06/22 22:41:44 luis Exp $ */
