@@ -1,4 +1,4 @@
-/* $Id: html_output.c,v 1.2 1999/06/14 23:47:15 luis Exp $
+/* $Id: html_output.c,v 1.3 1999/06/17 17:40:14 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Mon Jun 14 23:55:37 MEST 1999
  * Disclaimer:
@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
+#include <stdarg.h>
 #include "multifree.h"
 #include "hashTable.h"
 #include "c2html.h"
@@ -47,9 +48,11 @@
 /* variables */
 
 /* functions */
-FILE *html_create(char *name, char *title)
+FILE *html_create(char *name, char *title, ...)
 {
 	FILE *f;
+	va_list p;
+	va_start(p, title);
 
 	f = fopen (name, "w");
 	if (!f) {
@@ -79,13 +82,18 @@ FILE *html_create(char *name, char *title)
 	fprintf(f,"  -->\n");
 	fprintf(f,"<HTML>\n");
 	fprintf(f,"  <HEAD>\n");
-	fprintf(f,"    <TITLE>%s</title>\n", title);
+	fprintf(f,"    <TITLE>");
+	vfprintf(f,title, p);
+	fprintf(f,"</title>\n");
 	if (base_dir)
 		fprintf(f,"    <BASE HREF=\"%s\">\n", base_dir);
 	fprintf(f,"  </head>\n");
 	fprintf(f,"  <BODY>\n");
-	fprintf(f,"    <H1>%s</h1>\n", title);
+	fprintf(f,"    <H1>");
+	vfprintf(f,title, p);
+	fprintf(f,"</h1>\n", title);
 	fprintf(f,"	   <HR>\n");
+	va_end(p);
 	return f;
 } /* create_html */
 
@@ -100,4 +108,4 @@ void html_close(FILE *f)
 	fclose(f);
 } /* close_html */
 
-/* $Id: html_output.c,v 1.2 1999/06/14 23:47:15 luis Exp $ */
+/* $Id: html_output.c,v 1.3 1999/06/17 17:40:14 luis Exp $ */

@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.15 1999/06/15 01:02:54 luis Exp $
+/* $Id: c2html.c,v 0.16 1999/06/17 17:40:14 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.15 1999/06/15 01:02:54 luis Exp $";
+char *rcsId = "$Id: c2html.c,v 0.16 1999/06/17 17:40:14 luis Exp $";
 
 /* types */
 
@@ -54,6 +54,7 @@ FileNode *files_first = NULL, *files_last = NULL;
 int files_n = 0;
 FileNode **files_array;
 char *base_dir = NULL;
+int flags = 0;
 
 /* functions */
 static int files_cmp (FileNode **f1, FileNode **f2)
@@ -194,6 +195,10 @@ void do_usage (void)
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -h   Help.  This help screen.\n");
 	fprintf(stderr, "  -b base_dir.  Base directory for URL composition\n");
+	fprintf(stderr, "  -2   Two level.  Generate Index in a two level structure, showing\n");
+	fprintf(stderr, "       directories at the upper level, and files and symbols at the lower.\n");
+	fprintf(stderr, "  -d   Debug.  Print file and file number order, instead of just the\n");
+	fprintf(stderr, "       percentage of the default case\n");
 } /* do_usage */
 
 /* main program */
@@ -204,10 +209,12 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "hb:")) != EOF) {
+	while ((opt = getopt(argc, argv, "hb:2d")) != EOF) {
 		switch(opt) {
 		case 'h': do_usage(); exit(0);
 		case 'b': base_dir = optarg; break;
+		case '2': flags |= FLAG_TWOLEVEL; break;
+		case 'd': flags |= FLAG_VERBOSE; break;
 		default:
 		}
 	}
@@ -227,8 +234,9 @@ int main (int argc, char **argv)
 
 	/* print the results ---do the heavy work--- */
 	{	FileNode *f; CtagNode *c;
-		FILE *idx;
-		int i,acum, percent;
+		FILE *toc, *idx;
+		int i,acum, percent, llen;
+		char *dir, *ldir;
 
 		/* sort the filelist */
 		files_array = calloc(files_n, sizeof files_array[0]);
@@ -237,7 +245,23 @@ int main (int argc, char **argv)
 		qsort(files_array, files_n, sizeof files_array[0],
 			(int (*)(const void *, const void *))files_cmp);
 
-		idx = html_create("index.html", "Index");
+		toc = (flags & FLAG_TWOLEVEL)
+			? html_create("index.html", "Directories")
+			: NULL;
+		idx = (flags & FLAG_TWOLEVEL)
+			? NULL
+			: html_create("index.html", "Index");
+
+		if (flags & FLAG_TWOLEVEL) {
+			toc = html_create("index.html", "Directories");
+			idx = NULL;
+			fprintf(toc, "    <UL>\n");
+		} else {
+			toc = NULL;
+			idx = html_create("index.html", "Files");
+			fprintf(idx, "    <UL>\n");
+		}
+
 		acum = files_n >> 1; percent = 0;
 		/* process each file in the database, in order */
 		for (i = 0; i < files_n; i++) {
@@ -245,17 +269,43 @@ int main (int argc, char **argv)
 			FILE *ex;
 
 			f = files_array[i];
-			fprintf (idx,
-				"    <h2>File <A HREF=\"%s"EXT2"\">%s</a>:</h2>\n",
+
+			if (flags & FLAG_TWOLEVEL) {
+				if (!idx || strncmp(f->name, ldir, llen)) {
+					char *p;
+					if (idx) {
+						fprintf(idx, "    </ul>\n");
+						html_close (idx);
+					}
+					sprintf (buffer, PFX2"%05d"EXT2, i);
+					ldir = f->name; p = strrchr(ldir, '/');
+					llen = p ? p - ldir : 0;
+					idx = html_create(buffer, "Directory %0.*s", 
+						llen ? llen : 1, llen ? ldir : ".");
+					fprintf(toc,
+						"    <LI><A HREF=\"%s\">%0.*s</a>\n",
+						buffer, llen ? llen : 1, llen ? ldir : ".");
+				}
+			}
+			fprintf(idx,
+				"    <H2>File <A HREF=\"%s"EXT2"\">%s</a>:</h2>\n",
 				f->name, f->name);
 
-			/* Print the filename, as this is a lengthy process */
-			acum += 100;
-			if (acum >= files_n) {
-				percent += acum / files_n;
-				acum %= files_n;
+			/* Print the progress, as this is a lengthy process */
+			{	static char *progress[] = { "\\", "|", "/", "-" };
+
+				acum += 100;
+				if (acum >= files_n) {
+					percent += acum / files_n;
+					acum %= files_n;
+				}
+				if (flags & FLAG_VERBOSE)
+					printf("%s (%d of %d -- %d%%)\n",
+						f->name, i+1, files_n, percent);
+				else
+					printf("%s %02d%%\r", progress[i&3], percent);
+					fflush(stdout);
 			}
-			printf("%s (%d of %d -- %d%%)\n", f->name, i+1, files_n, percent);
 
 			/* edit the file */
 			sprintf (buffer, EX_PATH" %s", f->name);
@@ -308,8 +358,12 @@ int main (int argc, char **argv)
 			} /* conversion */
 		}
 		/* finish the index. */
-		html_close(idx);
+		if (idx) html_close(idx);
+		if (flags & FLAG_TWOLEVEL) {
+			fprintf(toc, "    </ul>\n");
+			html_close(toc);
+		}
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.15 1999/06/15 01:02:54 luis Exp $ */
+/* $Id: c2html.c,v 0.16 1999/06/17 17:40:14 luis Exp $ */

@@ -1,4 +1,4 @@
-/* $Id: c2html.h,v 0.12 1999/06/14 23:47:15 luis Exp $
+/* $Id: c2html.h,v 0.13 1999/06/17 17:40:14 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 22:45:02 MEST 1999
  * Disclaimer: (c) 1999 Luis Colorado <luis.colorado@SLUG.CTV.ES>
@@ -40,6 +40,7 @@
 #define EXT1			".temp"
 #define EXT2			".html"
 #define PFX1			"ta-"
+#define PFX2			"i-"
 
 #define FLAG_MENU_CREATED	1
 
@@ -49,6 +50,9 @@
 #endif
 
 #undef TRACEON		/* 1 */
+
+#define FLAG_TWOLEVEL	1
+#define FLAG_VERBOSE	2
 
 /* types */
 typedef struct ctag_node {
@@ -68,7 +72,7 @@ typedef struct file_node {
 } FileNode;
 
 /* prototypes */
-FILE *html_create(char *name, char *title);
+FILE *html_create(char *name, char *title, ...);
 void html_close(FILE *f);
 
 /* variables */
@@ -76,6 +80,7 @@ extern HashTable syms_table, files_table;
 extern FileNode *files_first, *files_last;
 extern char *base_dir;
 extern char *base_slash;
+extern int flags;
 
 /* functions */
 
@@ -84,4 +89,4 @@ extern char *base_slash;
  * protected against double inclusion from other files.
  */
 
-/* $Id: c2html.h,v 0.12 1999/06/14 23:47:15 luis Exp $ */
+/* $Id: c2html.h,v 0.13 1999/06/17 17:40:14 luis Exp $ */
