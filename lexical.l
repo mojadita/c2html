@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.16 1999/06/22 22:41:44 luis Exp $
+/* $Id: lexical.l,v 0.17 2002/11/09 20:21:21 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * 
@@ -93,7 +93,7 @@ alpha		([a-zA-Z\$_])
 
 directive	(define|undef|include|if|ifdef|ifndef|else|elif|endif|error|pragma)
 %%
-"/*"					{	PUSH(incomment); fprintf(OUTPUT, "<I>/*"); }
+"/*"					{	PUSH(incomment); fprintf(OUTPUT, "<FONT COLOR=\"blue\"><I>/*"); }
 <incomment>\n			|
 <incomment>.			pr(OUTPUT, yytext);
 <incomment>TODO			|
@@ -101,15 +101,15 @@ directive	(define|undef|include|if|ifdef|ifndef|else|elif|endif|error|pragma)
 <incomment>XXX			|
 <incomment>ARGSUSED		|
 <incomment>NEVERREACHED	fprintf(OUTPUT, "<U>%s</u>", yytext);
-<incomment>"*/"			{	fprintf(OUTPUT, "*/</i>"); POP(); }
+<incomment>"*/"			{	fprintf(OUTPUT, "*/</i></font>"); POP(); }
 
 "#"{sp}*\n				fprintf(OUTPUT, "<B>%s</b>", yytext); 
 "#"{directive}			{	PUSH(indirective);
-							fprintf(OUTPUT, "<B>%s</b><I>", yytext);
+							fprintf(OUTPUT, "<FONT COLOR=\"maroon\"><B>%s</b><I>", yytext);
 						}
 <indirective>defined	fprintf(OUTPUT, "<B>%s</b>", yytext);
 <indirective>\\\n		fputs("\\\n", OUTPUT);
-<indirective>\n			{	fputs("</i>\n", OUTPUT); POP(); }
+<indirective>\n			{	fputs("</i></font>\n", OUTPUT); POP(); }
 
 auto					|
 break					|
@@ -142,26 +142,26 @@ union					|
 unsigned				|
 void					|
 volatile				|
-while					fprintf(OUTPUT, "<B>%s</b>", yytext);
+while					fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 
 0{odig}*{lu}			|
 [1-9]{dig}*{lu}			|
 0[xX]{xdig}*{lu}		|
 {mant}({exp})?{fl}		|
-{mant2}{exp}{fl}		fprintf(OUTPUT, "<B><I>%s</i></b>", yytext);
+{mant2}{exp}{fl}		fprintf(OUTPUT, "<FONT COLOR=\"red\"><B><I>%s</i></b></font>", yytext);
 
-\"						{	PUSH(instring); fputs("<B><I>\"", OUTPUT); }
-<instring>\"			{	fputs("\"</i></b>", OUTPUT); POP(); }
-<instring>{esc}			{	fputs("<U>", OUTPUT);pr(OUTPUT, yytext);
-							fputs("</u>", OUTPUT);
+\"						{	PUSH(instring); fputs("<FONT COLOR=\"green\"><I>\"", OUTPUT); }
+<instring>\"			{	fputs("\"</i></font>", OUTPUT); POP(); }
+<instring>{esc}			{	fputs("<FONT COLOR=\"blue\"><U>", OUTPUT);pr(OUTPUT, yytext);
+							fputs("</u></font>", OUTPUT);
 						}
 <instring>\n			|
 <instring>.				pr(OUTPUT, yytext);
 
-\'						{	PUSH(inchar); fputs("<B><I>\'", OUTPUT); }
-<inchar>\'				{	fputs("\'</i></b>", OUTPUT); POP(); }
-<inchar>{esc}			{	fputs("<U>", OUTPUT);pr(OUTPUT, yytext);
-							fputs("</u>", OUTPUT);
+\'						{	PUSH(inchar); fputs("<FONT COLOR=\"red\"><B><I>\'", OUTPUT); }
+<inchar>\'				{	fputs("\'</i></b></font>", OUTPUT); POP(); }
+<inchar>{esc}			{	fputs("<FONT COLOR=\"blue\"><U>", OUTPUT);pr(OUTPUT, yytext);
+							fputs("</u></font>", OUTPUT);
 						}
 <inchar>\n				|
 <inchar>.				fputs(yytext, OUTPUT);
@@ -373,4 +373,4 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.16 1999/06/22 22:41:44 luis Exp $ */
+/* $Id: lexical.l,v 0.17 2002/11/09 20:21:21 luis Exp $ */

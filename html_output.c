@@ -1,4 +1,4 @@
-/* $Id: html_output.c,v 1.4 1999/06/20 16:55:22 luis Exp $
+/* $Id: html_output.c,v 1.5 2002/11/09 20:21:21 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Mon Jun 14 23:55:37 MEST 1999
  * Disclaimer:
@@ -88,7 +88,7 @@ FILE *html_create(char *name, char *title, ...)
 	if (base_dir)
 		fprintf(f,"    <BASE HREF=\"%s\">\n", base_dir);
 	fprintf(f,"  </head>\n");
-	fprintf(f,"  <BODY>\n");
+	fprintf(f,"  <BODY><A HREF=\"index.html\">Top Dir</a>\n");
 	fprintf(f,"    <H1>");
 	vfprintf(f,title, p);
 	fprintf(f,"</h1>\n", title);
@@ -102,11 +102,11 @@ void html_close(FILE *f)
 	fprintf(f,"    <HR>\n");
 	fprintf(f,"	<P><A HREF=\"http://SLUG.HispaLinux.ES/~luis/utils/c2html/\">"
 		PROGNAME" "VERSION"</a>: Copyright (C) 1999 Luis Colorado "
-		"<A HREF=\"mailto:Luis.Colorado@SLUG.HispaLinux.ES?SUBJECT=C2HTML\""
-		">&lt;Luis.Colorado@SLUG.HispaLinux.ES&gt;</a>\n");
+		"<A HREF=\"mailto:Luis.Colorado@HispaLinux.ES?SUBJECT=C2HTML\""
+		">&lt;Luis.Colorado@HispaLinux.ES&gt;</a>\n");
 	fprintf(f,"  </body>\n");
 	fprintf(f,"</html>\n");
 	fclose(f);
 } /* close_html */
 
-/* $Id: html_output.c,v 1.4 1999/06/20 16:55:22 luis Exp $ */
+/* $Id: html_output.c,v 1.5 2002/11/09 20:21:21 luis Exp $ */
