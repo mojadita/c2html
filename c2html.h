@@ -1,4 +1,4 @@
-/* $Id: c2html.h,v 0.13 1999/06/17 17:40:14 luis Exp $
+/* $Id: c2html.h,v 0.14 1999/06/22 20:08:38 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 22:45:02 MEST 1999
  * Disclaimer: (c) 1999 Luis Colorado <luis.colorado@SLUG.CTV.ES>
@@ -53,6 +53,7 @@
 
 #define FLAG_TWOLEVEL	1
 #define FLAG_VERBOSE	2
+#define FLAG_RELFILENAME	4
 
 /* types */
 typedef struct ctag_node {
@@ -89,4 +90,4 @@ extern int flags;
  * protected against double inclusion from other files.
  */
 
-/* $Id: c2html.h,v 0.13 1999/06/17 17:40:14 luis Exp $ */
+/* $Id: c2html.h,v 0.14 1999/06/22 20:08:38 luis Exp $ */

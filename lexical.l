@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.14 1999/06/14 23:04:02 luis Exp $
+/* $Id: lexical.l,v 0.15 1999/06/22 20:08:38 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * 
@@ -52,12 +52,15 @@
 static int state[PUSHSIZE];
 static int pointer = 0;
 
+#define YY_DECL	int yylex(char *fnout)
+
 /* types */
 
 /* prototypes */
 void pr(FILE *, char *);
 void scanfile(char *, char *, char *);
 void createmenu(CtagNode *);
+char *relfilename(char *fmt, char *fdest, char *fsour);
 
 /* variables */
 static FILE *OUTPUT;
@@ -178,11 +181,13 @@ while					fprintf(OUTPUT, "<B>%s</b>", yytext);
 								CtagNode *ce = he->data;
 								if (!(ce->next)) {
 									fprintf(OUTPUT,
-										"<A HREF=\"%s"EXT2"#%s\">",
-										ce->file, ce->sym);
+										"<A HREF=\"%s#%s\">",
+										relfilename("%s"EXT2, ce->file, fnout),
+										ce->sym);
 								} else {
 									fprintf(OUTPUT,
-										"<A HREF=\""PFX1"%s"EXT2"\">", ce->sym);
+										"<!-- FIXME --><A HREF=\"%s\">",
+										relfilename(PFX1"%s"EXT2, ce->sym, fnout));
 									if (!(ce->flags & FLAG_MENU_CREATED)) {
 										createmenu(ce);
 									}
@@ -246,6 +251,51 @@ while					fprintf(OUTPUT, "<B>%s</b>", yytext);
 %%
 /* functions */
 
+char *relfilename(char *fmt, char *fdest, char *fsour)
+{
+	static char buffer[10240];  /* we return a pointer to this buffer */
+	char *outname;
+	int not_found = TRUE;
+
+	{	char *f1, *f2, *f3;
+		f1 = buffer;
+		f2 = f1 + sprintf(buffer, fmt, fdest) + 1;
+		f3 = f2 + sprintf(f2, "%s", fsour) + 1;
+		fdest = f1; fsour = f2; outname = f3;
+	}
+#if 0
+	fprintf(stderr, "relfilename: \"%s\" -> \"%s\"", fsour, fdest);
+#endif
+	if (!(flags & FLAG_RELFILENAME)) return fdest;
+	while (not_found) {
+		char *p1 = strchr (fsour, '/');
+		char *p2 = strchr (fdest, '/');
+
+		if (!p1 || !p2) break;
+		*p1 = '\0'; *p2 = '\0';
+		not_found = (strcmp(fsour, fdest) == 0);
+		*p1++ = '/'; *p2++ = '/';
+		if (not_found) {
+			fsour = p1; fdest = p2;
+		}
+	}
+	/* we have eliminated the common part, now construct the output string */
+	{	char *p, *q = outname;
+		while (p = strchr(fsour, '/')) {
+			q += sprintf (q, "../");
+			fsour = p+1;
+		}
+		q += sprintf (q, "%s", fdest);
+	}
+
+#if 0
+	fprintf(stderr, " ==> \"%s\";\n", outname);
+#endif
+
+
+	return outname;
+} /* relfilename */
+
 void pr(FILE *f, char *s)
 {
 	while (*s) {
@@ -308,7 +358,7 @@ void scanfile (char *fn, char *fin, char *fout)
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	pointer=0;
 	PUSH(INITIAL);
-	yylex();
+	yylex(fout);
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	fprintf(OUTPUT, "    </pre>\n");
 	fclose (INPUT);
@@ -316,4 +366,4 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.14 1999/06/14 23:04:02 luis Exp $ */
+/* $Id: lexical.l,v 0.15 1999/06/22 20:08:38 luis Exp $ */

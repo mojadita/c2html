@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.17 1999/06/20 16:55:22 luis Exp $
+/* $Id: c2html.c,v 0.18 1999/06/22 20:08:38 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.17 1999/06/20 16:55:22 luis Exp $";
+char *rcsId = "$Id: c2html.c,v 0.18 1999/06/22 20:08:38 luis Exp $";
 
 /* types */
 
@@ -183,9 +183,15 @@ void process(char *fn)
 void do_usage (void)
 {
 	fprintf(stderr, "Usage: "PROGNAME" [ options ... ] tagfile1 ...\n");
-	fprintf(stderr, "This program operates on a constructed ctags(1) file, and construct an\n");
-	fprintf(stderr, "HTML hierarchy of source files, parallel to their C counterparts, with\n");
-	fprintf(stderr, "hyperlink cross references to all the C identifiers located in the code.\n");
+	fprintf(stderr, PROGNAME" "VERSION": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n");
+	fprintf(stderr, "This program is under GNU PUBLIC LICENSE, version 2 or later\n");
+	fprintf(stderr, "see the terms and conditions of use at http://www.gnu.org/\n");
+	fprintf(stderr, "(you might receive a copy of it with this program)\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "This program operates on a constructed tags file (see ctags(1)), and\n");
+	fprintf(stderr, "constructs an HTML hierarchy of source files, parallel to their C\n");
+	fprintf(stderr, "counterparts, with hyperlink cross references to all the C identifiers\n");
+	fprintf(stderr, "located in the code.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "It uses the tags file to locate all the identifier definitions in the\n");
 	fprintf(stderr, "C code, and then, it constructs a syntax marked HTML file, with each\n");
@@ -195,10 +201,14 @@ void do_usage (void)
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -h   Help.  This help screen.\n");
 	fprintf(stderr, "  -b base_dir.  Base directory for URL composition\n");
+	fprintf(stderr, "       This causes to generate <BASE> tags.  Useful if more than one directory\n");
+	fprintf(stderr, "       and no relative pathnames\n");
 	fprintf(stderr, "  -2   Two level.  Generate Index in a two level structure, showing\n");
 	fprintf(stderr, "       directories at the upper level, and files and symbols at the lower.\n");
 	fprintf(stderr, "  -d   Debug.  Print file and file number order, instead of just the\n");
 	fprintf(stderr, "       percentage of the default case\n");
+	fprintf(stderr, "  -r   Relative pathnames.  Generate relative pathnames in the links between\n");
+	fprintf(stderr, "       symbols and their definitions\n");
 } /* do_usage */
 
 /* main program */
@@ -209,12 +219,13 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "hb:2d")) != EOF) {
+	while ((opt = getopt(argc, argv, "hb:2dr")) != EOF) {
 		switch(opt) {
-		case 'h': do_usage(); exit(0);
+		case 'h': do_usage(); exit(EXIT_SUCCESS);
 		case 'b': base_dir = optarg; break;
 		case '2': flags |= FLAG_TWOLEVEL; break;
 		case 'd': flags |= FLAG_VERBOSE; break;
+		case 'r': flags |= FLAG_RELFILENAME; break;
 		default:
 		}
 	}
@@ -359,4 +370,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.17 1999/06/20 16:55:22 luis Exp $ */
+/* $Id: c2html.c,v 0.18 1999/06/22 20:08:38 luis Exp $ */
