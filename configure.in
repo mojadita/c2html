@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 0.16 1999/06/23 20:14:18 luis Exp $
+dnl $Id: configure.in,v 0.17 2002/11/09 21:10:09 luis Exp $
 dnl Author: Luis.Colorado@SLUG.HispaLinux.ES
 dnl Copyright: GPL (C) 1999 Luis.Colorado@SLUG.HispaLinux.ES
 dnl
@@ -28,7 +28,7 @@ AC_PROG_LEX
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PATH_PROG(EX_PATH, [ex],,$PATH:/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin)
-VERSION=0.7a
+VERSION=0.8a
 AC_SUBST(VERSION)
 AC_SUBST(EX_PATH)
 
@@ -53,4 +53,4 @@ AC_CHECK_FUNCS(strdup)
 
 AC_OUTPUT(Makefile c2html.man)
 
-dnl $Id: configure.in,v 0.16 1999/06/23 20:14:18 luis Exp $
+dnl $Id: configure.in,v 0.17 2002/11/09 21:10:09 luis Exp $
