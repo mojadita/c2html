@@ -1,9 +1,11 @@
-/* $Id: hashCRC12.c,v 1.1 2000/07/16 21:51:06 luis Exp $
+/* $Id: hashCRC12.c,v 1.2 2002/11/09 18:59:06 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Fri Mar 12 20:27:22 MET 1999
  */
 
 #define IN_HASHCRC12_C
+
+static char rcsId [] = "\n$Id: hashCRC12.c,v 1.2 2002/11/09 18:59:06 luis Exp $\n";
 
 /* Standard include files */
 #include <sys/types.h>
@@ -36,4 +38,4 @@ u_long hashCRC12 (u_char *s)
   return result;
 } /* hashCRC12 */
 
-/* $Id: hashCRC12.c,v 1.1 2000/07/16 21:51:06 luis Exp $ */
+/* $Id: hashCRC12.c,v 1.2 2002/11/09 18:59:06 luis Exp $ */

@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.18 1999/06/22 20:08:38 luis Exp $
+/* $Id: c2html.c,v 0.19 2002/11/09 18:59:06 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.18 1999/06/22 20:08:38 luis Exp $";
+char *rcsId = "$Id: c2html.c,v 0.19 2002/11/09 18:59:06 luis Exp $";
 
 /* types */
 
@@ -227,6 +227,7 @@ int main (int argc, char **argv)
 		case 'd': flags |= FLAG_VERBOSE; break;
 		case 'r': flags |= FLAG_RELFILENAME; break;
 		default:
+			do_usage(); exit(EXIT_FAILURE);
 		}
 	}
 	argc -= optind; argv += optind; /* shift all the options */
@@ -309,6 +310,7 @@ int main (int argc, char **argv)
 						f->name, i+1, files_n, percent);
 				else
 					fprintf(stderr, "%s %02d%%\r", progress[i&3], percent);
+				fflush(stderr);
 			}
 
 			/* edit the file */
@@ -349,7 +351,7 @@ int main (int argc, char **argv)
 			fprintf(ex,
 				"w %s"EXT1"\n"
 				"q\n", f->name);
-			fclose (ex);
+			pclose (ex);
 
 			/* convert the temporary file into the html one */
 			{	char *p = buffer;  /* we use buffer again */
@@ -370,4 +372,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.18 1999/06/22 20:08:38 luis Exp $ */
+/* $Id: c2html.c,v 0.19 2002/11/09 18:59:06 luis Exp $ */
