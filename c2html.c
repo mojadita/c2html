@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.20 2002/11/09 20:26:15 luis Exp $
+/* $Id: c2html.c,v 0.21 2005/02/22 19:23:36 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "\n$Id: c2html.c,v 0.20 2002/11/09 20:26:15 luis Exp $\n";
+char *rcsId = "\n$Id: c2html.c,v 0.21 2005/02/22 19:23:36 luis Exp $\n";
 
 /* types */
 
@@ -335,15 +335,11 @@ int main (int argc, char **argv)
 					c->sym);
 				/* insert a mark at the beggining of the line.
 				 * The mark format is
-				 * (@A NAME="<symbol name>"@)
-				 * (@/a@)
+				 * (@A NAME="<symbol name>"@)(@/a@)
 				 * The mark format must not be changed, or the procedure
 				 * to analyse it again to generate the tags won't work */
 				fprintf (ex,
-					"i\n"
-					"(@A NAME=\"%s\"@)\n"
-					"(@/a@)\n"
-					".\n",
+					"s:^:(@A NAME=\"%s\"@)(@/a@):\n",
 					c->sym);
 			} /* foreach tag in this file */
 			fprintf(idx, "    </ul>\n");
@@ -372,4 +368,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.20 2002/11/09 20:26:15 luis Exp $ */
+/* $Id: c2html.c,v 0.21 2005/02/22 19:23:36 luis Exp $ */
