@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1 2005/02/22 19:23:36 luis Exp $
+# $Id: Makefile.am,v 1.2 2005/03/02 20:35:18 luis Exp $
 # Author: Luis.Colorado@SLUG.HispaLinux.ES
 # Date: Sun Jun  6 15:43:44 MEST 1999
 # C2HTML -- A program to convert a C source package into a cross reference HTML
@@ -20,11 +20,14 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-INCLUDES=-DVERSION=\""@VERSION@"\" -DEX_PATH=\""@EX_PATH@ >/dev/null 2>&1"\"
+INCLUDES=-DAUTHOR=\""@AUTHOR@"\" -DPROGNAME=\""@PACKAGE@"\" \
+	-DVERSION=\""@VERSION@"\" -DEX_PATH=\""@EX_PATH@ >/dev/null 2>&1"\" \
+	-DAUTHOR_EMAIL=\""@AUTHOR_EMAIL@"\" -DPACKAGE_URL=\""@PACKAGE_URL@"\" \
+	-DAUTHOR_NAME=\""@AUTHOR_NAME@"\"
 
 bin_PROGRAMS=c2html
 
 c2html_SOURCES = c2html.c calcCRC.c crc12.c hashCRC12.c hashTable.c multifree.c \
 	lexical.l html_output.c
 #
-# $Id: Makefile.am,v 1.1 2005/02/22 19:23:36 luis Exp $
+# $Id: Makefile.am,v 1.2 2005/03/02 20:35:18 luis Exp $

@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.21 2005/02/22 19:23:36 luis Exp $
+/* $Id: c2html.c,v 0.22 2005/03/02 20:35:19 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "\n$Id: c2html.c,v 0.21 2005/02/22 19:23:36 luis Exp $\n";
+char *rcsId = "\n$Id: c2html.c,v 0.22 2005/03/02 20:35:19 luis Exp $\n";
 
 /* types */
 
@@ -76,7 +76,7 @@ void process(char *fn)
 		if (!tagfile) {
 			fprintf (stderr,
 				PROGNAME": Error opening %s: %s\n",
-				fn, sys_errlist[errno]);
+				fn, strerror(errno));
 			exit (EXIT_FAILURE);
 		}
 	}
@@ -101,7 +101,7 @@ void process(char *fn)
 			 * symbol, so give up */
 			fprintf (stderr,
 				PROGNAME": "__FILE__"(%d): hashTableLookup: %s\n",
-				__LINE__, sys_errlist[errno]);
+				__LINE__, strerror(errno));
 			exit(EXIT_FAILURE);
 		} /* if (!che) */
 
@@ -127,7 +127,7 @@ void process(char *fn)
 		if (!ce) {
 			fprintf (stderr,
 				PROGNAME": "__FILE__"(%d): malloc: %s\n",
-				__LINE__, sys_errlist[errno]);
+				__LINE__, strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 		ce->sym = che->key;
@@ -144,7 +144,7 @@ void process(char *fn)
 		if (!fhe) {
 			fprintf (stderr,
 				PROGNAME": "__FILE__"(%d): hashTablePermLookup: %s\n",
-				__LINE__, sys_errlist[errno]);
+				__LINE__, strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 		ce->file = fhe->key; /* deferred: see above */
@@ -154,7 +154,7 @@ void process(char *fn)
 			if (!fe) {
 				fprintf (stderr,
 					PROGNAME": "__FILE__"(%d): malloc: %s\n",
-					__LINE__, sys_errlist[errno]);
+					__LINE__, strerror(errno));
 				exit(EXIT_FAILURE);
 			}
 			fe->name = fhe->key;
@@ -319,7 +319,7 @@ int main (int argc, char **argv)
 			if (!ex) {
 				fprintf (stderr,
 					PROGNAME": "__FILE__"(%d): popen(\"%s\"): %s\n",
-					__LINE__, buffer, sys_errlist[errno]);
+					__LINE__, buffer, strerror(errno));
 				exit(EXIT_FAILURE);
 			}
 
@@ -368,4 +368,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.21 2005/02/22 19:23:36 luis Exp $ */
+/* $Id: c2html.c,v 0.22 2005/03/02 20:35:19 luis Exp $ */
