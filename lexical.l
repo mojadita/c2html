@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.11 1999/06/08 16:25:39 root Exp $
+/* $Id: lexical.l,v 0.12 1999/06/13 21:32:26 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * Disclaimer:
@@ -390,7 +390,10 @@ static FILE *OUTPUT;
 %s indirective
 %x instring
 %x inchar
+
 %option noyywrap
+%option pointer
+
 odig		([0-7])
 dig			([0-9])
 xdig		([0-9a-fA-F])
@@ -482,7 +485,7 @@ while					fprintf(OUTPUT, "<B>%s</b>", yytext);
 <inchar>\n				|
 <inchar>.				fputs(yytext, OUTPUT);
 
-^"(@"[^@]*"@)\n"			fprintf(OUTPUT, "<%0.*s>", yyleng-5, yytext+2);
+<*>^"(@"[^@]*"@)\n"		fprintf(OUTPUT, "<%0.*s>", yyleng-5, yytext+2);
 
 [a-zA-Z_\$]{alnum}*		{	/* identifier */
 							HashEntry *he;
@@ -643,13 +646,15 @@ void scanfile (char *fn, char *fin, char *fout)
 	fprintf(OUTPUT, "  <HEAD>\n");
 	fprintf(OUTPUT, "    <TITLE>%s</title>\n", fn);
 	fprintf(OUTPUT, "  </head>\n");
-	fprintf(OUTPUT, "  <BODY BGCOLOR=\"#ffffff\">\n");
+	fprintf(OUTPUT, "  <BODY>\n");
 	fprintf(OUTPUT, "    <H1>%s</h1>\n", fn);
 	fprintf(OUTPUT, "    <HR>\n");
 	fprintf(OUTPUT, "    <PRE>\n");
+	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	pointer=0;
 	PUSH(INITIAL);
 	yylex();
+	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	fprintf(OUTPUT, "    </pre>\n");
 	fprintf(OUTPUT, "  </body>\n");
 	fprintf(OUTPUT, "</html>\n");
@@ -658,4 +663,4 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.11 1999/06/08 16:25:39 root Exp $ */
+/* $Id: lexical.l,v 0.12 1999/06/13 21:32:26 luis Exp $ */
