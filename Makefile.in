@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 0.12 1999/06/14 23:08:22 luis Exp $
+# $Id: Makefile.in,v 0.13 1999/06/14 23:47:15 luis Exp $
 # Author: Luis.Colorado@SLUG.HispaLinux.ES
 # Date: Sun Jun  6 15:43:44 MEST 1999
 # C2HTML -- A program to convert a C source package into a cross reference HTML
@@ -23,7 +23,7 @@
 CC = @CC@
 LEX = @LEX@
 
-CFLAGS=-O2 -I. -DVERSION=\""@VERSION@"\"
+CFLAGS=-O2 -I. -DVERSION=\""@VERSION@"\" -DEX_PATH=\""@EX_PATH@ >/dev/null 2>&1"\"
 LDFLAGS=
 
 INSTALL = @INSTALL@
@@ -51,4 +51,4 @@ install: @bindir@/c2html
 @bindir@/c2html: c2html Makefile
 	-$(INSTALL) $(INSTALLFLAGS) c2html @bindir@
 
-# $Id: Makefile.in,v 0.12 1999/06/14 23:08:22 luis Exp $
+# $Id: Makefile.in,v 0.13 1999/06/14 23:47:15 luis Exp $

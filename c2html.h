@@ -1,4 +1,4 @@
-/* $Id: c2html.h,v 0.11 1999/06/14 23:08:22 luis Exp $
+/* $Id: c2html.h,v 0.12 1999/06/14 23:47:15 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 22:45:02 MEST 1999
  * Disclaimer: (c) 1999 Luis Colorado <luis.colorado@SLUG.CTV.ES>
@@ -33,7 +33,9 @@
 #endif
 #define DEFAULT_TAGS	"tags"
 #define PROGNAME		"c2html"
-#define EX_PATH			"/usr/bin/ex >/dev/null 2>&1"
+#ifndef EX_PATH
+#error EX_PATH must be defined to the path of the ex(1) command.
+#endif
 #define EXCMD_BUFSIZE	1024
 #define EXT1			".temp"
 #define EXT2			".html"
@@ -82,4 +84,4 @@ extern char *base_slash;
  * protected against double inclusion from other files.
  */
 
-/* $Id: c2html.h,v 0.11 1999/06/14 23:08:22 luis Exp $ */
+/* $Id: c2html.h,v 0.12 1999/06/14 23:47:15 luis Exp $ */
