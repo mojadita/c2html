@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.13 1999/06/14 23:04:02 luis Exp $
+/* $Id: c2html.c,v 0.14 1999/06/14 23:57:51 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.13 1999/06/14 23:04:02 luis Exp $";
+char *rcsId = "$Id: c2html.c,v 0.14 1999/06/14 23:57:51 luis Exp $";
 
 /* types */
 
@@ -249,7 +249,7 @@ int main (int argc, char **argv)
 				f->name, f->name);
 
 			/* Print the filename, as this is a lengthy process */
-			printf("%s\n", f->name);
+			printf("%s (%d of %d)\n", f->name, i+1, files_n);
 
 			/* edit the file */
 			sprintf (buffer, EX_PATH" %s", f->name);
@@ -306,4 +306,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.13 1999/06/14 23:04:02 luis Exp $ */
+/* $Id: c2html.c,v 0.14 1999/06/14 23:57:51 luis Exp $ */
