@@ -1,4 +1,4 @@
-/* $Id: html_output.c,v 1.3 1999/06/17 17:40:14 luis Exp $
+/* $Id: html_output.c,v 1.4 1999/06/20 16:55:22 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Mon Jun 14 23:55:37 MEST 1999
  * Disclaimer:
@@ -100,7 +100,8 @@ FILE *html_create(char *name, char *title, ...)
 void html_close(FILE *f)
 {
 	fprintf(f,"    <HR>\n");
-	fprintf(f,"	<P>"PROGNAME" "VERSION": Copyright (C) 1999 Luis Colorado "
+	fprintf(f,"	<P><A HREF=\"http://SLUG.HispaLinux.ES/~luis/utils/c2html/\">"
+		PROGNAME" "VERSION"</a>: Copyright (C) 1999 Luis Colorado "
 		"<A HREF=\"mailto:Luis.Colorado@SLUG.HispaLinux.ES?SUBJECT=C2HTML\""
 		">&lt;Luis.Colorado@SLUG.HispaLinux.ES&gt;</a>\n");
 	fprintf(f,"  </body>\n");
@@ -108,4 +109,4 @@ void html_close(FILE *f)
 	fclose(f);
 } /* close_html */
 
-/* $Id: html_output.c,v 1.3 1999/06/17 17:40:14 luis Exp $ */
+/* $Id: html_output.c,v 1.4 1999/06/20 16:55:22 luis Exp $ */

@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.16 1999/06/17 17:40:14 luis Exp $
+/* $Id: c2html.c,v 0.17 1999/06/20 16:55:22 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.16 1999/06/17 17:40:14 luis Exp $";
+char *rcsId = "$Id: c2html.c,v 0.17 1999/06/20 16:55:22 luis Exp $";
 
 /* types */
 
@@ -245,13 +245,7 @@ int main (int argc, char **argv)
 		qsort(files_array, files_n, sizeof files_array[0],
 			(int (*)(const void *, const void *))files_cmp);
 
-		toc = (flags & FLAG_TWOLEVEL)
-			? html_create("index.html", "Directories")
-			: NULL;
-		idx = (flags & FLAG_TWOLEVEL)
-			? NULL
-			: html_create("index.html", "Index");
-
+		/* open the directory files */
 		if (flags & FLAG_TWOLEVEL) {
 			toc = html_create("index.html", "Directories");
 			idx = NULL;
@@ -300,11 +294,10 @@ int main (int argc, char **argv)
 					acum %= files_n;
 				}
 				if (flags & FLAG_VERBOSE)
-					printf("%s (%d of %d -- %d%%)\n",
+					fprintf(stderr, "%s (%d of %d -- %d%%)\n",
 						f->name, i+1, files_n, percent);
 				else
-					printf("%s %02d%%\r", progress[i&3], percent);
-					fflush(stdout);
+					fprintf(stderr, "%s %02d%%\r", progress[i&3], percent);
 			}
 
 			/* edit the file */
@@ -366,4 +359,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.16 1999/06/17 17:40:14 luis Exp $ */
+/* $Id: c2html.c,v 0.17 1999/06/20 16:55:22 luis Exp $ */
