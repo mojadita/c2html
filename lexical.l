@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.10 1999/06/08 07:43:09 luis Exp $
+/* $Id: lexical.l,v 0.11 1999/06/08 16:25:39 root Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * Disclaimer:
@@ -482,7 +482,7 @@ while					fprintf(OUTPUT, "<B>%s</b>", yytext);
 <inchar>\n				|
 <inchar>.				fputs(yytext, OUTPUT);
 
-"(@"[^@]*"@)"			fprintf(OUTPUT, "<%0.*s>", yyleng-4, yytext+2);
+^"(@"[^@]*"@)\n"			fprintf(OUTPUT, "<%0.*s>", yyleng-5, yytext+2);
 
 [a-zA-Z_\$]{alnum}*		{	/* identifier */
 							HashEntry *he;
@@ -658,4 +658,4 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.10 1999/06/08 07:43:09 luis Exp $ */
+/* $Id: lexical.l,v 0.11 1999/06/08 16:25:39 root Exp $ */

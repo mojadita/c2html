@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.10 1999/06/08 07:43:32 luis Exp $
+/* $Id: c2html.c,v 0.11 1999/06/08 16:25:39 root Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer: (c) Luis Colorado, 1999
@@ -363,7 +363,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.10 1999/06/08 07:43:32 luis Exp $";
+char *rcsId = "$Id: c2html.c,v 0.11 1999/06/08 16:25:39 root Exp $";
 
 /* types */
 
@@ -609,8 +609,13 @@ int main (int argc, char **argv)
 				 * The mark format must not be changed, or the procedure
 				 * to analyse it again to generate the tags won't work */
 				fprintf (ex,
-					"s/^/(@A NAME=\"%s\"@)/\n"
-					"s/$/(@\\/a@)/\n",
+					"i\n"
+					"(@A NAME=\"%s\"@)\n"
+					".\n"
+					"+\n"
+					"a\n"
+					"(@/a@)\n"
+					".\n",
 					c->sym);
 			} /* foreach tag in this file */
 			fprintf(idx, "    </ul>\n");
@@ -637,4 +642,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.10 1999/06/08 07:43:32 luis Exp $ */
+/* $Id: c2html.c,v 0.11 1999/06/08 16:25:39 root Exp $ */
