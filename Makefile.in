@@ -1,4 +1,4 @@
-# $Id: Makefile.in,v 0.10 1999/06/08 09:29:08 luis Exp $
+# $Id: Makefile.in,v 0.11 1999/06/08 09:38:22 luis Exp $
 # Author: Luis.Colorado@SLUG.HispaLinux.ES
 # Date: Sun Jun  6 15:43:44 MEST 1999
 
@@ -25,10 +25,10 @@ clean:
 	$(RM) $(RMFLAGS) $(c2html_objs) c2html *.html
 
 distclean: clean
-	$(RM) $(RMFLAGS) Makefile config.log config.cache
+	$(RM) $(RMFLAGS) Makefile config.log config.cache config.status
 
 install: @bindir@/c2html
 @bindir@/c2html: c2html Makefile
 	-$(INSTALL) $(INSTALLFLAGS) c2html @bindir@
 
-# $Id: Makefile.in,v 0.10 1999/06/08 09:29:08 luis Exp $
+# $Id: Makefile.in,v 0.11 1999/06/08 09:38:22 luis Exp $
