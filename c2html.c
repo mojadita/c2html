@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.19 2002/11/09 18:59:06 luis Exp $
+/* $Id: c2html.c,v 0.20 2002/11/09 20:26:15 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.19 2002/11/09 18:59:06 luis Exp $";
+char *rcsId = "\n$Id: c2html.c,v 0.20 2002/11/09 20:26:15 luis Exp $\n";
 
 /* types */
 
@@ -372,4 +372,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.19 2002/11/09 18:59:06 luis Exp $ */
+/* $Id: c2html.c,v 0.20 2002/11/09 20:26:15 luis Exp $ */
