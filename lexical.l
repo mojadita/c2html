@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.12 1999/06/13 21:32:26 luis Exp $
+/* $Id: lexical.l,v 0.13 1999/06/13 22:37:25 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * Disclaimer:
@@ -500,13 +500,11 @@ while					fprintf(OUTPUT, "<B>%s</b>", yytext);
 								CtagNode *ce = he->data;
 								if (!(ce->next)) {
 									fprintf(OUTPUT,
-										"<A HREF=\"%s%s%s"EXT2"#%s\">",
-										base_dir, base_slash,
+										"<A HREF=\"%s"EXT2"#%s\">",
 										ce->file, ce->sym);
 								} else {
 									fprintf(OUTPUT,
-										"<A HREF=\"%s%s"PFX1"%s"EXT2"\">",
-										base_dir, base_slash, ce->sym);
+										"<A HREF=\""PFX1"%s"EXT2"\">", ce->sym);
 									if (!(ce->flags & FLAG_MENU_CREATED)) {
 										createmenu(ce);
 									}
@@ -615,18 +613,20 @@ void createmenu(CtagNode *ce)
 	}
 	fprintf(outf, "<HTML>\n");
 	fprintf(outf, "  <HEAD>\n");
+	if (base_dir)
+		fprintf(outf, "    <BASE HREF=\"%s\">\n", base_dir);
 	fprintf(outf, "    <TITLE>%s</title>\n", ce->sym);
 	fprintf(outf, "  </head>\n");
 	fprintf(outf, "  <BODY>\n");
 	fprintf(outf, "    <H1>%s</h1>\n", ce->sym);
-	fprintf(outf, "	<HR>\n");
-	fprintf(outf, "	<UL>\n");
+	fprintf(outf, "    <HR>\n");
+	fprintf(outf, "    <UL>\n");
 	for (;ce; ce = ce->next) {
-		fprintf(outf, "      <LI><A HREF=\"%s%s%s"EXT2"#%s\">%s</a>\n",
-			base_dir, base_slash, ce->file, ce->sym, ce->file);
+		fprintf(outf, "      <LI><A HREF=\"%s"EXT2"#%s\">%s</a>\n",
+			ce->file, ce->sym, ce->file);
 		ce->flags |= FLAG_MENU_CREATED;
 	}
-	fprintf(outf, "	</ul>\n");
+	fprintf(outf, "	   </ul>\n");
 	fprintf(outf, "  </body>\n");
 	fprintf(outf, "</html>\n");
 	fclose(outf);
@@ -644,6 +644,8 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_switch_to_buffer (bs);
 	fprintf(OUTPUT, "<HTML>\n");
 	fprintf(OUTPUT, "  <HEAD>\n");
+	if (base_dir)
+		fprintf(OUTPUT, "    <BASE HREF=\"%s\">\n", base_dir);
 	fprintf(OUTPUT, "    <TITLE>%s</title>\n", fn);
 	fprintf(OUTPUT, "  </head>\n");
 	fprintf(OUTPUT, "  <BODY>\n");
@@ -663,4 +665,4 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.12 1999/06/13 21:32:26 luis Exp $ */
+/* $Id: lexical.l,v 0.13 1999/06/13 22:37:25 luis Exp $ */

@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.11 1999/06/08 16:25:39 root Exp $
+/* $Id: c2html.c,v 0.12 1999/06/13 22:37:25 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer: (c) Luis Colorado, 1999
@@ -363,7 +363,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "$Id: c2html.c,v 0.11 1999/06/08 16:25:39 root Exp $";
+char *rcsId = "$Id: c2html.c,v 0.12 1999/06/13 22:37:25 luis Exp $";
 
 /* types */
 
@@ -374,11 +374,10 @@ HashTable syms_table, files_table;
 FileNode *files_first = NULL, *files_last = NULL;
 int files_n = 0;
 FileNode **files_array;
-char *base_slash = "";
-char *base_dir = "";
+char *base_dir = NULL;
 
 /* functions */
-int files_cmp (FileNode **f1, FileNode **f2)
+static int files_cmp (FileNode **f1, FileNode **f2)
 {
 	return strcmp(f1[0]->name, f2[0]->name);
 } /* files_cmp */
@@ -410,8 +409,9 @@ void process(char *fn)
 
 		id = strtok (line, " \t\n"); if (!id) continue;
 		fi = strtok (NULL, " \t\n"); if (!fi) continue;
+		/* We don't use the third field. */
 
-		/* Ignore ctags(1) private symbols */
+		/* Ignore VIM ctags(1) private symbols */
 		if (!isalnum(id[0])) continue;
 
 		/* first, find the ctag entry */
@@ -527,14 +527,8 @@ int main (int argc, char **argv)
 
 	while ((opt = getopt(argc, argv, "hb:")) != EOF) {
 		switch(opt) {
-		case 'h':
-		  do_usage(); exit(0);
-		case 'b':
-			base_dir = optarg;
-			base_slash = base_dir[0]
-				? (base_dir[strlen(base_dir)-1] == '/') ? "" : "/"
-				: "";
-			break;
+		case 'h': do_usage(); exit(0);
+		case 'b': base_dir = optarg; break;
 		default:
 		}
 	}
@@ -567,6 +561,8 @@ int main (int argc, char **argv)
 		idx = fopen ("index.html", "w");
 		fprintf(idx, "<HTML>\n");
 		fprintf(idx, "  <HEAD>\n");
+		if (base_dir)
+			fprintf(idx, "    <BASE HREF=\"%s\">\n", base_dir);
 		fprintf(idx, "    <TITLE>Index</title>\n");
 		fprintf(idx, "  <BODY>\n");
 		fprintf(idx, "    <H1>Index</h1>\n");
@@ -579,8 +575,8 @@ int main (int argc, char **argv)
 
 			f = files_array[i];
 			fprintf (idx,
-				"    <h2>File <A HREF=\"%s%s%s"EXT2"\">%s</a>:</h2>\n",
-				base_dir, base_slash, f->name, f->name);
+				"    <h2>File <A HREF=\"%s"EXT2"\">%s</a>:</h2>\n",
+				f->name, f->name);
 
 			/* Print the filename, as this is a lengthy process */
 			printf("%s\n", f->name);
@@ -599,8 +595,8 @@ int main (int argc, char **argv)
 			fprintf (idx, "    <UL>\n");
 			for (c = f->ctags_first; c; c = c->ctags_next) {
 				fprintf (idx,
-					"      <LI><A HREF=\"%s%s%s"EXT2"#%s\">%s</a>\n",
-					base_dir, base_slash, c->file, c->sym, c->sym);
+					"      <LI><A HREF=\"%s"EXT2"#%s\">%s</a>\n",
+					c->file, c->sym, c->sym);
 				/* switch to the tag, using ex(1) */
 				fprintf (ex, "ta %s\n", c->sym);
 				/* insert a mark at the beggining of the line.
@@ -611,9 +607,6 @@ int main (int argc, char **argv)
 				fprintf (ex,
 					"i\n"
 					"(@A NAME=\"%s\"@)\n"
-					".\n"
-					"+\n"
-					"a\n"
 					"(@/a@)\n"
 					".\n",
 					c->sym);
@@ -642,4 +635,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.11 1999/06/08 16:25:39 root Exp $ */
+/* $Id: c2html.c,v 0.12 1999/06/13 22:37:25 luis Exp $ */
