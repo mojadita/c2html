@@ -1,12 +1,40 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 0.10 1999/06/08 09:33:17 luis Exp $
+dnl $Id: configure.in,v 0.11 1999/06/14 23:08:22 luis Exp $
 dnl Author: Luis.Colorado@SLUG.HispaLinux.ES
 dnl Copyright: GPL (C) 1999 Luis.Colorado@SLUG.HispaLinux.ES
-dnl 
+dnl
+dnl C2HTML -- A program to convert C source code to cross referenced HTML.
+dnl Copyright (C) 1999  <Luis.Colorado@SLUG.HispaLinux.ES>
+dnl
+dnl This program is free software; you can redistribute it and/or modify
+dnl it under the terms of the GNU General Public License as published by
+dnl the Free Software Foundation; either version 2 of the License, or
+dnl (at your option) any later version.
+dnl
+dnl This program is distributed in the hope that it will be useful,
+dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+dnl GNU General Public License for more details.
+dnl
+dnl You should have received a copy of the GNU General Public License
+dnl along with this program; if not, write to the Free Software
+dnl Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+dnl
 
 AC_INIT(c2html.c)
 
 dnl Checks for programs.
+AC_PROG_LEX
+AC_PROG_CC
+AC_PROG_INSTALL
+VERSION=0.5
+AC_SUBST(VERSION)
+
+if test `basename ${LEX}` != 'flex'
+then
+	echo "$0: We ONLY support flex (LEX = ${LEX})" >&2
+	exit 1
+fi
 
 dnl Checks for libraries.
 
@@ -23,4 +51,4 @@ AC_CHECK_FUNCS(strdup)
 
 AC_OUTPUT(Makefile)
 
-dnl $Id: configure.in,v 0.10 1999/06/08 09:33:17 luis Exp $
+dnl $Id: configure.in,v 0.11 1999/06/14 23:08:22 luis Exp $

@@ -1,19 +1,39 @@
-# $Id: Makefile.in,v 0.11 1999/06/08 09:38:22 luis Exp $
+# $Id: Makefile.in,v 0.12 1999/06/14 23:08:22 luis Exp $
 # Author: Luis.Colorado@SLUG.HispaLinux.ES
 # Date: Sun Jun  6 15:43:44 MEST 1999
+# C2HTML -- A program to convert a C source package into a cross reference HTML
+#      hierarchy.
+# Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
 
-CC = gcc
+CC = @CC@
+LEX = @LEX@
 
-CFLAGS=-O2 -I.
+CFLAGS=-O2 -I. -DVERSION=\""@VERSION@"\"
 LDFLAGS=
 
-INSTALL = install
+INSTALL = @INSTALL@
 INSTALLFLAGS = -m 111 -o bin -g bin
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
-c2html_objs = c2html.o calcCRC.o crc12.o hashCRC12.o hashTable.o multifree.o lexical.o
+c2html_objs = c2html.o calcCRC.o crc12.o hashCRC12.o hashTable.o multifree.o \
+	lexical.o html_output.o
 c2html_libs =
 
 c2html: $(c2html_objs)
@@ -31,4 +51,4 @@ install: @bindir@/c2html
 @bindir@/c2html: c2html Makefile
 	-$(INSTALL) $(INSTALLFLAGS) c2html @bindir@
 
-# $Id: Makefile.in,v 0.11 1999/06/08 09:38:22 luis Exp $
+# $Id: Makefile.in,v 0.12 1999/06/14 23:08:22 luis Exp $
