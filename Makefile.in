@@ -1,0 +1,16 @@
+# $Id: Makefile.in,v 0.9 1999/06/08 00:38:03 luis Exp $
+# Author: Luis.Colorado@SLUG.HispaLinux.ES
+# Date: Sun Jun  6 15:43:44 MEST 1999
+
+CFLAGS=-O2 -I.
+LDFLAGS=
+
+c2html_objs = c2html.o calcCRC.o crc12.o hashCRC12.o hashTable.o multifree.o \
+	lexical.o
+c2html_libs =
+
+c2html: $(c2html_objs)
+	$(CC) $(LDFLAGS) -o c2html $(c2html_objs) $(c2html_libs)
+
+$(c2html_objs): c2html.h hashCRC12.h hashTable.h multifree.h Makefile
+# $Id: Makefile.in,v 0.9 1999/06/08 00:38:03 luis Exp $
