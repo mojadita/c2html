@@ -3,22 +3,12 @@
 Little program to generate HTML pages from a tags file, the later generated
 with ctags(1) command.
 
-Warning: This program is in a ****VERY ALPHA**** state... Although it's safe
-to use it, there is no documentation about it (I have not even resolved some
-problems I'm having now)
-
-Basicly, to generate web pages from the program texts, just execute ctags(1)
-utility with option -n (this is an essential requisite to the utility to
-work) and then execute c2html.
-
 You can also try the program with the -h option (to get some more help)
 
 In the sources directory, execute:
 
-
 ctags -h *
 c2html
-
 
 Best regards, and not doubt in suggesting anything you like to improve the
 program.
@@ -30,15 +20,6 @@ Luis.
 Pequeño programa para generar páginas web a partir de un fichero de tags,
 generado por la utilidad ctags(1).
 
-Atención:  El programa está en una fase ****MUY ALFA****... Aunque no es
-arriesgado utilizarlo, aún no hay documentación de ningún tipo (aún no tengo
-claro incluso como voy a resolver algunos de los problemas que se me
-plantean para completarlo)
-
-Básicamente, para generar páginas web con los textos de los programas, ejecutar
-la utilidad ctags(1) con la opción -n (ésto es, de momento un requisito
-esencial para que la utilidad funcione) y después, ejecutar el programa
-c2html.
 
 También, probar el programa con la opción -h.
 
@@ -46,7 +27,6 @@ En el directorio donde se encuentran los fuentes, ejecutar:
 
 ctags -h *
 c2html
-
 
 Un saludo, y no dudeis en hacerme cualquier sugerencia ;)
 
