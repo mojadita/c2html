@@ -4,8 +4,6 @@ config.cache
 config.status
 Makefile
 c2html.man
-hashTable.c
-hashTable.h
 c2html
 index.html
 c2html.c.html
