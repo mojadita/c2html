@@ -1,4 +1,4 @@
-/* $Id: c2html.h,v 0.15 2005/03/02 20:35:19 luis Exp $
+/* $Id: c2html.h,v 0.16 2009/01/03 18:43:39 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 22:45:02 MEST 1999
  * Disclaimer: (c) 1999 Luis Colorado <luis.colorado@SLUG.CTV.ES>
@@ -60,6 +60,7 @@ typedef struct ctag_node {
 	char *sym;  /* symbol */
 	char *file; /* file */
 	char *ctfile; /* ctag file */
+	int tag_num; /* tag number */
 	struct ctag_node *ctags_next;
 	struct ctag_node *next;
 } CtagNode;
@@ -89,4 +90,4 @@ extern int flags;
  * protected against double inclusion from other files.
  */
 
-/* $Id: c2html.h,v 0.15 2005/03/02 20:35:19 luis Exp $ */
+/* $Id: c2html.h,v 0.16 2009/01/03 18:43:39 luis Exp $ */

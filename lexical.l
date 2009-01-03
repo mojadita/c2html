@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.19 2005/03/02 20:35:19 luis Exp $
+/* $Id: lexical.l,v 0.20 2009/01/03 18:43:39 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * 
@@ -187,7 +187,10 @@ while					fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 								} else {
 									fprintf(OUTPUT,
 										"<!-- FIXME --><A HREF=\"%s\">",
-										relfilename(PFX1"%s"EXT2, ce->sym, fnout));
+										relfilename(
+											PFX1"%s"EXT2,
+											ce->sym,
+											fnout));
 									if (!(ce->flags & FLAG_MENU_CREATED)) {
 										createmenu(ce);
 									}
@@ -342,8 +345,8 @@ void createmenu(CtagNode *ce)
 	outf = html_create(buffer, ce->sym);
 	fprintf(outf, "    <UL>\n");
 	for (;ce; ce = ce->next) {
-		fprintf(outf, "      <LI><A HREF=\"%s"EXT2"#%s\">%s</a>\n",
-			ce->file, ce->sym, ce->file);
+		fprintf(outf, "      <LI><A HREF=\"%s"EXT2"#%s_%d\">%s</a>\n",
+			ce->file, ce->sym, ce->tag_num, ce->file);
 		ce->flags |= FLAG_MENU_CREATED;
 	}
 	fprintf(outf, "	   </ul>\n");
@@ -373,4 +376,4 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.19 2005/03/02 20:35:19 luis Exp $ */
+/* $Id: lexical.l,v 0.20 2009/01/03 18:43:39 luis Exp $ */

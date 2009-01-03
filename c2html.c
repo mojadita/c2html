@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.22 2005/03/02 20:35:19 luis Exp $
+/* $Id: c2html.c,v 0.23 2009/01/03 18:43:39 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -42,7 +42,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "\n$Id: c2html.c,v 0.22 2005/03/02 20:35:19 luis Exp $\n";
+char *rcsId = "\n$Id: c2html.c,v 0.23 2009/01/03 18:43:39 luis Exp $\n";
 
 /* types */
 
@@ -68,7 +68,7 @@ void process(char *fn)
 	FILE *tagfile;
 	char line [MAXLINELENGTH];
 	
-	if (!fn) {
+	if (!fn || !strcmp(fn, "-")) {
 		fn = "<stdin>";
 		tagfile = stdin;
 	} else {
@@ -84,7 +84,7 @@ void process(char *fn)
 	/* file open, process lines */
 	while (fgets(line, sizeof line, tagfile)) {
 		char *id, *fi;
-		HashEntry *che; CtagNode *ce;
+		HashEntry *che; CtagNode *ce, *old_ce;
 		HashEntry *fhe; FileNode *fe;
 
 		id = strtok (line, " \t\n"); if (!id) continue;
@@ -105,6 +105,7 @@ void process(char *fn)
 			exit(EXIT_FAILURE);
 		} /* if (!che) */
 
+#if 0
 		/* symbol found, let's find if already in database */
 		{	CtagNode *auxce;
 			for (auxce = (CtagNode *)(che->data);
@@ -121,8 +122,10 @@ void process(char *fn)
 				continue;
 			}
 		} /* check for found */
+#endif
 
 		/* ...add it */
+		old_ce = (CtagNode *)che->data;
 		ce = malloc (sizeof *ce);
 		if (!ce) {
 			fprintf (stderr,
@@ -135,6 +138,7 @@ void process(char *fn)
 		/* defer ce->file initialization until appropiate (see below) */
 		ce->ctfile = fn;  /* not used, but don't hurts */
 		ce->ctags_next = NULL;
+		ce->tag_num = (old_ce ? old_ce->tag_num + 1 : 1);
 		/* insert in the ctags list for this sym */
 		ce->next = che->data;
 		che->data = ce;
@@ -327,20 +331,20 @@ int main (int argc, char **argv)
 			fprintf (idx, "    <UL>\n");
 			for (c = f->ctags_first; c; c = c->ctags_next) {
 				fprintf (idx,
-					"      <LI><A HREF=\"%s"EXT2"#%s\">%s</a>\n",
-					c->file, c->sym, c->sym);
+					"      <LI><A HREF=\"%s"EXT2"#%s_%d\">%s(%s/%d)</a>\n",
+					c->file, c->sym, c->tag_num, c->sym, c->file, c->tag_num);
 				/* switch to the tag, using ex(1) */
 				fprintf (ex,
-					"ta %s\n",
-					c->sym);
+					"%dta %s\n",
+					c->tag_num, c->sym);
 				/* insert a mark at the beggining of the line.
 				 * The mark format is
 				 * (@A NAME="<symbol name>"@)(@/a@)
 				 * The mark format must not be changed, or the procedure
 				 * to analyse it again to generate the tags won't work */
 				fprintf (ex,
-					"s:^:(@A NAME=\"%s\"@)(@/a@):\n",
-					c->sym);
+					"s:^:(@A NAME=\"%s_%d\"@)(@/a@):\n",
+					c->sym, c->tag_num);
 			} /* foreach tag in this file */
 			fprintf(idx, "    </ul>\n");
 			/* write and exit ex(1) */
@@ -368,4 +372,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.22 2005/03/02 20:35:19 luis Exp $ */
+/* $Id: c2html.c,v 0.23 2009/01/03 18:43:39 luis Exp $ */
