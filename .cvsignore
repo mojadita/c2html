@@ -17,5 +17,7 @@ hashTable.h.html
 html_output.c.html
 multifree.c.html
 multifree.h.html
+lexical.c
+lexical.c.html
 ta-*.html
 i-*.html
