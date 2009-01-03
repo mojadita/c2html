@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.20 2009/01/03 18:43:39 luis Exp $
+/* $Id: lexical.l,v 0.21 2009/01/03 22:23:11 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * 
@@ -60,6 +60,7 @@ static int pointer = 0;
 void pr(FILE *, char *);
 void scanfile(char *, char *, char *);
 void createmenu(CtagNode *);
+void newline(int do_reset);
 char *relfilename(char *fmt, char *fdest, char *fsour);
 
 /* variables */
@@ -71,6 +72,7 @@ static FILE *OUTPUT;
 %s indirective
 %x instring
 %x inchar
+%x inATAG
 
 %option noyywrap
 %option pointer
@@ -94,7 +96,7 @@ alpha		([a-zA-Z\$_])
 directive	(define|undef|include|if|ifdef|ifndef|else|elif|endif|error|pragma)
 %%
 "/*"					{	PUSH(incomment); fprintf(OUTPUT, "<FONT COLOR=\"blue\"><I>/*"); }
-<incomment>\n			|
+<incomment>\n			{	pr(OUTPUT, yytext); newline(FALSE); }
 <incomment>.			pr(OUTPUT, yytext);
 <incomment>TODO			|
 <incomment>FIXME		|
@@ -103,13 +105,13 @@ directive	(define|undef|include|if|ifdef|ifndef|else|elif|endif|error|pragma)
 <incomment>NEVERREACHED	fprintf(OUTPUT, "<U>%s</u>", yytext);
 <incomment>"*/"			{	fprintf(OUTPUT, "*/</i></font>"); POP(); }
 
-"#"{sp}*\n				fprintf(OUTPUT, "<B>%s</b>", yytext); 
+"#"{sp}*\n				{	fprintf(OUTPUT, "<B>%s</b>", yytext); newline(FALSE); }
 "#"{directive}			{	PUSH(indirective);
 							fprintf(OUTPUT, "<FONT COLOR=\"maroon\"><B>%s</b><I>", yytext);
 						}
 <indirective>defined	fprintf(OUTPUT, "<B>%s</b>", yytext);
-<indirective>\\\n		fputs("\\\n", OUTPUT);
-<indirective>\n			{	fputs("</i></font>\n", OUTPUT); POP(); }
+<indirective>\\\n		{ fputs("\\\n", OUTPUT); newline(FALSE); }
+<indirective>\n			{	fputs("</i></font>\n", OUTPUT); newline(FALSE); POP(); }
 
 auto					|
 break					|
@@ -155,7 +157,7 @@ while					fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 <instring>{esc}			{	fputs("<FONT COLOR=\"blue\"><U>", OUTPUT);pr(OUTPUT, yytext);
 							fputs("</u></font>", OUTPUT);
 						}
-<instring>\n			|
+<instring>\n			{ pr(OUTPUT, yytext); newline(FALSE); }
 <instring>.				pr(OUTPUT, yytext);
 
 \'						{	PUSH(inchar); fputs("<FONT COLOR=\"red\"><B><I>\'", OUTPUT); }
@@ -163,10 +165,13 @@ while					fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 <inchar>{esc}			{	fputs("<FONT COLOR=\"blue\"><U>", OUTPUT);pr(OUTPUT, yytext);
 							fputs("</u></font>", OUTPUT);
 						}
-<inchar>\n				|
+<inchar>\n				{ fputs(yytext, OUTPUT); newline(FALSE); }
 <inchar>.				fputs(yytext, OUTPUT);
 
-<INITIAL>"(@"[^@]*"@)"	fprintf(OUTPUT, "<%0.*s>", yyleng-4, yytext+2);
+<INITIAL>^"(@"			fputs("<", OUTPUT); BEGIN(inATAG);
+<inATAG>"@)(@"			fputs("><", OUTPUT);
+<inATAG>"@)"			fputs(">", OUTPUT); BEGIN(INITIAL);
+<inATAG>.				fputs(yytext, OUTPUT);
 
 [a-zA-Z_\$]{alnum}*		{	/* identifier */
 							HashEntry *he;
@@ -181,9 +186,9 @@ while					fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 								CtagNode *ce = he->data;
 								if (!(ce->next)) {
 									fprintf(OUTPUT,
-										"<A HREF=\"%s#%s\">",
+										"<A HREF=\"%s#%s_%d\">",
 										relfilename("%s"EXT2, ce->file, fnout),
-										ce->sym);
+										ce->sym, ce->tag_num);
 								} else {
 									fprintf(OUTPUT,
 										"<!-- FIXME --><A HREF=\"%s\">",
@@ -248,7 +253,7 @@ while					fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 "("						|
 ")"						fputs(yytext, OUTPUT);
 
-\n						|
+\n						{ fputs(yytext, OUTPUT); newline(FALSE); }
 .						fputs(yytext, OUTPUT);
 
 %%
@@ -319,6 +324,17 @@ void pr(FILE *f, char *s)
 	} /* while */
 } /* pr */
 
+void newline(int do_reset)
+{
+	static int linenum = 0;
+
+	if (do_reset) linenum = 0;
+	if (flags & FLAG_LINENUMBERS) {
+		fprintf(OUTPUT, "<FONT COLOR=\"grey\">%05d:</font> ",
+			++linenum);
+	}
+} /* newline */
+
 int trace(int s)
 {
 #if TRACEON
@@ -368,6 +384,7 @@ void scanfile (char *fn, char *fin, char *fout)
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	pointer=0;
 	PUSH(INITIAL);
+	newline(TRUE);
 	yylex(fout);
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	fprintf(OUTPUT, "    </pre>\n");
@@ -376,4 +393,4 @@ void scanfile (char *fn, char *fin, char *fout)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.20 2009/01/03 18:43:39 luis Exp $ */
+/* $Id: lexical.l,v 0.21 2009/01/03 22:23:11 luis Exp $ */

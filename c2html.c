@@ -1,4 +1,4 @@
-/* $Id: c2html.c,v 0.23 2009/01/03 18:43:39 luis Exp $
+/* $Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Thu Jun  3 19:30:16 MEST 1999
  * Disclaimer:
@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 #include <time.h>
 #include <multifree.h>
 #include <hashTable.h>
@@ -42,7 +43,7 @@
 /* constants */
 #define MAXLINELENGTH	2048
 
-char *rcsId = "\n$Id: c2html.c,v 0.23 2009/01/03 18:43:39 luis Exp $\n";
+char *rcsId = "\n$Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $\n";
 
 /* types */
 
@@ -104,25 +105,6 @@ void process(char *fn)
 				__LINE__, strerror(errno));
 			exit(EXIT_FAILURE);
 		} /* if (!che) */
-
-#if 0
-		/* symbol found, let's find if already in database */
-		{	CtagNode *auxce;
-			for (auxce = (CtagNode *)(che->data);
-				auxce;
-				auxce = auxce->next)
-			{
-				if (!strcmp(id,auxce->sym) && !strcmp(fi, auxce->file))
-					break;
-			} /* for */
-			if (auxce) { /* found */
-				fprintf(stderr,
-					PROGNAME": "__FILE__"(%d): Symbol %s(%s) already "
-					"in database\n", __LINE__, id, fi);
-				continue;
-			}
-		} /* check for found */
-#endif
 
 		/* ...add it */
 		old_ce = (CtagNode *)che->data;
@@ -223,13 +205,14 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "hb:2dr")) != EOF) {
+	while ((opt = getopt(argc, argv, "hb:2drn")) != EOF) {
 		switch(opt) {
 		case 'h': do_usage(); exit(EXIT_SUCCESS);
 		case 'b': base_dir = optarg; break;
 		case '2': flags |= FLAG_TWOLEVEL; break;
 		case 'd': flags |= FLAG_VERBOSE; break;
 		case 'r': flags |= FLAG_RELFILENAME; break;
+		case 'n': flags |= FLAG_LINENUMBERS; break;
 		default:
 			do_usage(); exit(EXIT_FAILURE);
 		}
@@ -297,6 +280,7 @@ int main (int argc, char **argv)
 						buffer, llen ? llen : 1, llen ? ldir : ".");
 				}
 			}
+
 			fprintf(idx,
 				"    <H2>File <A HREF=\"%s"EXT2"\">%s</a>:</h2>\n",
 				f->name, f->name);
@@ -304,32 +288,32 @@ int main (int argc, char **argv)
 			/* Print the progress, as this is a lengthy process */
 			{	static char *progress[] = { "\\", "|", "/", "-" };
 
-				acum += 100;
+				acum += 100000;
 				if (acum >= files_n) {
 					percent += acum / files_n;
 					acum %= files_n;
 				}
 				if (flags & FLAG_VERBOSE)
-					fprintf(stderr, "%s (%d of %d -- %d%%)\n",
-						f->name, i+1, files_n, percent);
+					fprintf(stderr, "%s (%d of %d -- %d.%03d%%)\n",
+						f->name, i+1, files_n, percent / 1000, percent % 1000);
 				else
-					fprintf(stderr, "%s %02d%%\r", progress[i&3], percent);
+					fprintf(stderr, "%s %2d.%03d%%\r", progress[i&3], percent/1000, percent % 1000);
 				fflush(stderr);
 			}
 
 			/* edit the file */
-			sprintf (buffer, EX_PATH" %s", f->name);
-			ex = popen (buffer, "w");
+			ex = popen (EX_PATH, "w");
 			if (!ex) {
 				fprintf (stderr,
 					PROGNAME": "__FILE__"(%d): popen(\"%s\"): %s\n",
-					__LINE__, buffer, strerror(errno));
+					__LINE__, EX_PATH, strerror(errno));
 				exit(EXIT_FAILURE);
 			}
 
 			/* Now, process the list of symbols related to this file */
 			fprintf (idx, "    <UL>\n");
 			for (c = f->ctags_first; c; c = c->ctags_next) {
+				assert(c->file == f->name);
 				fprintf (idx,
 					"      <LI><A HREF=\"%s"EXT2"#%s_%d\">%s(%s/%d)</a>\n",
 					c->file, c->sym, c->tag_num, c->sym, c->file, c->tag_num);
@@ -372,4 +356,4 @@ int main (int argc, char **argv)
 	} /* output phase */
 } /* main */
 
-/* $Id: c2html.c,v 0.23 2009/01/03 18:43:39 luis Exp $ */
+/* $Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $ */
