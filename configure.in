@@ -29,7 +29,9 @@ AUTHOR_NAME="Luis Colorado"
 AUTHOR_EMAIL="lc@luiscoloradosistemas.com"
 PACKAGE_URL="http://www.luiscoloradosistemas.com/c2html/"
 
-AC_SUBST(AUTHOR_NAME AUTHOR_EMAIL PACKAGE_URL)
+AC_SUBST(AUTHOR_NAME)
+AC_SUBST(AUTHOR_EMAIL)
+AC_SUBST(PACKAGE_URL)
 
 dnl Checks for programs.
 AM_PROG_LEX

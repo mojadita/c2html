@@ -39,6 +39,7 @@
 #include <multifree.h>
 #include <hashTable.h>
 #include "c2html.h"
+#include <avl.h>
 
 /* constants */
 #define MAXLINELENGTH	2048

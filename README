@@ -17,11 +17,11 @@ Luis.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Spanish version ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PequeÒo programa para generar p·ginas web a partir de un fichero de tags,
+Peque√±o programa para generar p√°ginas web a partir de un fichero de tags,
 generado por la utilidad ctags(1).
 
 
-TambiÈn, probar el programa con la opciÛn -h.
+Tambi√©n, probar el programa con la opci√≥n -h.
 
 En el directorio donde se encuentran los fuentes, ejecutar:
 
