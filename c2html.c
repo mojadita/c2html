@@ -42,7 +42,7 @@
 #include <avl.h>
 
 /* constants */
-#define MAXLINELENGTH	2048
+#define MAXLINELENGTH	4096
 
 char *rcsId = "\n$Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $\n";
 
@@ -164,6 +164,7 @@ void process(char *fn)
 			fe->ctags_last->ctags_next = ce;
 		fe->ctags_last = ce;
 	} /* while ... */
+	if (tagfile != stdin) fclose(tagfile);
 } /* process */
 
 /* print help message */
