@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <time.h>
+
 #include <multifree.h>
 #include <hashTable.h>
 #include <avl.h>
@@ -66,6 +67,7 @@ void process(const char *fn)
 {
 	FILE *tagfile;
 	char line [MAXLINELENGTH];
+	unsigned long long line_num = 0;
 	
 	tagfile = fopen (fn, "r");
 	if (!tagfile) {
@@ -82,16 +84,33 @@ void process(const char *fn)
 	while (fgets(line, sizeof line, tagfile)) {
 		const char *id, *fi, *st;
 		const ctag *tag;
+		
+		line_num++;
 
-		id = strtok (line, " \t\n"); if (!id) continue;
-		fi = strtok (NULL, " \t\n"); if (!fi) continue;
-		st = strtok (NULL, "\n"); if (!st) continue;
+		id = strtok (line, "\t\n"); if (!id) {
+			fprintf(stderr,
+				"%s:%lld:warning: bad syntax, unrecognized id.\n",
+				fn, line_num);
+			continue;
+		} /* if */
+		fi = strtok (NULL, "\t\n"); if (!fi) {
+			fprintf(stderr,
+				"%s:%lld:warning: bad syntax, unrecognized file name.\n",
+				fn, line_num);
+			continue;
+		} /* if */
+		st = strtok (NULL, "\n"); if (!st) {
+			fprintf(stderr,
+				"%s:%lld:warning: bad syntax, unrecognized search string.\n",
+				fn, line_num);
+			continue;
+		} /* if */
 
 		/* Ignore VIM ctags(1) private symbols */
 		if (id[0] == '!') {
 			fprintf(stderr,
-				__FILE__":%d:IGNORING \"%s\" vim private identifier\n",
-				__LINE__, id);
+				"%s:%lld:warning: ignoring \"%s\" vim private identifier\n",
+				fn, line_num, id);
 			continue;
 		} /* if */
 
@@ -106,17 +125,23 @@ void process(const char *fn)
 
 		/* first, find the ctag entry */
 		tag = ctag_lookup(id, fi, st);
+#if 0
 		printf(
 			"TAG:\n"
 			"  tag->id: %s\n"
 			"  tag->tag_no: %d\n"
 			"  tag->fi: %s\n"
-			"  tag->ss: %s\n"
-			"\n",
+			"  tag->ss: %s\n  ",
 			tag->id,
 			tag->tag_no,
 			tag->fi,
 			tag->ss);
+		{	int i;
+			for (i = 0; tag->path[i]; i++)
+				printf("[%s|%p]", tag->path[i], tag->path[i]);
+			printf("\n");
+		}
+#endif
 
 	} /* while ... */
 	fclose(tagfile);
@@ -177,16 +202,28 @@ int main (int argc, char **argv)
 		} /* switch */
 	} /* while */
 
-	argc -= optind; argv += optind; /* shift all the options */
-
-	/* Initialize hash tables */
-#if 0
-	hashTableInit(&syms_table);
-	hashTableInit(&files_table);
-#endif
-
 	/* Process files */
 	process(tag_file);
+
+	{	AVL_ITERATOR i;
+		const char *old_fi = NULL;
+		for (i = avl_tree_first(db_ctag); i; i = avl_iterator_next(i)) {
+			const ctag *t = avl_iterator_data(i);
+			const char *new_fi = t->fi;
+			if (t->fi != old_fi) { /* change in file */
+				if (old_fi) {
+					printf("closing [%s].\n", old_fi);
+				} /* if */
+				printf("opening [%s]:\n", new_fi);
+			} /* if */
+			/* TODO: Here goes the stuff */
+			printf("    tag [%s][%d] (%p)\n", t->id, t->tag_no, t->ss);
+			old_fi = new_fi;
+		} /* for */
+		if (old_fi) {
+			printf("closing [%s].\n", old_fi);
+		} /* if */
+	} /* block */
 
 #if 0
 	/* print the results ---do the heavy work--- */

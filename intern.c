@@ -10,7 +10,12 @@
 #include "intern.h"
 #include <avl.h>
 
-static AVL_TREE strings_avl = NULL;
+AVL_TREE strings_avl = NULL;
+
+static int print_string(FILE *o, const char *s)
+{
+	return fprintf(o, "%s", s);
+} /* print_string */
 
 const char *intern(const char *s)
 {
@@ -20,7 +25,7 @@ const char *intern(const char *s)
 			(AVL_FCOMP) strcmp,
 			(AVL_FCONS) strdup,
 			(AVL_FDEST) free,
-			NULL));
+			(AVL_FPRNT) print_string));
 	} /* if */
 	p = avl_tree_atkey(strings_avl, s, MT_EQ);
 	if (!p) {
