@@ -35,5 +35,7 @@ extern node db_root_node;
 ctag_p ctag_lookup(const char *id, const char *fi, const char *ss);
 ctag_p ctag_lookup_by_id(const char *id);
 
+const char *make_path(const char **v, char *buffer, size_t bs);
+
 #endif /* _DB_H */
 /* $Id$ */

@@ -189,4 +189,19 @@ ctag_p ctag_lookup_by_id(const char *id)
 	return avl_tree_get(db_ctag_ix_id, id);
 } /* ctag_lookup_by_id */
 
+const char *make_path(const char **v, char *buffer, size_t bs)
+{
+	int i;
+	const char *res = buffer;
+
+	for (i = 0;*v; v++, i++) {
+		int res = snprintf(
+			buffer, bs,
+			"%s%s", i ? "/" : "", *v);
+		buffer += res; bs -= res;
+	} /* for */
+	
+	return res;
+} /* make_path */
+
 /* $Id$ */

@@ -206,22 +206,31 @@ int main (int argc, char **argv)
 	process(tag_file);
 
 	{	AVL_ITERATOR i;
-		const char *old_fi = NULL;
+		const ctag *old_tag = NULL;
+		const char *old_file = NULL;
+		char buffer[MAXLINELENGTH];
+
 		for (i = avl_tree_first(db_ctag); i; i = avl_iterator_next(i)) {
-			const ctag *t = avl_iterator_data(i);
-			const char *new_fi = t->fi;
-			if (t->fi != old_fi) { /* change in file */
-				if (old_fi) {
-					printf("closing [%s].\n", old_fi);
+			const ctag *new_tag = avl_iterator_data(i);
+			const char *new_file = new_tag->fi;
+			if (old_file != new_file) { /* change in file */
+				if (old_file) {
+					printf("closing [%s].\n", old_file);
+					printf("      EX>>> w %s.temp\n",
+						make_path(old_tag->path, buffer, sizeof buffer));
 				} /* if */
-				printf("opening [%s]:\n", new_fi);
+				printf("opening [%s]:\n", new_file);
+				printf("      EX>>> e %s\n", new_file);
 			} /* if */
 			/* TODO: Here goes the stuff */
-			printf("    tag [%s][%d] (%p)\n", t->id, t->tag_no, t->ss);
-			old_fi = new_fi;
+			printf("    tag [%s/%d]\n", new_tag->id, new_tag->tag_no);
+			printf("      EX>>> %dta %s\n", new_tag->tag_no, new_tag->id);
+			printf("      EX>>> s/^/(@a name=\"%s-%d\"@@)/\n", new_tag->id, new_tag->tag_no);
+			old_tag = new_tag; old_file = new_file;
 		} /* for */
-		if (old_fi) {
-			printf("closing [%s].\n", old_fi);
+		if (old_tag) {
+			printf("closing [%s].\n", old_tag->fi);
+			printf("      EX>>> w %s.temp\n", make_path(old_tag->path, buffer, sizeof buffer));
 		} /* if */
 	} /* block */
 
