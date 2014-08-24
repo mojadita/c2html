@@ -29,6 +29,7 @@ INCLUDES=-DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
 bin_PROGRAMS=c2html
 
 c2html_SOURCES = c2html.c calcCRC.c crc12.c hashCRC12.c hashTable.c multifree.c \
-	lexical.l html_output.c
+	lexical.l html_output.c intern.c db.c
+c2html_LDFLAGS = -lavl
 #
 # $Id: Makefile.am,v 1.2 2005/03/02 20:35:18 luis Exp $

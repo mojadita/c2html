@@ -38,8 +38,11 @@
 #include <time.h>
 #include <multifree.h>
 #include <hashTable.h>
-#include "c2html.h"
 #include <avl.h>
+
+#include "c2html.h"
+#include "intern.h"
+#include "db.h"
 
 /* constants */
 #define MAXLINELENGTH	4096
@@ -51,120 +54,72 @@ char *rcsId = "\n$Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $\n";
 /* prototypes */
 
 /* variables */
-HashTable syms_table, files_table;
-FileNode *files_first = NULL, *files_last = NULL;
-int files_n = 0;
-FileNode **files_array;
-char *base_dir = NULL;
+
+const char *base_dir = NULL;
 int flags = 0;
+const char *tag_file = "tags";
 
 /* functions */
-static int files_cmp (FileNode **f1, FileNode **f2)
-{
-	return strcmp(f1[0]->name, f2[0]->name);
-} /* files_cmp */
 
 /* process file of name fn */
-void process(char *fn)
+void process(const char *fn)
 {
 	FILE *tagfile;
 	char line [MAXLINELENGTH];
 	
-	if (!fn || !strcmp(fn, "-")) {
-		fn = "<stdin>";
-		tagfile = stdin;
-	} else {
-		tagfile = fopen (fn, "r");
-		if (!tagfile) {
-			fprintf (stderr,
-				PROGNAME": Error opening %s: %s\n",
-				fn, strerror(errno));
-			exit (EXIT_FAILURE);
-		}
-	}
+	tagfile = fopen (fn, "r");
+	if (!tagfile) {
+		fprintf (stderr,
+			PROGNAME": Error opening %s: %s\n",
+			fn, strerror(errno));
+		exit (EXIT_FAILURE);
+	} /* if */
+
+	fprintf(stderr,
+		"Processing %s...\n", fn);
 
 	/* file open, process lines */
 	while (fgets(line, sizeof line, tagfile)) {
-		char *id, *fi;
-		HashEntry *che; CtagNode *ce, *old_ce;
-		HashEntry *fhe; FileNode *fe;
+		const char *id, *fi, *st;
+		const ctag *tag;
 
 		id = strtok (line, " \t\n"); if (!id) continue;
 		fi = strtok (NULL, " \t\n"); if (!fi) continue;
-		/* We don't use the third field. */
+		st = strtok (NULL, "\n"); if (!st) continue;
 
 		/* Ignore VIM ctags(1) private symbols */
-		if (!isalnum(id[0])) continue;
+		if (id[0] == '!') {
+			fprintf(stderr,
+				__FILE__":%d:IGNORING \"%s\" vim private identifier\n",
+				__LINE__, id);
+			continue;
+		} /* if */
+
+		/* We intern everithing, so we can compare strings just
+		 * comparing the pointers (for equality only, sorry).
+		 * This way, we can construct a database of ctags, based
+		 * on the three pointers, instead of the string values. */
+
+		id = intern(id); /* intern the identifier */
+		fi = intern(fi); /* intern the file of the ctag */
+		st = intern(st); /* intern the locating string */
 
 		/* first, find the ctag entry */
-		che = hashTableLookup (&syms_table, id);
-		if (!che) {
-			/* hashTableLookup has not been able to get an entry for this
-			 * symbol, so give up */
-			fprintf (stderr,
-				PROGNAME": "__FILE__"(%d): hashTableLookup: %s\n",
-				__LINE__, strerror(errno));
-			exit(EXIT_FAILURE);
-		} /* if (!che) */
+		tag = ctag_lookup(id, fi, st);
+		printf(
+			"TAG:\n"
+			"  tag->id: %s\n"
+			"  tag->tag_no: %d\n"
+			"  tag->fi: %s\n"
+			"  tag->ss: %s\n"
+			"\n",
+			tag->id,
+			tag->tag_no,
+			tag->fi,
+			tag->ss);
 
-		/* ...add it */
-		old_ce = (CtagNode *)che->data;
-		ce = malloc (sizeof *ce);
-		if (!ce) {
-			fprintf (stderr,
-				PROGNAME": "__FILE__"(%d): malloc: %s\n",
-				__LINE__, strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		ce->sym = che->key;
-		ce->flags = 0;
-		/* defer ce->file initialization until appropiate (see below) */
-		ce->ctfile = fn;  /* not used, but don't hurts */
-		ce->ctags_next = NULL;
-		ce->tag_num = (old_ce ? old_ce->tag_num + 1 : 1);
-		/* insert in the ctags list for this sym */
-		ce->next = che->data;
-		che->data = ce;
-
-		/* next, find the file */
-		fhe = hashTableLookup (&files_table, fi);
-		if (!fhe) {
-			fprintf (stderr,
-				PROGNAME": "__FILE__"(%d): hashTablePermLookup: %s\n",
-				__LINE__, strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-		ce->file = fhe->key; /* deferred: see above */
-		fe = fhe->data;
-		if (!fe) {  /* File is new */
-			fhe->data = fe = malloc (sizeof *fe);
-			if (!fe) {
-				fprintf (stderr,
-					PROGNAME": "__FILE__"(%d): malloc: %s\n",
-					__LINE__, strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-			fe->name = fhe->key;
-			fe->files_next = NULL;
-			fe->ctags_first = fe->ctags_last = NULL;
-
-			/* insert file in file list */
-			if (!files_first)
-				files_first = fe;
-			if (files_last)
-				files_last->files_next = fe;
-			files_last = fe;
-			files_n++;
-		} /* new file */
-
-		/* insert ctag in file ctag list */
-		if (!fe->ctags_first)
-			fe->ctags_first = ce;
-		if (fe->ctags_last)
-			fe->ctags_last->ctags_next = ce;
-		fe->ctags_last = ce;
 	} /* while ... */
-	if (tagfile != stdin) fclose(tagfile);
+	fclose(tagfile);
 } /* process */
 
 /* print help message */
@@ -187,6 +142,7 @@ void do_usage (void)
 	fprintf(stderr, "to it, surrounded by a <a href> tag, so clicking with the mouse leads us\n");
 	fprintf(stderr, "quickly and efficiently to the definition.\n");
 	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "  -t tag_file. The tag file to be used\n");
 	fprintf(stderr, "  -h   Help.  This help screen.\n");
 	fprintf(stderr, "  -b base_dir.  Base directory for URL composition\n");
 	fprintf(stderr, "       This causes to generate <BASE> tags.  Useful if more than one directory\n");
@@ -207,8 +163,9 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "hb:2drn")) != EOF) {
+	while ((opt = getopt(argc, argv, "t:hb:2drn")) != EOF) {
 		switch(opt) {
+		case 't': tag_file = intern(optarg); break;
 		case 'h': do_usage(); exit(EXIT_SUCCESS);
 		case 'b': base_dir = optarg; break;
 		case '2': flags |= FLAG_TWOLEVEL; break;
@@ -217,22 +174,21 @@ int main (int argc, char **argv)
 		case 'n': flags |= FLAG_LINENUMBERS; break;
 		default:
 			do_usage(); exit(EXIT_FAILURE);
-		}
-	}
+		} /* switch */
+	} /* while */
+
 	argc -= optind; argv += optind; /* shift all the options */
 
 	/* Initialize hash tables */
+#if 0
 	hashTableInit(&syms_table);
 	hashTableInit(&files_table);
+#endif
 
 	/* Process files */
-	if (argc) while (argc) {
-		process(argv[0]);
-		argc--; argv++; /* shift */
-	} else {
-		process(DEFAULT_TAGS); /* process tags by default */
-	}
+	process(tag_file);
 
+#if 0
 	/* print the results ---do the heavy work--- */
 	{	FileNode *f; CtagNode *c;
 		FILE *toc, *idx;
@@ -295,11 +251,8 @@ int main (int argc, char **argv)
 					percent += acum / files_n;
 					acum %= files_n;
 				}
-				if (flags & FLAG_VERBOSE)
-					fprintf(stderr, "%s (%d of %d -- %d.%03d%%)\n",
-						f->name, i+1, files_n, percent / 1000, percent % 1000);
-				else
-					fprintf(stderr, "%s %2d.%03d%%\r", progress[i&3], percent/1000, percent % 1000);
+				fprintf(stderr, "%s (%d/%d -- %2d.%03d%%) %s\033[K\r",
+					progress[i&3], i+1, files_n, percent / 1000, percent % 1000, f->name);
 				fflush(stderr);
 			}
 
@@ -356,6 +309,7 @@ int main (int argc, char **argv)
 			html_close(toc);
 		}
 	} /* output phase */
+#endif
 } /* main */
 
 /* $Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $ */

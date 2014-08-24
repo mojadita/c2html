@@ -21,3 +21,5 @@ libtool
 tags
 ltmain.sh
 ylwrap
+*.html
+*.temp

@@ -97,20 +97,20 @@ directive	(define|undef|include|if|ifdef|ifndef|else|elif|endif|error|pragma)
 %%
 "/*"					{	PUSH(incomment); fprintf(OUTPUT, "<FONT COLOR=\"blue\"><I>/*"); }
 <incomment>\n			{	pr(OUTPUT, yytext); newline(FALSE); }
-<incomment>.			pr(OUTPUT, yytext);
+<incomment>.				pr(OUTPUT, yytext);
 <incomment>TODO			|
 <incomment>FIXME		|
 <incomment>XXX			|
 <incomment>ARGSUSED		|
-<incomment>NEVERREACHED	fprintf(OUTPUT, "<U>%s</u>", yytext);
+<incomment>NEVERREACHED		fprintf(OUTPUT, "<U>%s</u>", yytext);
 <incomment>"*/"			{	fprintf(OUTPUT, "*/</i></font>"); POP(); }
 
 "#"{sp}*\n				{	fprintf(OUTPUT, "<B>%s</b>", yytext); newline(FALSE); }
 "#"{directive}			{	PUSH(indirective);
 							fprintf(OUTPUT, "<FONT COLOR=\"maroon\"><B>%s</b><I>", yytext);
 						}
-<indirective>defined	fprintf(OUTPUT, "<B>%s</b>", yytext);
-<indirective>\\\n		{ fputs("\\\n", OUTPUT); newline(FALSE); }
+<indirective>defined		fprintf(OUTPUT, "<B>%s</b>", yytext);
+<indirective>\\\n		{	fputs("\\\n", OUTPUT); newline(FALSE); }
 <indirective>\n			{	fputs("</i></font>\n", OUTPUT); newline(FALSE); POP(); }
 
 auto					|
@@ -144,36 +144,37 @@ union					|
 unsigned				|
 void					|
 volatile				|
-while					fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
+while						fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 
 0{odig}*{lu}			|
 [1-9]{dig}*{lu}			|
 0[xX]{xdig}*{lu}		|
 {mant}({exp})?{fl}		|
-{mant2}{exp}{fl}		fprintf(OUTPUT, "<FONT COLOR=\"red\"><B><I>%s</i></b></font>", yytext);
+{mant2}{exp}{fl}			fprintf(OUTPUT, "<FONT COLOR=\"red\"><B><I>%s</i></b></font>", yytext);
 
 \"						{	PUSH(instring); fputs("<FONT COLOR=\"green\"><I>\"", OUTPUT); }
 <instring>\"			{	fputs("\"</i></font>", OUTPUT); POP(); }
 <instring>{esc}			{	fputs("<FONT COLOR=\"blue\"><U>", OUTPUT);pr(OUTPUT, yytext);
 							fputs("</u></font>", OUTPUT);
 						}
-<instring>\n			{ pr(OUTPUT, yytext); newline(FALSE); }
-<instring>.				pr(OUTPUT, yytext);
+<instring>\n			{	pr(OUTPUT, yytext); newline(FALSE); }
+<instring>.					pr(OUTPUT, yytext);
 
 \'						{	PUSH(inchar); fputs("<FONT COLOR=\"red\"><B><I>\'", OUTPUT); }
 <inchar>\'				{	fputs("\'</i></b></font>", OUTPUT); POP(); }
 <inchar>{esc}			{	fputs("<FONT COLOR=\"blue\"><U>", OUTPUT);pr(OUTPUT, yytext);
 							fputs("</u></font>", OUTPUT);
 						}
-<inchar>\n				{ fputs(yytext, OUTPUT); newline(FALSE); }
-<inchar>.				fputs(yytext, OUTPUT);
+<inchar>\n				{	fputs(yytext, OUTPUT); newline(FALSE); }
+<inchar>.					fputs(yytext, OUTPUT);
 
-<INITIAL>^"(@"			fputs("<", OUTPUT); BEGIN(inATAG);
-<inATAG>"@)(@"			fputs("><", OUTPUT);
-<inATAG>"@)"			fputs(">", OUTPUT); BEGIN(INITIAL);
-<inATAG>.				fputs(yytext, OUTPUT);
+<INITIAL>^"(@"				fputs("<", OUTPUT); BEGIN(inATAG);
+<inATAG>"@)(@"				fputs("><", OUTPUT);
+<inATAG>"@)"				fputs(">", OUTPUT); BEGIN(INITIAL);
+<inATAG>.					fputs(yytext, OUTPUT);
 
 [a-zA-Z_\$]{alnum}*		{	/* identifier */
+#if 0
 							HashEntry *he;
 							he = hashTableLookup(&syms_table, yytext);
 							if (!he) {
@@ -205,6 +206,7 @@ while					fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 							if (he->data) {
 								fprintf(OUTPUT, "</a>");
 							}
+#endif
 						}
 "..."					|
 "&&"					|

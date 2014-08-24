@@ -80,7 +80,7 @@ void html_close(FILE *f);
 /* variables */
 extern HashTable syms_table, files_table;
 extern FileNode *files_first, *files_last;
-extern char *base_dir;
+extern const char *base_dir;
 extern char *base_slash;
 extern int flags;
 
