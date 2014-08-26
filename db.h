@@ -9,13 +9,12 @@
 #include <avl.h>
 
 typedef struct ctag_s {
-	const char		*id; /* tag identifier */
-	const char		*fi; /* file this tag points to. */
-	const char		*ss; /* scan string for ex(1) */
-	int				tag_no; /* tag number */
-	struct ctag_s	*next; /* next tag with the same id in this tag file */
-	struct node_s	*nod;
-	const char		**path; /* path component strings, NULL terminated */
+	const char				*id; /* tag identifier */
+	const char				*fi; /* file this tag points to. */
+	const char				*ss; /* scan string for ex(1) */
+	int						tag_no; /* tag number */
+	const struct ctag_s		*next; /* next tag with the same id in this tag file */
+	const struct node_s		*nod; /* file node this tag points to. */
 } ctag, *ctag_p;
 
 #define FLAG_ISDIR		(1 << 0)
@@ -32,10 +31,10 @@ extern AVL_TREE db_ctag;
 extern AVL_TREE db_ctag_ix_id;
 extern node db_root_node;
 
+char *get_name(const node *p, char **buffer, size_t *bs);
+void mk_dir(const node *nod);
 ctag_p ctag_lookup(const char *id, const char *fi, const char *ss);
 ctag_p ctag_lookup_by_id(const char *id);
-
-const char *make_path(const char **v, char *buffer, size_t bs);
 
 #endif /* _DB_H */
 /* $Id$ */

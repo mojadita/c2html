@@ -4,9 +4,12 @@
  * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
  */
 
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <assert.h>
 
 #include "intern.h"
@@ -19,12 +22,12 @@ node db_root_node;
 static int print_ctag(FILE *f, const ctag *a)
 {
 	return fprintf(f, "%s|%s|%p", a->fi, a->id, a->ss);
-}
+} /* print_ctag */
 
 static int print_string(FILE *f, const char *s)
 {
 	return fprintf(f, "%s", s);
-}
+} /* print_string */
 
 /* this function compares the unique index of <id,fi,ss>
  * for the db_ctag database */
@@ -47,6 +50,43 @@ static int ctag_cmp(const ctag_p a, const ctag_p b)
 	return res;
 } /* ctag_cmp */
 
+char *get_name(const node *p, char **buffer, size_t *bs)
+{
+	char *res = *buffer; /* save the original pointer */
+	int n;
+	if (p->parent) {
+		int n;
+		get_name(p->parent, buffer, bs);
+	} /* if */
+	n = snprintf(*buffer, *bs,
+		"%s%s",
+		p->parent
+			? "/"
+			: "",
+		p->name);
+	*buffer += n; *bs -= n;
+	return res;
+} /* get_name */
+
+void mk_dir(const node *nod)
+{
+	if (nod->flags & FLAG_ISDIR) {
+		char buffer[4096];
+		char *p = buffer;
+		size_t bs = sizeof buffer;
+		int res;
+
+		p = get_name(nod, &p, &bs);
+		printf("mk_dir(%s);\n", p);
+		res = mkdir(p, 0777);
+		if (res < 0) {
+			fprintf(stderr,
+				"ERROR:mkdir:%s:%s(errno=%d)\n",
+				p, strerror(errno), errno);
+		} /* if */
+	} /* if */
+} /* mk_dir */
+
 static void module_init()
 {
 	assert(db_ctag = new_avl_tree(
@@ -59,10 +99,11 @@ static void module_init()
 		NULL, /* the key is the id string, internalized */
 		NULL,
 		(AVL_FPRNT) print_string)); /* no key printing function */
-	db_root_node.name = "c2html";
+	db_root_node.name = "c2h";
 	db_root_node.parent = NULL;
 	db_root_node.flags = FLAG_ISDIR;
 	db_root_node.level = 0;
+	mk_dir(&db_root_node);
 	assert(db_root_node.subnodes = new_avl_tree(
 		(AVL_FCOMP) strcmp,
 		NULL, /* the key is the id string, internalized */
@@ -96,7 +137,8 @@ static const node *name2node(const char *p)
 		} /* if */
 		if (!strcmp(nam, "..")) {
 			if (nod->parent == NULL) {
-				fprintf("ERROR: cannot allow ../ at the beginning of the file name (%s)\n",
+				fprintf(stderr,
+					"ERROR: ../ not allowed in %s\n",
 					p);
 				exit(EXIT_FAILURE);
 			} /* if */
@@ -116,6 +158,8 @@ static const node *name2node(const char *p)
 				NULL, NULL, NULL));
 			next->level = nod->level + 1;
 			avl_tree_put(nod->subnodes, nam, next);
+			mk_dir(next);
+			
 #if 0
 			printf("NODE: %p\n"
 				"  next->name = %s\n"
@@ -169,13 +213,6 @@ ctag_p ctag_lookup(const char *id, const char *fi, const char *ss)
 		res->nod = name2node(res->fi);
 		avl_tree_put(db_ctag, res, res);
 		avl_tree_put(db_ctag_ix_id, id, res);
-		{	node_p nod;  /* allocate the path components in the array. */
-
-			assert(res->path = calloc(res->nod->level+2, sizeof(char *)));
-			res->path[res->nod->level+1] = NULL;
-			for (nod = res->nod; nod; nod = nod->parent)
-				res->path[nod->level] = nod->name;
-		} /* block */
 	} /* if */
 
 	return res;
@@ -188,20 +225,5 @@ ctag_p ctag_lookup_by_id(const char *id)
 
 	return avl_tree_get(db_ctag_ix_id, id);
 } /* ctag_lookup_by_id */
-
-const char *make_path(const char **v, char *buffer, size_t bs)
-{
-	int i;
-	const char *res = buffer;
-
-	for (i = 0;*v; v++, i++) {
-		int res = snprintf(
-			buffer, bs,
-			"%s%s", i ? "/" : "", *v);
-		buffer += res; bs -= res;
-	} /* for */
-	
-	return res;
-} /* make_path */
 
 /* $Id$ */
