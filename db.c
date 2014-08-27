@@ -17,7 +17,7 @@
 
 AVL_TREE db_ctag = NULL;
 AVL_TREE db_ctag_ix_id = NULL;
-node db_root_node;
+node_p db_root_node = NULL;
 
 static int print_ctag(FILE *f, const ctag *a)
 {
@@ -50,13 +50,14 @@ static int ctag_cmp(const ctag_p a, const ctag_p b)
 	return res;
 } /* ctag_cmp */
 
-char *get_name(const node *p, char **buffer, size_t *bs)
+static char *get_name_rec(const node *p, char **buffer, size_t *bs)
 {
 	char *res = *buffer; /* save the original pointer */
 	int n;
+
 	if (p->parent) {
 		int n;
-		get_name(p->parent, buffer, bs);
+		get_name_rec(p->parent, buffer, bs);
 	} /* if */
 	n = snprintf(*buffer, *bs,
 		"%s%s",
@@ -65,58 +66,72 @@ char *get_name(const node *p, char **buffer, size_t *bs)
 			: "",
 		p->name);
 	*buffer += n; *bs -= n;
+
 	return res;
+} /* get_name_rec */
+
+static char *get_name(const node *p)
+{
+	static char buffer[4096]; /* one page */
+	size_t bs = sizeof buffer;
+	char *aux = buffer;
+
+	return get_name_rec(p, &aux, &bs);
 } /* get_name */
 
-void mk_dir(const node *nod)
+node_p new_node(
+	const char *name,
+	node_p parent,
+	node_type typ)
 {
-	if (nod->flags & FLAG_ISDIR) {
-		char buffer[4096];
-		char *p = buffer;
-		size_t bs = sizeof buffer;
-		int res;
+	node_p res;
 
-		p = get_name(nod, &p, &bs);
-		printf("mk_dir(%s);\n", p);
-		res = mkdir(p, 0777);
-		if (res < 0) {
-			fprintf(stderr,
-				"ERROR:mkdir:%s:%s(errno=%d)\n",
-				p, strerror(errno), errno);
-		} /* if */
-	} /* if */
-} /* mk_dir */
-
-static void module_init()
-{
-	assert(db_ctag = new_avl_tree(
-		(AVL_FCOMP) ctag_cmp, /* comparison of the three fields, in order */
-		NULL, /* the key is the actual ctag entry, externally allocated */
-		NULL,
-		(AVL_FPRNT) print_ctag)); /* no key printing function */
-	assert(db_ctag_ix_id = new_avl_tree(
-		(AVL_FCOMP) strcmp, /* comparison of the tg and id fields */
-		NULL, /* the key is the id string, internalized */
-		NULL,
-		(AVL_FPRNT) print_string)); /* no key printing function */
-	db_root_node.name = "c2h";
-	db_root_node.parent = NULL;
-	db_root_node.flags = FLAG_ISDIR;
-	db_root_node.level = 0;
-	mk_dir(&db_root_node);
-	assert(db_root_node.subnodes = new_avl_tree(
+#if DEBUG
+	printf("new_node(%s, %p, %d)\n", name, parent, typ);
+#endif
+	assert(res = malloc(sizeof (node)));
+	res->name = intern(name);
+	res->parent = parent;
+	res->type = typ;
+	assert(res->subnodes = new_avl_tree(
 		(AVL_FCOMP) strcmp,
-		NULL, /* the key is the id string, internalized */
-		NULL,
-		(AVL_FPRNT) print_string)); /* no key printing function */
-} /* module_init */
+		NULL, NULL, (AVL_FPRNT) print_string));
+	res->level = res->parent ? parent->level + 1 : 0;
+	res->full_name = intern(get_name(res));
+	res->index_f = NULL;
 
-static const node *name2node(const char *p)
+#if DEBUG
+	printf( "new_node() ->\n"
+		"  name     : %s(%p)\n"
+		"  parent   : [0x%p](%s)\n"
+		"  type     : %d\n"
+		"  subnodes : %p\n"
+		"  level    : %d\n"
+		"  tag_list : %p\n"
+		"  full_name: %s\n"
+		"  index_f  : %p\n",
+		res->name, res->name,
+		res->parent, res->parent ? res->parent->name : "NULL",
+		res->type,
+		res->subnodes,
+		res->level,
+		res->tag_list,
+		res->full_name,
+		res->index_f);
+#endif
+
+	return res;
+} /* new_node */
+
+static node *name2node(node_p root, const char *p)
 {
-	char *aux, *name = strdup(p);
+	char *aux, *name = strdup(p); /* we return it at the end */
 	const char *nam;
-	node_p nod = &db_root_node;
+	node_p nod = root;
 
+#if DEBUG
+	printf("name2node(%p(%s), %s);\n", root, root->name, p);
+#endif
 	/* we cannot have absolute paths */
 	if (name[0] == '/') {
 		fprintf(stderr,
@@ -124,17 +139,27 @@ static const node *name2node(const char *p)
 		exit(EXIT_FAILURE);
 	} /* if */
 
+#if DEBUG
+	printf("solving name->node: ");
+#endif
 	for(nam = name; nam; nam = aux) {
 		node_p next;
 
 		aux = strchr(nam, '/'); /* search for a '/' character */
-		if (aux) /* if found, nullify it and every one following it */
+		if (aux) /* if found, nullify it and every one char following it */
 			while (*aux == '/') *aux++ = '\0';
 		/* now, aux points to the next name component or NULL */
 		/* nam is the component name of this element of the path */
+#if DEBUG
+		printf("Solving for [%s] (aux == %p)\n", nam, aux);
+#endif
+
+		/* CHECK FOR SPECIAL "." ENTRY */
 		if (!strcmp(nam, ".")) {
 			continue; /* it it's the . entry. */
 		} /* if */
+
+		/* ... AND CHECK ALSO FOR ".." */
 		if (!strcmp(nam, "..")) {
 			if (nod->parent == NULL) {
 				fprintf(stderr,
@@ -146,73 +171,115 @@ static const node *name2node(const char *p)
 			continue;
 		} /* if */
 
+		/* now we have a valid name */
 		nam = intern(nam);
 		next = avl_tree_get(nod->subnodes, nam);
 		if (!next) {
-			assert(next = malloc(sizeof(node)));
-			next->name = nam;
-			next->parent = nod;
-			next->flags = aux ? FLAG_ISDIR : FLAG_ISFILE;
-			assert(next->subnodes = new_avl_tree(
-				(AVL_FCOMP) strcmp,
-				NULL, NULL, NULL));
-			next->level = nod->level + 1;
+			next = new_node(
+				nam, nod,
+				aux	? FLAG_ISDIR
+					: FLAG_ISFILE);
 			avl_tree_put(nod->subnodes, nam, next);
-			mk_dir(next);
+		} /* if */
 			
 #if 0
 			printf("NODE: %p\n"
 				"  next->name = %s\n"
 				"  next->parent = %p(%s)\n"
-				"  next->flags = 0x%02x\n"
+				"  next->type = 0x%02x\n"
 				"  next->level = %d\n",
 				next,
 				next->name,
 				next->parent, next->parent->name,
-				next->flags,
+				next->type,
 				next->level);
 #endif
-		} /* if */
 		nod = next;
 	} /* for */
 	free(name);
 	return nod;
-} /* name2nod */
+} /* name2node */
+
+static ctag_p new_ctag(
+	const char *id,
+	const char *fi,
+	const char *ss)
+{
+	ctag_p res;
+
+#if DEBUG
+	printf("new_ctag(\"%s\",\"%s\",\"%s\");\n", id, fi, ss);
+#endif
+
+	assert(res = malloc(sizeof(ctag))); /* allocate memory */
+
+	res->id = id = intern(id);
+	res->fi = fi = intern(fi);
+	res->ss = ss = intern(ss);
+
+	res->next = ctag_lookup_by_id(id);
+	/* insert in list of tags with the same id. */
+#if DEBUG
+	printf("Putting on db_ctag_ix_id table\n");
+#endif
+	avl_tree_put(db_ctag_ix_id, id, res);
+
+	res->tag_no = res->next
+			? res->next->tag_no + 1
+			: 1;
+	res->nod = name2node(db_root_node, res->fi); /* get the node */
+	res->nod->type = FLAG_ISFILE;
+	/* insert in list of tags in the same node. */
+	res->next_in_nod = avl_tree_get(
+		res->nod->subnodes,
+		id);
+	avl_tree_put(res->nod->subnodes, id, res);
+
+	return res;
+} /* new_ctag */
+
+
+void db_init()
+{
+#if DEBUG
+	printf("db_init();\n");
+#endif
+	assert(db_ctag = new_avl_tree(
+		(AVL_FCOMP) ctag_cmp, /* comparison of the three fields, in order */
+		NULL, /* the key is the actual ctag entry, externally allocated */
+		NULL,
+		(AVL_FPRNT) print_ctag)); /* no key printing function */
+	assert(db_ctag_ix_id = new_avl_tree(
+		(AVL_FCOMP) strcmp, /* comparison of the tg and id fields */
+		NULL, /* the key is the id string, internalized */
+		NULL,
+		(AVL_FPRNT) print_string)); /* no key printing function */
+	db_root_node = new_node(
+		"c2h", NULL, FLAG_ISDIR);
+} /* module_init */
 
 ctag_p ctag_lookup(const char *id, const char *fi, const char *ss)
 {
 	ctag_p res; /* result of lookup */
 	ctag key; /* search key */
 
-	if (!db_ctag) /* module not initialized */
-		module_init();
-
 	key.id = id; /* construct the key to search for the entry. */
 	key.fi = fi;
 	key.ss = ss;
 
-#if 0
+#if DEBUG
 	printf("locating [%s][%s][%p]\n", fi, id, ss);
 #endif
 	res = avl_tree_get(db_ctag, &key);
-	if (res) { /* tag doesn't exist, create it */
+	if (res) { /* tag does exist, signal it */
 		fprintf(stderr,
-			"ERROR: TAG[%s][%s][%p] ALREADY IN DATABASE, IGNORED\n",
+			"ERROR: TAG[%s][%s][%s] ALREADY IN DATABASE, "
+			"IGNORED\n",
 			fi, id, ss);
-	} else {
-		ctag_p prev;
-
-		assert(res = malloc(sizeof(ctag))); /* allocate memory */
-		res->id = id;
-		res->fi = fi;
-		res->ss = ss;
-		res->next = ctag_lookup_by_id(id);
-		res->tag_no = res->next
-				? res->next->tag_no + 1
-				: 1;
-		res->nod = name2node(res->fi);
+	} else { /* create it */
+		res = new_ctag(id, fi, ss);
+		/* put in database */
 		avl_tree_put(db_ctag, res, res);
-		avl_tree_put(db_ctag_ix_id, id, res);
 	} /* if */
 
 	return res;
@@ -220,9 +287,9 @@ ctag_p ctag_lookup(const char *id, const char *fi, const char *ss)
 
 ctag_p ctag_lookup_by_id(const char *id)
 {
-	if (!db_ctag) /* module not initialized */
-		module_init();
-
+#if DEBUG
+	printf("ctag_lookup_by_id(%s);\n", id);
+#endif
 	return avl_tree_get(db_ctag_ix_id, id);
 } /* ctag_lookup_by_id */
 

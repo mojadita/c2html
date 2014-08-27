@@ -19,20 +19,28 @@ static int print_string(FILE *o, const char *s)
 
 const char *intern(const char *s)
 {
-	AVL_ITERATOR p;
+	char *res;
+
+#if DEBUG
+	printf("intern(%s);\n", s);
+#endif
 	if (!strings_avl) {
 		assert(strings_avl = new_avl_tree(
 			(AVL_FCOMP) strcmp,
-			(AVL_FCONS) strdup,
-			(AVL_FDEST) free,
+			NULL,
+			NULL,
 			(AVL_FPRNT) print_string));
 	} /* if */
-	p = avl_tree_atkey(strings_avl, s, MT_EQ);
-	if (!p) {
-		p = avl_tree_put(strings_avl, s, NULL);
-		avl_iterator_set_data(p, (void *)avl_iterator_key(p));
+	res = avl_tree_get(strings_avl, s);
+	if (!res) {
+#if DEBUG
+		printf("Interning [%s]\n", s);
+#endif
+		res = strdup(s);
+		avl_tree_put(strings_avl, res, res);
 	} /* if */
-	return avl_iterator_data(p);
+
+	return res;
 } /* intern */
 	
 /* $Id$ */

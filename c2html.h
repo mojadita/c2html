@@ -27,6 +27,10 @@
  */
 #ifndef C2HTML_H
 #define C2HTML_H
+
+#include "multifree.h"
+#include "hashTable.h"
+
 /* constants */
 #ifndef VERSION
 #error VERSION is not defined

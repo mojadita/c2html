@@ -37,8 +37,6 @@
 #include <assert.h>
 #include <time.h>
 
-#include <multifree.h>
-#include <hashTable.h>
 #include <avl.h>
 
 #include "c2html.h"
@@ -60,10 +58,12 @@ const char *base_dir = NULL;
 int flags = 0;
 const char *tag_file = "tags";
 
+static FILE *ex_process = NULL;
+
 /* functions */
 
 /* process file of name fn */
-void process(const char *fn)
+void process1(const char *fn)
 {
 	FILE *tagfile;
 	char line [MAXLINELENGTH];
@@ -77,8 +77,7 @@ void process(const char *fn)
 		exit (EXIT_FAILURE);
 	} /* if */
 
-	fprintf(stderr,
-		"Processing %s...\n", fn);
+	printf("Processing %s...\n", fn);
 
 	/* file open, process lines */
 	while (fgets(line, sizeof line, tagfile)) {
@@ -114,15 +113,6 @@ void process(const char *fn)
 			continue;
 		} /* if */
 
-		/* We intern everithing, so we can compare strings just
-		 * comparing the pointers (for equality only, sorry).
-		 * This way, we can construct a database of ctags, based
-		 * on the three pointers, instead of the string values. */
-
-		id = intern(id); /* intern the identifier */
-		fi = intern(fi); /* intern the file of the ctag */
-		st = intern(st); /* intern the locating string */
-
 		/* first, find the ctag entry */
 		tag = ctag_lookup(id, fi, st);
 #if 0
@@ -145,7 +135,110 @@ void process(const char *fn)
 
 	} /* while ... */
 	fclose(tagfile);
-} /* process */
+} /* process1 */
+
+void process2(node *n)
+{
+#if DEBUG
+	printf("process2: entering \"%s\"\n", n->full_name);
+#endif
+	switch (n->type) {
+	case FLAG_ISDIR: {
+		/* 1.- mkdir */
+		{	int res;
+#if DEBUG
+			printf("process2:   mkdir(\"%s\");\n", n->full_name);
+#endif
+			res = mkdir(n->full_name, 0777);
+			if (res < 0) {
+				fprintf(stderr,
+					"process2:error:MKDIR:%s:%s(errno=%d)\n",
+					n->full_name, strerror(errno), errno);
+				return; /* cannot continue */
+			} /* if */
+		} /* block */
+		/* 2.- make index.html */
+		{	char *p;
+			static char buffer[4096];
+			snprintf(buffer, sizeof buffer,
+				"%s/index.html", n->full_name);
+			printf("process2:   "
+				"html_create(\"%s\", \"Directory %%s\", \"%s\");\n",
+				buffer, n->full_name);
+			n->index_f = html_create(buffer, "Directory %s", n->full_name);
+		} /* block */
+		if (n->parent) {
+			fprintf(n->parent->index_f,
+"      <li><h2><a href=\"%s/index.html\">%s</a> directory.</h2></li>\n",
+				n->name, n->name);
+		} /* if */
+				
+		/* 3.- recurse to subdirectories */
+		{	AVL_ITERATOR it;
+			for (	it = avl_tree_first(n->subnodes);
+				it;
+				it = avl_iterator_next(it))
+			{
+				process2(avl_iterator_data(it));
+			} /* for */
+		} /* block */
+
+		/* 4.- close files */
+		{
+			html_close(n->index_f);
+			n->index_f = NULL;
+		} /* block */
+		/* 5.- and finish */
+		} break;
+
+	/* 4.- PROCESS FILE */
+	case FLAG_ISFILE: {
+		if (n->parent) {
+			const ctag *p;
+			AVL_ITERATOR it;
+			fprintf(n->parent->index_f,
+"      <li><h2><a href=\"%s.html\">%s</a> file.</h2>\n",
+				n->name, n->name);
+			if (avl_tree_size(n->subnodes)) {
+				fprintf(n->parent->index_f,
+"        <ul>\n"
+					);
+				for (	it = avl_tree_first(n->subnodes);
+						it;
+						it = avl_iterator_next(it))
+				{
+					for (	p = avl_iterator_data(it);
+							p; 
+							p = p->next_in_nod)
+					{
+						fprintf(n->parent->index_f,
+"          <li><a href=\"%s.html#%s-%d\">%s(%d)</a></li>\n",
+							n->name,p->id,p->tag_no,p->id,p->tag_no);
+					} /* for */
+				} /* for */
+				fprintf(n->parent->index_f,
+"        </ul>\n"
+					);
+			} /* if */
+			fprintf(n->parent->index_f,
+"       </li>\n"
+				);
+		} /* if */
+		} break;
+
+	/* 5.- DATABASE INCONSISTENCY */
+	default:
+		fprintf(stderr,
+			PROGNAME":"__FILE__"(%d): DATABASE "
+			"INCONSISTENCY (n->type == %d)\n",
+			__LINE__, n->type);
+		exit(EXIT_FAILURE);
+	} /* switch */
+
+#if DEBUG
+	printf("process2: leaving \"%s\"\n", n->full_name);
+#endif
+} /* process2 */
 
 /* print help message */
 void do_usage (void)
@@ -172,12 +265,8 @@ void do_usage (void)
 	fprintf(stderr, "  -b base_dir.  Base directory for URL composition\n");
 	fprintf(stderr, "       This causes to generate <BASE> tags.  Useful if more than one directory\n");
 	fprintf(stderr, "       and no relative pathnames\n");
-	fprintf(stderr, "  -2   Two level.  Generate Index in a two level structure, showing\n");
-	fprintf(stderr, "       directories at the upper level, and files and symbols at the lower.\n");
 	fprintf(stderr, "  -d   Debug.  Print file and file number order, instead of just the\n");
 	fprintf(stderr, "       percentage of the default case\n");
-	fprintf(stderr, "  -r   Relative pathnames.  Generate relative pathnames in the links between\n");
-	fprintf(stderr, "       symbols and their definitions\n");
 } /* do_usage */
 
 /* main program */
@@ -190,12 +279,10 @@ int main (int argc, char **argv)
 
 	while ((opt = getopt(argc, argv, "t:hb:2drn")) != EOF) {
 		switch(opt) {
-		case 't': tag_file = intern(optarg); break;
+		case 't': tag_file = optarg; break;
 		case 'h': do_usage(); exit(EXIT_SUCCESS);
 		case 'b': base_dir = optarg; break;
-		case '2': flags |= FLAG_TWOLEVEL; break;
 		case 'd': flags |= FLAG_VERBOSE; break;
-		case 'r': flags |= FLAG_RELFILENAME; break;
 		case 'n': flags |= FLAG_LINENUMBERS; break;
 		default:
 			do_usage(); exit(EXIT_FAILURE);
@@ -203,8 +290,20 @@ int main (int argc, char **argv)
 	} /* while */
 
 	/* Process files */
-	process(tag_file);
+	db_init();
+	ex_process = popen(EX_PATH, "w");
+	if (!ex_process) {
+		fprintf(stderr,
+			PROGNAME":ex_process:%s(errno=%d)\n",
+			strerror(errno), errno);
+		exit(EXIT_FAILURE);
+	} /* if */
 
+	process1(tag_file);
+	process2(db_root_node);
+	pclose(ex_process);
+
+#if 0
 	{	AVL_ITERATOR i;
 		const ctag *old_tag = NULL;
 		const node *old_file = NULL;
@@ -241,6 +340,7 @@ int main (int argc, char **argv)
 			printf("      EX>>> w %s.temp\n", p);
 		} /* if */
 	} /* block */
+#endif
 
 #if 0
 	/* print the results ---do the heavy work--- */

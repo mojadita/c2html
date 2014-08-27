@@ -35,8 +35,8 @@
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
-#include <multifree.h>
-#include <hashTable.h>
+
+#include <avl.h>
 #include "c2html.h"
 
 /* constants */
