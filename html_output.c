@@ -38,6 +38,7 @@
 #include <stdarg.h>
 #include "multifree.h"
 #include "hashTable.h"
+#include "db.h"
 #include "c2html.h"
 
 /* constants */
@@ -49,10 +50,11 @@
 /* variables */
 
 /* functions */
-FILE *html_create(char *name, char *title, ...)
+FILE *html_create(char *name, const node *p)
 {
 	FILE *f;
-	va_list p;
+	const node **components;
+	int i;
 
 	f = fopen (name, "w");
 	if (!f) {
@@ -83,26 +85,15 @@ FILE *html_create(char *name, char *title, ...)
 "  -->\n"
 "<html>\n"
 "  <head>\n"
-"    <title>"
-		);
-	va_start(p, title);
-	vfprintf(f, title, p);
-	va_end(p);
-	fprintf(f,"</title>\n");
-	//if (base_dir)
-	//	fprintf(f,"    <BASE HREF=\"%s\">\n", base_dir);
-	fprintf(f,
-"  </head>\n");
-	fprintf(f,
-"  <body>\n");
-	va_start(p, title);
-	fprintf(f,
-"    <h1>"); vfprintf(f,title, p); fprintf(f,"</h1>\n");
-	va_end(p);
-	fprintf(f,
-"    <hr/>\n"
-"    <ul>\n"
-		);
+"    <title>Directory %s</title>\n"
+"    <link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">\n"
+"    <script src=\"index.js\"></script>\n"
+"  </head>\n"
+"  <body>\n"
+"    <div class=\"title\">Directory %s</div>\n",
+		p->full_name, p->full_name);
+
+	fprintf(f, "    <ul>\n");
 	return f;
 } /* create_html */
 

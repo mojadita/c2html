@@ -78,7 +78,7 @@ typedef struct file_node {
 } FileNode;
 
 /* prototypes */
-FILE *html_create(char *name, char *title, ...);
+FILE *html_create(char *name, const node *p);
 void html_close(FILE *f);
 
 /* variables */

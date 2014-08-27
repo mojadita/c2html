@@ -39,6 +39,7 @@
 
 #include <avl.h>
 
+#include "db.h"
 #include "c2html.h"
 #include "intern.h"
 #include "db.h"
@@ -157,19 +158,21 @@ void process2(node *n)
 				return; /* cannot continue */
 			} /* if */
 		} /* block */
+
 		/* 2.- make index.html */
 		{	char *p;
 			static char buffer[4096];
-			snprintf(buffer, sizeof buffer,
-				"%s/index.html", n->full_name);
+			snprintf(buffer, sizeof buffer, "%s/index.html", n->full_name);
+#if DEBUG
 			printf("process2:   "
 				"html_create(\"%s\", \"Directory %%s\", \"%s\");\n",
 				buffer, n->full_name);
-			n->index_f = html_create(buffer, "Directory %s", n->full_name);
+#endif
+			n->index_f = html_create(buffer, n);
 		} /* block */
 		if (n->parent) {
 			fprintf(n->parent->index_f,
-"      <li><h2><a href=\"%s/index.html\">%s</a> directory.</h2></li>\n",
+				"      <li><div class=\"dir\"><a href=\"%s/index.html\">%s</a> directory.</div></li>\n",
 				n->name, n->name);
 		} /* if */
 				
@@ -184,10 +187,10 @@ void process2(node *n)
 		} /* block */
 
 		/* 4.- close files */
-		{
-			html_close(n->index_f);
+		{	html_close(n->index_f);
 			n->index_f = NULL;
 		} /* block */
+
 		/* 5.- and finish */
 		} break;
 
@@ -197,12 +200,10 @@ void process2(node *n)
 			const ctag *p;
 			AVL_ITERATOR it;
 			fprintf(n->parent->index_f,
-"      <li><h2><a href=\"%s.html\">%s</a> file.</h2>\n",
+				"      <li><div class=\"file\"><a href=\"%s.html\">%s</a> file.</div>\n",
 				n->name, n->name);
 			if (avl_tree_size(n->subnodes)) {
-				fprintf(n->parent->index_f,
-"        <ul>\n"
-					);
+				fprintf(n->parent->index_f, "        <ul>\n");
 				for (	it = avl_tree_first(n->subnodes);
 						it;
 						it = avl_iterator_next(it))
@@ -212,17 +213,13 @@ void process2(node *n)
 							p = p->next_in_nod)
 					{
 						fprintf(n->parent->index_f,
-"          <li><a href=\"%s.html#%s-%d\">%s(%d)</a></li>\n",
-							n->name,p->id,p->tag_no,p->id,p->tag_no);
+							"          <li><div class=\"tag\"><a href=\"%s.html#%s-%d\">%s</a></div></li>\n",
+							n->name,p->id,p->tag_no,p->id);
 					} /* for */
 				} /* for */
-				fprintf(n->parent->index_f,
-"        </ul>\n"
-					);
+				fprintf(n->parent->index_f, "        </ul>\n");
 			} /* if */
-			fprintf(n->parent->index_f,
-"       </li>\n"
-				);
+			fprintf(n->parent->index_f, "       </li>\n");
 		} /* if */
 		} break;
 
@@ -232,7 +229,7 @@ void process2(node *n)
 			PROGNAME":"__FILE__"(%d): DATABASE "
 			"INCONSISTENCY (n->type == %d)\n",
 			__LINE__, n->type);
-		exit(EXIT_FAILURE);
+		abort();
 	} /* switch */
 
 #if DEBUG

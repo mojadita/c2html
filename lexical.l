@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <avl.h>
+#include "db.h"
 #include "c2html.h"
 
 /* constants */
@@ -58,7 +59,7 @@ static int pointer = 0;
 
 /* prototypes */
 void pr(FILE *, char *);
-void scanfile(char *, char *, char *);
+void scanfile(const node *, char *, char *);
 void createmenu(CtagNode *);
 void newline(int do_reset);
 char *relfilename(char *fmt, char *fdest, char *fsour);
@@ -360,7 +361,7 @@ void createmenu(CtagNode *ce)
 #if 0
 	fprintf (stderr, PROGNAME": creating menu %s\n", buffer);
 #endif
-	outf = html_create(buffer, ce->sym);
+	outf = html_create(buffer, NULL);
 	fprintf(outf, "    <UL>\n");
 	for (;ce; ce = ce->next) {
 		fprintf(outf, "      <LI><A HREF=\"%s"EXT2"#%s_%d\">%s</a>\n",
@@ -372,7 +373,7 @@ void createmenu(CtagNode *ce)
 } /* createmenu */
 		
 
-void scanfile (char *fn, char *fin, char *fout)
+void scanfile (const node *fn, char *fin, char *fout)
 {
 	FILE *INPUT;
 	YY_BUFFER_STATE bs;
