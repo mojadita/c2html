@@ -22,6 +22,8 @@ typedef struct ctag_s {
 typedef enum node_type_e {
 	FLAG_ISDIR,
 	FLAG_ISFILE,
+	FLAG_TYPEMASK		=(1<<4)-1,
+	FLAG_DONTPROCESS 	=(1<<4),
 } node_type;
 
 typedef struct node_s {
@@ -33,6 +35,7 @@ typedef struct node_s {
 	FILE			*index_f; /* index.html file descriptor */
 	struct node_s	**path; /* path from the root */
 	const char		*full_name; /* full path name */
+	struct node_s	*html_file;
 } node;
 
 extern AVL_TREE db_ctag;

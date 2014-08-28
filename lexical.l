@@ -60,7 +60,7 @@ static int pointer = 0;
 
 /* prototypes */
 void pr(FILE *, char *);
-void scanfile(const node *);
+void scanfile(node *);
 void createmenu(CtagNode *);
 void newline(int do_reset);
 char *relfilename(char *fmt, char *fdest, char *fsour);
@@ -362,7 +362,7 @@ void createmenu(CtagNode *ce)
 #if 0
 	fprintf (stderr, PROGNAME": creating menu %s\n", buffer);
 #endif
-	outf = html_create(buffer, NULL);
+	outf = html_create(NULL);
 	fprintf(outf, "    <UL>\n");
 	for (;ce; ce = ce->next) {
 		fprintf(outf, "      <LI><A HREF=\"%s"EXT2"#%s_%d\">%s</a>\n",
@@ -374,7 +374,7 @@ void createmenu(CtagNode *ce)
 } /* createmenu */
 		
 
-void scanfile (const node *fin)
+void scanfile (node *fin)
 {
 	FILE *INPUT;
 	YY_BUFFER_STATE bs;
@@ -385,7 +385,8 @@ void scanfile (const node *fin)
 	fout = avl_tree_get(fin->parent->subnodes, buffer);
 	if (!fout) {
 		fout = new_node(buffer, fin->parent, FLAG_ISFILE);
-		avl_tree_put(fin->parent->subnodes, buffer, fout);
+		fin->html_file = fout;
+		/* hidden, as it's not being put in his parent's subnodes */
 	} /* if */
 
 	printf("Generating [%s-->%s]\n", fin->full_name, fout->full_name);
@@ -396,7 +397,7 @@ void scanfile (const node *fin)
 			fin->full_name, strerror(errno), errno);
 		exit(EXIT_FAILURE);
 	} /* if */
-	OUTPUT = html_create(fout->full_name, fin);
+	OUTPUT = html_create(fin);
 	if (!OUTPUT) {
 		fprintf(stderr, PROGNAME":fopen:WRITE:%s:%s(errno=%d)\n",
 			fout->full_name, strerror(errno), errno);
@@ -410,7 +411,7 @@ void scanfile (const node *fin)
 	pointer=0;
 	PUSH(INITIAL);
 	newline(TRUE);
-	//yylex(fout);
+	yylex(fout);
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	fprintf(OUTPUT, "    </pre>\n");
 	fclose (INPUT);

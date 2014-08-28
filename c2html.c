@@ -46,6 +46,11 @@
 #include "db.h"
 
 /* constants */
+
+#ifndef DEBUG
+#define DEBUG 1
+#endif
+
 #define MAXLINELENGTH	4096
 
 char *rcsId = "\n$Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $\n";
@@ -175,21 +180,19 @@ void process2(node *n)
 		} /* block */
 
 		/* 2.- make index.html */
-		{	char *p;
-			static char buffer[4096];
-
-			snprintf(buffer, sizeof buffer, "%s/index.html", n->full_name);
-#if DEBUG
+		
+		{	n->html_file = new_node("index.html", n, FLAG_DONTPROCESS | FLAG_ISFILE);
+#if DEBUG | 1
 			printf("process2:   "
-				"html_create(\"%s\", \"Directory %%s\", \"%s\");\n",
-				buffer, n->full_name);
+				"html_create(\"%s\", \"%s\");\n",
+				n->html_file->full_name, n->full_name);
 #endif
-			n->index_f = html_create(buffer, n);
+			n->index_f = html_create(n);
 		} /* block */
 		if (n->parent) {
 			fprintf(n->parent->index_f,
-				"      <li><div class=\"dir\"><a href=\"%s/index.html\">%s</a> directory.</div></li>\n",
-				n->name, n->name);
+				"      <li><div class=\"dir\"><a href=\"%s\">%s</a> directory.</div></li>\n",
+				n->html_file->name, n->name);
 		} /* if */
 				
 		/* 3.- recurse to subdirectories */
@@ -343,7 +346,7 @@ int main (int argc, char **argv)
 	} /* while */
 
 	db_init(output);
-	style_node = new_node(style_file, db_root_node, FLAG_ISFILE);
+	style_node = new_node(style_file, db_root_node, FLAG_DONTPROCESS | FLAG_ISFILE);
 
 	/* Process files */
 
