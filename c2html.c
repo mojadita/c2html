@@ -35,6 +35,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdarg.h>
 #include <time.h>
 
 #include <avl.h>
@@ -56,6 +57,7 @@ char *rcsId = "\n$Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $\n";
 /* variables */
 
 const char *base_dir = NULL;
+const char *output = "html.out";
 int flags = 0;
 const char *tag_file = "tags";
 
@@ -138,6 +140,19 @@ void process1(const char *fn)
 	fclose(tagfile);
 } /* process1 */
 
+int send_ex(const char *fmt, ...)
+{
+	va_list p;
+
+	fprintf(stdout, ":");
+	va_start(p, fmt);
+	vfprintf(stdout, fmt, p);
+	va_end(p);
+	va_start(p, fmt);
+	vfprintf(ex_process, fmt, p);
+	va_end(p);
+} /* send_ex */
+
 void process2(node *n)
 {
 #if DEBUG
@@ -192,36 +207,63 @@ void process2(node *n)
 		} /* block */
 
 		/* 5.- and finish */
-		} break;
+	} break;
 
 	/* 4.- PROCESS FILE */
 	case FLAG_ISFILE: {
 		if (n->parent) {
 			const ctag *p;
+			const char *s = strchr(n->full_name, '/');
+			while (*s == '/') s++;
 			AVL_ITERATOR it;
 			fprintf(n->parent->index_f,
 				"      <li><div class=\"file\"><a href=\"%s.html\">%s</a> file.</div>\n",
 				n->name, n->name);
+			send_ex("e! %s\n", s); /* edit file */
 			if (avl_tree_size(n->subnodes)) {
 				fprintf(n->parent->index_f, "        <ul>\n");
 				for (	it = avl_tree_first(n->subnodes);
 						it;
 						it = avl_iterator_next(it))
 				{
-					for (	p = avl_iterator_data(it);
-							p; 
-							p = p->next_in_nod)
-					{
-						fprintf(n->parent->index_f,
-							"          <li><div class=\"tag\"><a href=\"%s.html#%s-%d\">%s</a></div></li>\n",
-							n->name,p->id,p->tag_no,p->id);
-					} /* for */
+					p = avl_iterator_data(it);
+					if (p->tag_no > 1) {
+						for (; p; p = p->next) {
+							fprintf(n->parent->index_f,
+								"          <li><div class=\"tag\"><a href=\"%s.html#%s-%d\">%s</a></div></li>\n",
+								n->name,p->id,p->tag_no,p->id);
+							send_ex("ts %s\n%d\n", p->id, p->tag_no); /* tag select, se vim(1) help */
+							send_ex("s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
+						} /* for */
+					} else {
+						send_ex("ta %s\n", p->id); /* goto tag, only one tag in this file */
+						send_ex("s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
+					} /* if */
 				} /* for */
-				fprintf(n->parent->index_f, "        </ul>\n");
+				fprintf(n->parent->index_f, "       </ul>\n");
 			} /* if */
+			send_ex("w! %s\n", n->full_name); /* write file */
 			fprintf(n->parent->index_f, "       </li>\n");
 		} /* if */
-		} break;
+		if (flags & FLAG_PROGRESS) {	/* print progress */
+			static int i=0;
+			static char *progress[] = { "\\", "|", "/", "-" };
+			static long acum; 
+			static int percent = 0;
+
+			if (!i++) acum = n_files >> 1;
+
+			acum += 100000;
+			if (acum >= n_files) {
+				percent += acum / n_files;
+				acum %= n_files;
+			} /* if */
+			fprintf(stderr, "%s (%d/%d -- %3d.%03d%%) %s\033[K\r",
+				progress[i&3], i, n_files, percent / 1000,
+				percent % 1000, n->full_name);
+			if (i >= n_files) fprintf(stderr, "\n");
+		} /* block */
+	} break;
 
 	/* 5.- DATABASE INCONSISTENCY */
 	default:
@@ -274,20 +316,26 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "t:hb:2drn")) != EOF) {
+	while ((opt = getopt(argc, argv, "t:hb:2drno:p")) != EOF) {
 		switch(opt) {
 		case 't': tag_file = optarg; break;
 		case 'h': do_usage(); exit(EXIT_SUCCESS);
 		case 'b': base_dir = optarg; break;
 		case 'd': flags |= FLAG_VERBOSE; break;
 		case 'n': flags |= FLAG_LINENUMBERS; break;
+		case 'o': output = optarg; break;
+		case 'p': flags |= FLAG_PROGRESS; break;
 		default:
 			do_usage(); exit(EXIT_FAILURE);
 		} /* switch */
 	} /* while */
 
+	db_init(output);
+
 	/* Process files */
-	db_init();
+
+	process1(tag_file);
+
 	ex_process = popen(EX_PATH, "w");
 	if (!ex_process) {
 		fprintf(stderr,
@@ -295,9 +343,9 @@ int main (int argc, char **argv)
 			strerror(errno), errno);
 		exit(EXIT_FAILURE);
 	} /* if */
-
-	process1(tag_file);
+	send_ex("set notagstack\n");
 	process2(db_root_node);
+	send_ex("q!\n"); /* terminate */
 	pclose(ex_process);
 
 #if 0

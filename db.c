@@ -16,8 +16,8 @@
 #include "db.h"
 
 AVL_TREE db_ctag = NULL;
-AVL_TREE db_ctag_ix_id = NULL;
 node_p db_root_node = NULL;
+int n_files = 0;
 
 static int print_ctag(FILE *f, const ctag *a)
 {
@@ -179,6 +179,7 @@ static node *name2node(node_p root, const char *p)
 				nam, nod,
 				aux	? FLAG_ISDIR
 					: FLAG_ISFILE);
+			if (!aux) n_files++;
 			avl_tree_put(nod->subnodes, nam, next);
 		} /* if */
 			
@@ -217,29 +218,25 @@ static ctag_p new_ctag(
 	res->fi = fi = intern(fi);
 	res->ss = ss = intern(ss);
 
-	res->next = ctag_lookup_by_id(id);
-	/* insert in list of tags with the same id. */
-#if DEBUG
-	printf("Putting on db_ctag_ix_id table\n");
-#endif
-	avl_tree_put(db_ctag_ix_id, id, res);
+	/* get the node this tag belongs to */
+	res->nod = name2node(db_root_node, res->fi);
 
-	res->tag_no = res->next
-			? res->next->tag_no + 1
-			: 1;
-	res->nod = name2node(db_root_node, res->fi); /* get the node */
-	res->nod->type = FLAG_ISFILE;
-	/* insert in list of tags in the same node. */
-	res->next_in_nod = avl_tree_get(
+	/* insert the ctag in list of tags in the same node. */
+	res->next = avl_tree_get(
 		res->nod->subnodes,
 		id);
-	avl_tree_put(res->nod->subnodes, id, res);
+	res->tag_no = res->next
+		? res->next->tag_no + 1
+		: 1;
+	avl_tree_put(
+		res->nod->subnodes,
+		id, res);
 
 	return res;
 } /* new_ctag */
 
 
-void db_init()
+void db_init(const char *o)
 {
 #if DEBUG
 	printf("db_init();\n");
@@ -249,13 +246,8 @@ void db_init()
 		NULL, /* the key is the actual ctag entry, externally allocated */
 		NULL,
 		(AVL_FPRNT) print_ctag)); /* no key printing function */
-	assert(db_ctag_ix_id = new_avl_tree(
-		(AVL_FCOMP) strcmp, /* comparison of the tg and id fields */
-		NULL, /* the key is the id string, internalized */
-		NULL,
-		(AVL_FPRNT) print_string)); /* no key printing function */
 	db_root_node = new_node(
-		"c2h", NULL, FLAG_ISDIR);
+		o, NULL, FLAG_ISDIR);
 } /* module_init */
 
 ctag_p ctag_lookup(const char *id, const char *fi, const char *ss)
@@ -284,13 +276,5 @@ ctag_p ctag_lookup(const char *id, const char *fi, const char *ss)
 
 	return res;
 } /* ctag_lookup */
-
-ctag_p ctag_lookup_by_id(const char *id)
-{
-#if DEBUG
-	printf("ctag_lookup_by_id(%s);\n", id);
-#endif
-	return avl_tree_get(db_ctag_ix_id, id);
-} /* ctag_lookup_by_id */
 
 /* $Id$ */

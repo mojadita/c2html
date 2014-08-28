@@ -54,10 +54,11 @@
 
 #undef TRACEON		/* 1 */
 
-#define FLAG_TWOLEVEL	1
-#define FLAG_VERBOSE	2
-#define FLAG_RELFILENAME	4
-#define FLAG_LINENUMBERS	8
+#define FLAG_TWOLEVEL	(1 << 0)
+#define FLAG_VERBOSE	(1 << 1)
+#define FLAG_RELFILENAME	(1 << 2)
+#define FLAG_LINENUMBERS	(1 << 3)
+#define FLAG_PROGRESS		(1 << 4)
 
 /* types */
 typedef struct ctag_node {
@@ -87,6 +88,7 @@ extern FileNode *files_first, *files_last;
 extern const char *base_dir;
 extern char *base_slash;
 extern int flags;
+extern const char *output;
 
 /* functions */
 
