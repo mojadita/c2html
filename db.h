@@ -17,34 +17,33 @@ typedef struct ctag_s {
 	const struct ctag_s	*next; /* next tag with the same id in this tag file */
 	//const struct ctag_s	*next_in_nod;
 	struct node_s		*nod; /* file node this tag points to. */
-}	*ctag_p,
-	ctag;
+} ctag;
 
 typedef enum node_type_e {
 	FLAG_ISDIR,
 	FLAG_ISFILE,
-}	*node_type_p,
-	node_type;
+} node_type;
 
 typedef struct node_s {
 	const char		*name; /* name of this node. */
 	struct node_s		*parent; /* parent node of this. */
 	node_type		type; /* type of this node. */
 	AVL_TREE		subnodes; /* children of this node */
-	int 			level; /* level of this node */
-	const char		*full_name; /* full path name */
+	int 			level; /* level of this node, root node is at level 1 */
 	FILE			*index_f; /* index.html file descriptor */
-}	*node_p,
-	node;
+	struct node_s	**path; /* path from the root */
+	const char		*full_name; /* full path name */
+} node;
 
 extern AVL_TREE db_ctag;
-extern node_p db_root_node;
+extern node *db_root_node;
 extern int n_files;
 
 void db_init(const char *);
 void mk_dir(const node *nod);
-ctag_p ctag_lookup(const char *id, const char *fi, const char *ss);
-ctag_p ctag_lookup_by_id(const char *id);
+node *new_node(const char *name, node *parent, node_type typ);
+ctag *ctag_lookup(const char *id, const char *fi, const char *ss);
+ctag *ctag_lookup_by_id(const char *id);
 
 #endif /* _DB_H */
 /* $Id$ */

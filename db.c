@@ -16,7 +16,7 @@
 #include "db.h"
 
 AVL_TREE db_ctag = NULL;
-node_p db_root_node = NULL;
+node *db_root_node = NULL;
 int n_files = 0;
 
 static int print_ctag(FILE *f, const ctag *a)
@@ -31,7 +31,7 @@ static int print_string(FILE *f, const char *s)
 
 /* this function compares the unique index of <id,fi,ss>
  * for the db_ctag database */
-static int ctag_cmp(const ctag_p a, const ctag_p b)
+static int ctag_cmp(const ctag *a, const ctag *b)
 {
 	int res;
 	res = strcmp(a->fi, b->fi); /* file is the most significative */
@@ -50,43 +50,12 @@ static int ctag_cmp(const ctag_p a, const ctag_p b)
 	return res;
 } /* ctag_cmp */
 
-static char *get_name_rec(const node *p, char **buffer, size_t *bs)
+node *new_node(const char *name, node *parent, node_type typ)
 {
-	char *res = *buffer; /* save the original pointer */
-	int n;
+	node *res;
+	int i;
 
-	if (p->parent) {
-		int n;
-		get_name_rec(p->parent, buffer, bs);
-	} /* if */
-	n = snprintf(*buffer, *bs,
-		"%s%s",
-		p->parent
-			? "/"
-			: "",
-		p->name);
-	*buffer += n; *bs -= n;
-
-	return res;
-} /* get_name_rec */
-
-static char *get_name(const node *p)
-{
-	static char buffer[4096]; /* one page */
-	size_t bs = sizeof buffer;
-	char *aux = buffer;
-
-	return get_name_rec(p, &aux, &bs);
-} /* get_name */
-
-node_p new_node(
-	const char *name,
-	node_p parent,
-	node_type typ)
-{
-	node_p res;
-
-#if DEBUG
+#if DEBUG | 1
 	printf("new_node(%s, %p, %d)\n", name, parent, typ);
 #endif
 	assert(res = malloc(sizeof (node)));
@@ -96,9 +65,35 @@ node_p new_node(
 	assert(res->subnodes = new_avl_tree(
 		(AVL_FCOMP) strcmp,
 		NULL, NULL, (AVL_FPRNT) print_string));
-	res->level = res->parent ? parent->level + 1 : 0;
-	res->full_name = intern(get_name(res));
+	res->level = parent ? parent->level + 1 : 1;
 	res->index_f = NULL;
+
+	/* construct the path to it. */
+	assert(res->path = calloc(res->level + 1, sizeof (node *)));
+	{	node *p;
+		for (	i = res->level-1, p = res;
+				i >= 0;
+				i--, p = p->parent)
+		{
+			res->path[i] = p;
+		} /* for */
+		res->path[res->level] = NULL;
+	} /* block */
+
+	/* construct the full name */
+	{	static char buffer[4096]; /* one page */
+		size_t bs = sizeof buffer;
+		int n;
+		char *aux = buffer;
+
+		for (i = 0; i < res->level; i++) {
+			n = snprintf(aux, bs, "%s%s",
+				i ? "/" : "", res->path[i]->name);
+			aux += n; bs -= n;
+		} /* for */
+
+		res->full_name = intern(buffer);
+	} /* block */
 
 #if DEBUG
 	printf( "new_node() ->\n"
@@ -123,11 +118,11 @@ node_p new_node(
 	return res;
 } /* new_node */
 
-static node *name2node(node_p root, const char *p)
+static node *name2node(node *root, const char *p)
 {
 	char *aux, *name = strdup(p); /* we return it at the end */
 	const char *nam;
-	node_p nod = root;
+	node *nod = root;
 
 #if DEBUG
 	printf("name2node(%p(%s), %s);\n", root, root->name, p);
@@ -143,7 +138,7 @@ static node *name2node(node_p root, const char *p)
 	printf("solving name->node: ");
 #endif
 	for(nam = name; nam; nam = aux) {
-		node_p next;
+		node *next;
 
 		aux = strchr(nam, '/'); /* search for a '/' character */
 		if (aux) /* if found, nullify it and every one char following it */
@@ -201,12 +196,12 @@ static node *name2node(node_p root, const char *p)
 	return nod;
 } /* name2node */
 
-static ctag_p new_ctag(
+static ctag *new_ctag(
 	const char *id,
 	const char *fi,
 	const char *ss)
 {
-	ctag_p res;
+	ctag *res;
 
 #if DEBUG
 	printf("new_ctag(\"%s\",\"%s\",\"%s\");\n", id, fi, ss);
@@ -250,9 +245,9 @@ void db_init(const char *o)
 		o, NULL, FLAG_ISDIR);
 } /* module_init */
 
-ctag_p ctag_lookup(const char *id, const char *fi, const char *ss)
+ctag *ctag_lookup(const char *id, const char *fi, const char *ss)
 {
-	ctag_p res; /* result of lookup */
+	ctag *res; /* result of lookup */
 	ctag key; /* search key */
 
 	key.id = id; /* construct the key to search for the entry. */

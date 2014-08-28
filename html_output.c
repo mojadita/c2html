@@ -5,6 +5,7 @@
  * 
  *  C2HTML -- A program to convert C source code into cross referenced HTML.
  *  Copyright (C) 1999 Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
+ *                2014 Luis Colorado <lc@luiscoloradosistemas.com>
  * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,7 +51,7 @@
 /* variables */
 
 /* functions */
-FILE *html_create(char *name, const node *p)
+FILE *html_create(const char *name, const node *p)
 {
 	FILE *f;
 	const node **components;

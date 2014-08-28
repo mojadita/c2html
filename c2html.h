@@ -79,16 +79,19 @@ typedef struct file_node {
 } FileNode;
 
 /* prototypes */
-FILE *html_create(char *name, const node *p);
+FILE *html_create(const char *name, const node *p);
 void html_close(FILE *f);
 
 /* variables */
 extern HashTable syms_table, files_table;
 extern FileNode *files_first, *files_last;
-extern const char *base_dir;
-extern char *base_slash;
+
 extern int flags;
+extern const char *tag_file;
 extern const char *output;
+extern const char *base_dir;
+extern const char *style_file;
+extern const node *style_node;
 
 /* functions */
 

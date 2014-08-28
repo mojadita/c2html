@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <avl.h>
+
 #include "db.h"
 #include "c2html.h"
 
@@ -59,7 +60,7 @@ static int pointer = 0;
 
 /* prototypes */
 void pr(FILE *, char *);
-void scanfile(const node *, char *, char *);
+void scanfile(const node *);
 void createmenu(CtagNode *);
 void newline(int do_reset);
 char *relfilename(char *fmt, char *fdest, char *fsour);
@@ -373,13 +374,34 @@ void createmenu(CtagNode *ce)
 } /* createmenu */
 		
 
-void scanfile (const node *fn, char *fin, char *fout)
+void scanfile (const node *fin)
 {
 	FILE *INPUT;
 	YY_BUFFER_STATE bs;
+	char buffer[64];
+	node *fout;
 
-	INPUT = fopen (fin, "r");
-	OUTPUT = html_create(fout, fn);
+	snprintf(buffer, sizeof buffer, "%s.html", fin->name);
+	fout = avl_tree_get(fin->parent->subnodes, buffer);
+	if (!fout) {
+		fout = new_node(buffer, fin->parent, FLAG_ISFILE);
+		avl_tree_put(fin->parent->subnodes, buffer, fout);
+	} /* if */
+
+	printf("Generating [%s-->%s]\n", fin->full_name, fout->full_name);
+
+	INPUT = fopen (fin->full_name, "r");
+	if (!INPUT) {
+		fprintf(stderr, PROGNAME":fopen:READ:%s:%s(errno=%d)\n",
+			fin->full_name, strerror(errno), errno);
+		exit(EXIT_FAILURE);
+	} /* if */
+	OUTPUT = html_create(fout->full_name, fin);
+	if (!OUTPUT) {
+		fprintf(stderr, PROGNAME":fopen:WRITE:%s:%s(errno=%d)\n",
+			fout->full_name, strerror(errno), errno);
+		exit(EXIT_FAILURE);
+	} /* if */
 	bs = yy_create_buffer (INPUT, YY_BUF_SIZE);
 	yy_switch_to_buffer (bs);
 
@@ -388,7 +410,7 @@ void scanfile (const node *fn, char *fin, char *fout)
 	pointer=0;
 	PUSH(INITIAL);
 	newline(TRUE);
-	yylex(fout);
+	//yylex(fout);
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	fprintf(OUTPUT, "    </pre>\n");
 	fclose (INPUT);

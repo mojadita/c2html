@@ -56,12 +56,12 @@ char *rcsId = "\n$Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $\n";
 
 /* variables */
 
-const char *base_dir = NULL;
-const char *output = "html.out";
 int flags = 0;
 const char *tag_file = "tags";
-
-static FILE *ex_process = NULL;
+const char *output = "html.out";
+const char *base_dir = NULL;
+const char *style_file = "style.css";
+const node *style_node = NULL;
 
 /* functions */
 
@@ -140,7 +140,7 @@ void process1(const char *fn)
 	fclose(tagfile);
 } /* process1 */
 
-int send_ex(const char *fmt, ...)
+int send_ex(FILE *ex, const char *fmt, ...)
 {
 	va_list p;
 
@@ -149,7 +149,7 @@ int send_ex(const char *fmt, ...)
 	vfprintf(stdout, fmt, p);
 	va_end(p);
 	va_start(p, fmt);
-	vfprintf(ex_process, fmt, p);
+	vfprintf(ex, fmt, p);
 	va_end(p);
 } /* send_ex */
 
@@ -177,6 +177,7 @@ void process2(node *n)
 		/* 2.- make index.html */
 		{	char *p;
 			static char buffer[4096];
+
 			snprintf(buffer, sizeof buffer, "%s/index.html", n->full_name);
 #if DEBUG
 			printf("process2:   "
@@ -214,12 +215,14 @@ void process2(node *n)
 		if (n->parent) {
 			const ctag *p;
 			const char *s = strchr(n->full_name, '/');
+			FILE *ex_fd = popen(EX_PATH, "w");
 			while (*s == '/') s++;
 			AVL_ITERATOR it;
 			fprintf(n->parent->index_f,
 				"      <li><div class=\"file\"><a href=\"%s.html\">%s</a> file.</div>\n",
 				n->name, n->name);
-			send_ex("e! %s\n", s); /* edit file */
+			send_ex(ex_fd, "set notagstack\n");
+			send_ex(ex_fd, "e! %s\n", s); /* edit file */
 			if (avl_tree_size(n->subnodes)) {
 				fprintf(n->parent->index_f, "        <ul>\n");
 				for (	it = avl_tree_first(n->subnodes);
@@ -232,18 +235,21 @@ void process2(node *n)
 							fprintf(n->parent->index_f,
 								"          <li><div class=\"tag\"><a href=\"%s.html#%s-%d\">%s</a></div></li>\n",
 								n->name,p->id,p->tag_no,p->id);
-							send_ex("ts %s\n%d\n", p->id, p->tag_no); /* tag select, se vim(1) help */
-							send_ex("s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
+							send_ex(ex_fd, "ts %s\n%d\n", p->id, p->tag_no); /* tag select, se vim(1) help */
+							send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
 						} /* for */
 					} else {
-						send_ex("ta %s\n", p->id); /* goto tag, only one tag in this file */
-						send_ex("s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
+						send_ex(ex_fd, "ta %s\n", p->id); /* goto tag, only one tag in this file */
+						send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
 					} /* if */
 				} /* for */
 				fprintf(n->parent->index_f, "       </ul>\n");
 			} /* if */
-			send_ex("w! %s\n", n->full_name); /* write file */
+			send_ex(ex_fd, "w! %s\n", n->full_name); /* write file */
+			send_ex(ex_fd, "q!\n"); /* terminate */
+			pclose(ex_fd);
 			fprintf(n->parent->index_f, "       </li>\n");
+			scanfile(n);
 		} /* if */
 		if (flags & FLAG_PROGRESS) {	/* print progress */
 			static int i=0;
@@ -282,30 +288,35 @@ void process2(node *n)
 /* print help message */
 void do_usage (void)
 {
-	fprintf(stderr, "Usage: "PROGNAME" [ options ... ] tagfile1 ...\n");
-	fprintf(stderr, PROGNAME" "VERSION": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n");
-	fprintf(stderr, "This program is under GNU PUBLIC LICENSE, version 2 or later\n");
-	fprintf(stderr, "see the terms and conditions of use at http://www.gnu.org/\n");
-	fprintf(stderr, "(you might receive a copy of it with this program)\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "This program operates on a constructed tags file (see ctags(1)), and\n");
-	fprintf(stderr, "constructs an HTML hierarchy of source files, parallel to their C\n");
-	fprintf(stderr, "counterparts, with hyperlink cross references to all the C identifiers\n");
-	fprintf(stderr, "located in the code.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "It uses the tags file to locate all the identifier definitions in the\n");
-	fprintf(stderr, "C code, and then, it constructs a syntax marked HTML file, with each\n");
-	fprintf(stderr, "definition found in the tags file marked in the code, and every reference\n");
-	fprintf(stderr, "to it, surrounded by a <a href> tag, so clicking with the mouse leads us\n");
-	fprintf(stderr, "quickly and efficiently to the definition.\n");
-	fprintf(stderr, "Options:\n");
-	fprintf(stderr, "  -t tag_file. The tag file to be used\n");
-	fprintf(stderr, "  -h   Help.  This help screen.\n");
-	fprintf(stderr, "  -b base_dir.  Base directory for URL composition\n");
-	fprintf(stderr, "       This causes to generate <BASE> tags.  Useful if more than one directory\n");
-	fprintf(stderr, "       and no relative pathnames\n");
-	fprintf(stderr, "  -d   Debug.  Print file and file number order, instead of just the\n");
-	fprintf(stderr, "       percentage of the default case\n");
+	fprintf(stderr, 
+"Usage: "PROGNAME" [ options ... ] tagfile1 ...\n"
+PROGNAME" "VERSION": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n"
+"This program is under GNU PUBLIC LICENSE, version 2 or later\n"
+"see the terms and conditions of use at http://www.gnu.org/\n"
+"(you might receive a copy of it with this program)\n"
+"\n"
+"This program operates on a constructed tags file (see ctags(1)), and\n"
+"constructs an HTML hierarchy of source files, parallel to their C\n"
+"counterparts, with hyperlink cross references to all the C identifiers\n"
+"located in the code.\n"
+"\n"
+"It uses the tags file to locate all the identifier definitions in the\n"
+"C code, and then, it constructs a syntax marked HTML file, with each\n"
+"definition found in the tags file marked in the code, and every reference\n"
+"to it, surrounded by a <a href> tag, so clicking with the mouse leads us\n"
+"quickly and efficiently to the definition.\n"
+"Options:\n"
+"  -h   Help.  This help screen.\n"
+"  -t tag_file. The tag file to be used (default: tags)\n"
+"  -b base_dir.  Base directory for URL composition\n"
+"       This causes to generate <BASE> tags.\n"
+"  -d   Debug.\n"
+"  -n   Output linenumbers.\n"
+"  -o   Output directory (default html.out)\n"
+"  -p   Progress is shown on stderr.\n"
+"  -s   Style file (default style.css)\n"
+		);
+
 } /* do_usage */
 
 /* main program */
@@ -316,37 +327,28 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "t:hb:2drno:p")) != EOF) {
+	while ((opt = getopt(argc, argv, "t:hb:2drno:ps:")) != EOF) {
 		switch(opt) {
-		case 't': tag_file = optarg; break;
 		case 'h': do_usage(); exit(EXIT_SUCCESS);
+		case 't': tag_file = optarg; break;
 		case 'b': base_dir = optarg; break;
 		case 'd': flags |= FLAG_VERBOSE; break;
 		case 'n': flags |= FLAG_LINENUMBERS; break;
 		case 'o': output = optarg; break;
 		case 'p': flags |= FLAG_PROGRESS; break;
+		case 's': style_file = optarg; break;
 		default:
 			do_usage(); exit(EXIT_FAILURE);
 		} /* switch */
 	} /* while */
 
 	db_init(output);
+	style_node = new_node(style_file, db_root_node, FLAG_ISFILE);
 
 	/* Process files */
 
 	process1(tag_file);
-
-	ex_process = popen(EX_PATH, "w");
-	if (!ex_process) {
-		fprintf(stderr,
-			PROGNAME":ex_process:%s(errno=%d)\n",
-			strerror(errno), errno);
-		exit(EXIT_FAILURE);
-	} /* if */
-	send_ex("set notagstack\n");
 	process2(db_root_node);
-	send_ex("q!\n"); /* terminate */
-	pclose(ex_process);
 
 #if 0
 	{	AVL_ITERATOR i;
