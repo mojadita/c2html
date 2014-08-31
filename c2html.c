@@ -62,11 +62,13 @@ char *rcsId = "\n$Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $\n";
 /* variables */
 
 int flags = 0;
-const char *tag_file = "tags";
-const char *output = "html.out";
-const char *base_dir = NULL;
-const char *style_file = "style.css";
-const node *style_node = NULL;
+const char *tag_file = DEFAULT_TAG_FILE;
+const char *output = DEFAULT_OUTPUT;
+const char *base_dir = DEFAULT_BASE_DIR;
+const char *style_file = DEFAULT_STYLE_FILE;
+node *style_node = NULL;
+const char *js_file = DEFAULT_JS_FILE;
+node *js_node = NULL;
 
 /* functions */
 
@@ -85,7 +87,9 @@ void process1(const char *fn)
 		exit (EXIT_FAILURE);
 	} /* if */
 
+#if DEBUG
 	printf("Processing %s...\n", fn);
+#endif
 
 	/* file open, process lines */
 	while (fgets(line, sizeof line, tagfile)) {
@@ -123,22 +127,19 @@ void process1(const char *fn)
 
 		/* first, find the ctag entry */
 		tag = ctag_lookup(id, fi, st);
-#if 0
+#if DEBUG
 		printf(
 			"TAG:\n"
 			"  tag->id: %s\n"
 			"  tag->tag_no: %d\n"
 			"  tag->fi: %s\n"
-			"  tag->ss: %s\n  ",
+			"  tag->ss: %s\n"
+			"  tag->nod: %s\n",
 			tag->id,
 			tag->tag_no,
 			tag->fi,
-			tag->ss);
-		{	int i;
-			for (i = 0; tag->path[i]; i++)
-				printf("[%s|%p]", tag->path[i], tag->path[i]);
-			printf("\n");
-		}
+			tag->ss,
+			tag->nod->full_name);
 #endif
 
 	} /* while ... */
@@ -149,10 +150,12 @@ int send_ex(FILE *ex, const char *fmt, ...)
 {
 	va_list p;
 
+#if DEBUG
 	fprintf(stdout, ":");
 	va_start(p, fmt);
 	vfprintf(stdout, fmt, p);
 	va_end(p);
+#endif
 	va_start(p, fmt);
 	vfprintf(ex, fmt, p);
 	va_end(p);
@@ -160,6 +163,7 @@ int send_ex(FILE *ex, const char *fmt, ...)
 
 void process2(node *n)
 {
+	assert(n);
 #if DEBUG
 	printf("process2: entering \"%s\"\n", n->full_name);
 #endif
@@ -181,18 +185,19 @@ void process2(node *n)
 
 		/* 2.- make index.html */
 		
-		{	n->html_file = new_node("index.html", n, FLAG_DONTPROCESS | FLAG_ISFILE);
-#if DEBUG | 1
-			printf("process2:   "
-				"html_create(\"%s\", \"%s\");\n",
-				n->html_file->full_name, n->full_name);
+		n->html_file = new_node("index.html", n, FLAG_ISFILE);
+#if DEBUG
+		printf("process2:   "
+			"html_create(\"%s\");\n",
+			n->full_name);
 #endif
-			n->index_f = html_create(n);
-		} /* block */
+		n->index_f = html_create(n);
+
+		/* write on the parent html file a reference to us */
 		if (n->parent) {
-			fprintf(n->parent->index_f,
-				"      <li><div class=\"dir\"><a href=\"%s\">%s</a> directory.</div></li>\n",
-				n->html_file->name, n->name);
+			fprintf(n->parent->html_file->index_f,
+				"      <li><span class=\"dir\"><a href=\"%s\">%s</a> directory.</span></li>\n",
+				rel_path(n->parent->html_file, n->html_file), n->name);
 		} /* if */
 				
 		/* 3.- recurse to subdirectories */
@@ -206,54 +211,75 @@ void process2(node *n)
 		} /* block */
 
 		/* 4.- close files */
-		{	html_close(n->index_f);
-			n->index_f = NULL;
-		} /* block */
+		html_close(n);
+		n->index_f = NULL;
 
 		/* 5.- and finish */
 	} break;
 
 	/* 4.- PROCESS FILE */
 	case FLAG_ISFILE: {
-		if (n->parent) {
-			const ctag *p;
-			const char *s = strchr(n->full_name, '/');
-			FILE *ex_fd = popen(EX_PATH, "w");
-			while (*s == '/') s++;
-			AVL_ITERATOR it;
-			fprintf(n->parent->index_f,
-				"      <li><div class=\"file\"><a href=\"%s.html\">%s</a> file.</div>\n",
-				n->name, n->name);
-			send_ex(ex_fd, "set notagstack\n");
-			send_ex(ex_fd, "e! %s\n", s); /* edit file */
-			if (avl_tree_size(n->subnodes)) {
-				fprintf(n->parent->index_f, "        <ul>\n");
-				for (	it = avl_tree_first(n->subnodes);
-						it;
-						it = avl_iterator_next(it))
-				{
-					p = avl_iterator_data(it);
-					if (p->tag_no > 1) {
-						for (; p; p = p->next) {
-							fprintf(n->parent->index_f,
-								"          <li><div class=\"tag\"><a href=\"%s.html#%s-%d\">%s</a></div></li>\n",
-								n->name,p->id,p->tag_no,p->id);
-							send_ex(ex_fd, "ts %s\n%d\n", p->id, p->tag_no); /* tag select, se vim(1) help */
-							send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
-						} /* for */
-					} else {
-						send_ex(ex_fd, "ta %s\n", p->id); /* goto tag, only one tag in this file */
-						send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
-					} /* if */
-				} /* for */
-				fprintf(n->parent->index_f, "       </ul>\n");
+		FILE *ex_fd;
+		AVL_ITERATOR it;
+
+		assert(n->parent);
+		assert(n->parent->html_file);
+		assert(n->parent->html_file->index_f);
+
+		{	char buffer[128];
+			snprintf(buffer, sizeof buffer, "%s.html", n->name);
+			n->html_file = avl_tree_get(n->parent->subnodes, buffer);
+			if (n->html_file) {
+				fprintf(stderr, PROGNAME":error:name clash with file %s\n",
+					n->html_file->full_name);
+				exit(EXIT_FAILURE);
 			} /* if */
-			send_ex(ex_fd, "w! %s\n", n->full_name); /* write file */
-			send_ex(ex_fd, "q!\n"); /* terminate */
-			pclose(ex_fd);
-			fprintf(n->parent->index_f, "       </li>\n");
-			scanfile(n);
+			n->html_file = new_node(buffer, n->parent, FLAG_ISFILE);
+			/* hidden, as it's not being put in his parent's subnodes */
+		} /* block */
+
+		fprintf(n->parent->html_file->index_f,
+			"      <li><span class=\"file\">"
+			"<a href=\"%s\">%s</a> file.</span>\n",
+			n->html_file->name, n->name);
+
+		ex_fd = popen(EX_PATH, "w");
+		send_ex(ex_fd, "set notagstack\n");
+		{	const char *s;
+			s = strchr(n->full_name, '/');
+			while (*s == '/') s++;
+			send_ex(ex_fd, "e! %s\n", s); /* edit file */
+		} /* block */
+
+		/* for every tag in this file */
+		if (avl_tree_size(n->subnodes)) {
+			fprintf(n->parent->html_file->index_f, "        <ul>\n");
+			for (	it = avl_tree_first(n->subnodes);
+					it;
+					it = avl_iterator_next(it))
+			{
+				const ctag *p;
+				p = avl_iterator_data(it);
+				if (p->tag_no > 1) {
+					for (; p; p = p->next) {
+						fprintf(n->parent->html_file->index_f,
+							"          <li><span class=\"tag\"><a href=\"%s#%s-%d\">%s</a></span></li>\n",
+							n->html_file->name, p->id, p->tag_no, p->id);
+						send_ex(ex_fd, "ts %s\n%d\n", p->id, p->tag_no); /* tag select, se vim(1) help */
+						send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
+					} /* for */
+				} else {
+					fprintf(n->parent->html_file->index_f,
+						"          <li><span class=\"tag\"><a href=\"%s#%s-%d\">%s</a></span></li>\n",
+						n->html_file->name, p->id, p->tag_no, p->id);
+					send_ex(ex_fd, "ta %s\n", p->id); /* goto tag, only one tag in this file */
+					send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
+				} /* if */
+			} /* for */
+			fprintf(n->parent->html_file->index_f, "        </ul>\n");
 		} /* if */
+		send_ex(ex_fd, "w! %s\n", n->full_name); /* write file */
+		send_ex(ex_fd, "q!\n"); /* terminate */
 		if (flags & FLAG_PROGRESS) {	/* print progress */
 			static int i=0;
 			static char *progress[] = { "\\", "|", "/", "-" };
@@ -267,11 +293,14 @@ void process2(node *n)
 				percent += acum / n_files;
 				acum %= n_files;
 			} /* if */
-			fprintf(stderr, "%s (%d/%d -- %3d.%03d%%) %s\033[K\r",
+			fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s\033[K",
 				progress[i&3], i, n_files, percent / 1000,
 				percent % 1000, n->full_name);
 			if (i >= n_files) fprintf(stderr, "\n");
 		} /* block */
+		pclose(ex_fd);
+		fprintf(n->parent->html_file->index_f, "      </li>\n");
+		scanfile(n);
 	} break;
 
 	/* 5.- DATABASE INCONSISTENCY */
@@ -292,8 +321,8 @@ void process2(node *n)
 void do_usage (void)
 {
 	fprintf(stderr, 
-"Usage: "PROGNAME" [ options ... ] tagfile1 ...\n"
-PROGNAME" "VERSION": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n"
+"Usage: " PROGNAME " [ options ... ]\n"
+PROGNAME " " VERSION ": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n"
 "This program is under GNU PUBLIC LICENSE, version 2 or later\n"
 "see the terms and conditions of use at http://www.gnu.org/\n"
 "(you might receive a copy of it with this program)\n"
@@ -310,14 +339,15 @@ PROGNAME" "VERSION": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n"
 "quickly and efficiently to the definition.\n"
 "Options:\n"
 "  -h   Help.  This help screen.\n"
-"  -t tag_file. The tag file to be used (default: tags)\n"
+"  -t tag_file. The tag file to be used (default: " DEFAULT_TAG_FILE ")\n"
 "  -b base_dir.  Base directory for URL composition\n"
-"       This causes to generate <BASE> tags.\n"
+"       This causes to generate <BASE> tags. (default: " DEFAULT_BASE_DIR_STRING ")\n"
 "  -d   Debug.\n"
 "  -n   Output linenumbers.\n"
-"  -o   Output directory (default html.out)\n"
+"  -o   Output directory (default " DEFAULT_OUTPUT ")\n"
 "  -p   Progress is shown on stderr.\n"
-"  -s   Style file (default style.css)\n"
+"  -s   Style file (default " DEFAULT_STYLE_FILE ")\n"
+"  -j   Javascript file (default " DEFAULT_JS_FILE ")\n"
 		);
 
 } /* do_usage */
@@ -330,7 +360,7 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "t:hb:2drno:ps:")) != EOF) {
+	while ((opt = getopt(argc, argv, "t:hb:2drno:ps:j:")) != EOF) {
 		switch(opt) {
 		case 'h': do_usage(); exit(EXIT_SUCCESS);
 		case 't': tag_file = optarg; break;
@@ -340,180 +370,21 @@ int main (int argc, char **argv)
 		case 'o': output = optarg; break;
 		case 'p': flags |= FLAG_PROGRESS; break;
 		case 's': style_file = optarg; break;
+		case 'j': js_file = optarg; break;
 		default:
 			do_usage(); exit(EXIT_FAILURE);
 		} /* switch */
 	} /* while */
 
 	db_init(output);
-	style_node = new_node(style_file, db_root_node, FLAG_DONTPROCESS | FLAG_ISFILE);
+	style_node = new_node(style_file, db_root_node, FLAG_ISFILE);
+	js_node = new_node(js_file, db_root_node, FLAG_ISFILE);
 
 	/* Process files */
 
 	process1(tag_file);
 	process2(db_root_node);
 
-#if 0
-	{	AVL_ITERATOR i;
-		const ctag *old_tag = NULL;
-		const node *old_file = NULL;
-		char buffer[MAXLINELENGTH];
-		
-
-		for (i = avl_tree_first(db_ctag); i; i = avl_iterator_next(i)) {
-			const ctag *new_tag = avl_iterator_data(i);
-			const node *new_file = new_tag->nod;
-			if (old_file != new_file) { /* change in file */
-				char *p = buffer;
-				size_t sz = sizeof buffer;
-				if (old_file) {
-					p = get_name(old_file, &p, &sz);
-					printf("closing [%s].\n", p);
-					printf("      EX>>> w %s.temp\n", p);
-				} /* if */
-				p = buffer; sz = sizeof buffer;
-				p = get_name(new_file, &p, &sz);
-				printf("opening [%s]:\n", p);
-				printf("      EX>>> e %s\n", p);
-			} /* if */
-			/* TODO: Here goes the stuff */
-			printf("    tag [%s/%d]\n", new_tag->id, new_tag->tag_no);
-			printf("      EX>>> %dta %s\n", new_tag->tag_no, new_tag->id);
-			printf("      EX>>> s:^:(@a name=\"%s-%d\"/@):\n", new_tag->id, new_tag->tag_no);
-			old_tag = new_tag; old_file = new_file;
-		} /* for */
-		if (old_tag) {
-			char *p = buffer;
-			size_t sz = sizeof buffer;
-			p = get_name(old_tag->nod, &p, &sz);
-			printf("closing [%s].\n", p);
-			printf("      EX>>> w %s.temp\n", p);
-		} /* if */
-	} /* block */
-#endif
-
-#if 0
-	/* print the results ---do the heavy work--- */
-	{	FileNode *f; CtagNode *c;
-		FILE *toc, *idx;
-		int i,acum, percent, llen;
-		char *dir, *ldir;
-
-		/* sort the filelist */
-		files_array = calloc(files_n, sizeof files_array[0]);
-		for (f = files_first, i=0; f; f = f->files_next, i++)
-			files_array[i] = f;
-		qsort(files_array, files_n, sizeof files_array[0],
-			(int (*)(const void *, const void *))files_cmp);
-
-		/* open the directory files */
-		if (flags & FLAG_TWOLEVEL) {
-			toc = html_create("index.html", "Directories");
-			idx = NULL;
-			fprintf(toc, "    <UL>\n");
-		} else {
-			toc = NULL;
-			idx = html_create("index.html", "Files");
-			fprintf(idx, "    <UL>\n");
-		}
-
-		acum = files_n >> 1; percent = 0;
-		/* process each file in the database, in order */
-		for (i = 0; i < files_n; i++) {
-			char buffer [EXCMD_BUFSIZE];
-			FILE *ex;
-
-			f = files_array[i];
-
-			if (flags & FLAG_TWOLEVEL) {
-				if (!idx || strncmp(f->name, ldir, llen)) {
-					char *p;
-					if (idx) {
-						fprintf(idx, "    </ul>\n");
-						html_close (idx);
-					}
-					sprintf (buffer, PFX2"%05d"EXT2, i);
-					ldir = f->name; p = strrchr(ldir, '/');
-					llen = p ? p - ldir : 0;
-					idx = html_create(buffer, "Directory %0.*s", 
-						llen ? llen : 1, llen ? ldir : ".");
-					fprintf(toc,
-						"    <LI><A HREF=\"%s\">%0.*s</a>\n",
-						buffer, llen ? llen : 1, llen ? ldir : ".");
-				}
-			}
-
-			fprintf(idx,
-				"    <H2>File <A HREF=\"%s"EXT2"\">%s</a>:</h2>\n",
-				f->name, f->name);
-
-			/* Print the progress, as this is a lengthy process */
-			{	static char *progress[] = { "\\", "|", "/", "-" };
-
-				acum += 100000;
-				if (acum >= files_n) {
-					percent += acum / files_n;
-					acum %= files_n;
-				}
-				fprintf(stderr, "%s (%d/%d -- %2d.%03d%%) %s\033[K\r",
-					progress[i&3], i+1, files_n, percent / 1000, percent % 1000, f->name);
-				fflush(stderr);
-			}
-
-			/* edit the file */
-			ex = popen (EX_PATH, "w");
-			if (!ex) {
-				fprintf (stderr,
-					PROGNAME": "__FILE__"(%d): popen(\"%s\"): %s\n",
-					__LINE__, EX_PATH, strerror(errno));
-				exit(EXIT_FAILURE);
-			}
-
-			/* Now, process the list of symbols related to this file */
-			fprintf (idx, "    <UL>\n");
-			for (c = f->ctags_first; c; c = c->ctags_next) {
-				assert(c->file == f->name);
-				fprintf (idx,
-					"      <LI><A HREF=\"%s"EXT2"#%s_%d\">%s(%s/%d)</a>\n",
-					c->file, c->sym, c->tag_num, c->sym, c->file, c->tag_num);
-				/* switch to the tag, using ex(1) */
-				fprintf (ex,
-					"%dta %s\n",
-					c->tag_num, c->sym);
-				/* insert a mark at the beggining of the line.
-				 * The mark format is
-				 * (@A NAME="<symbol name>"@)(@/a@)
-				 * The mark format must not be changed, or the procedure
-				 * to analyse it again to generate the tags won't work */
-				fprintf (ex,
-					"s:^:(@A NAME=\"%s_%d\"@)(@/a@):\n",
-					c->sym, c->tag_num);
-			} /* foreach tag in this file */
-			fprintf(idx, "    </ul>\n");
-			/* write and exit ex(1) */
-			fprintf(ex,
-				"w %s"EXT1"\n"
-				"q\n", f->name);
-			pclose (ex);
-
-			/* convert the temporary file into the html one */
-			{	char *p = buffer;  /* we use buffer again */
-
-				p += sprintf (p, "%s"EXT1, f->name); p++;
-				sprintf (p, "%s"EXT2, f->name);
-				scanfile (f->name, buffer, p);
-				/* erase temp file after work is done */
-				unlink (buffer);
-			} /* conversion */
-		}
-		/* finish the index. */
-		if (idx) html_close(idx);
-		if (flags & FLAG_TWOLEVEL) {
-			fprintf(toc, "    </ul>\n");
-			html_close(toc);
-		}
-	} /* output phase */
-#endif
 } /* main */
 
 /* $Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $ */

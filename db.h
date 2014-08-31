@@ -47,6 +47,8 @@ void mk_dir(const node *nod);
 node *new_node(const char *name, node *parent, node_type typ);
 ctag *ctag_lookup(const char *id, const char *fi, const char *ss);
 ctag *ctag_lookup_by_id(const char *id);
+int common_prefix(node *a, node *b);
+char *rel_path(node *a, node *b);
 
 #endif /* _DB_H */
 /* $Id$ */

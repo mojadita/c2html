@@ -272,4 +272,39 @@ ctag *ctag_lookup(const char *id, const char *fi, const char *ss)
 	return res;
 } /* ctag_lookup */
 
+int common_prefix(node *a, node *b)
+{
+	int i = 0;
+	while (	   a->path[i]
+			&& b->path[i]
+			&& a->path[i] == b->path[i])
+		i++;
+	return i;
+} /* common_prefix */
+
+char *rel_path(node *a, node *b)
+{
+	int c = common_prefix(a, b);
+	int i;
+	static char buffer[4096];
+	size_t bs = sizeof buffer;
+	char *p = buffer;
+	int res, n = 0;
+
+	for (i = a->level-1; i > 0 && i > c; i--) {
+		res = snprintf(p, bs, "%s..",
+			n++ ? "/" : "");
+		p += res; bs -= res;
+	} /* for */
+	/* now i == c or i == 0 */
+	while(i < b->level) {
+		res = snprintf(p, bs, "%s%s",
+			n++ ? "/" : "",
+			b->path[i++]->name);
+		p += res; bs -= res;
+	} /* while */
+
+	return buffer;
+} /* rel_path */
+
 /* $Id$ */

@@ -1,0 +1,16 @@
+.linenum {
+	background-color: orange;
+}
+.comment {
+	color: blue;
+}
+.resvword {
+	/*font-family: courier; */
+	font-weight: bold;
+}
+.string {
+	color: red;
+}
+.escapechar {
+	color: maroon;
+}

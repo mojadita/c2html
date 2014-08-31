@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
+#include <assert.h>
 #include <errno.h>
 
 #include <avl.h>
@@ -72,6 +73,7 @@ static FILE *OUTPUT;
 %}
 %x incomment
 %s indirective
+%x ininclude
 %x instring
 %x inchar
 %x inATAG
@@ -92,28 +94,45 @@ fl			(([flFL]|[fF][lL]|[lL][fF])?)
 esc			(\\(.|\n|{odig}{odig}?{odig}?|[xX]{xdig}+))
 sp			([\ \t])
 
-alnum		([a-zA-Z\$_0-9])
-alpha		([a-zA-Z\$_])
+alnum		([a-zA-Z_0-9])
+alpha		([a-zA-Z_])
 
-directive	(define|undef|include|if|ifdef|ifndef|else|elif|endif|error|pragma)
+directive	(define|undef|if|ifdef|ifndef|else|elif|endif|error|pragma)
+fn			("<"[^">"\n]*">")
+fn2			(\"[^"\n]*\")
+ident		({alpha}{alnum}*)
 %%
-"/*"					{	PUSH(incomment); fprintf(OUTPUT, "<FONT COLOR=\"blue\"><I>/*"); }
+"/*"					{	PUSH(incomment); fprintf(OUTPUT, "<span class=\"comment\">/*"); }
 <incomment>\n			{	pr(OUTPUT, yytext); newline(FALSE); }
-<incomment>.				pr(OUTPUT, yytext);
-<incomment>TODO			|
-<incomment>FIXME		|
-<incomment>XXX			|
-<incomment>ARGSUSED		|
-<incomment>NEVERREACHED		fprintf(OUTPUT, "<U>%s</u>", yytext);
-<incomment>"*/"			{	fprintf(OUTPUT, "*/</i></font>"); POP(); }
+<incomment>.			{	pr(OUTPUT, yytext); }
+<incomment>TODO			{	fprintf(OUTPUT, "<span class=\"todo\">%s</span>", yytext); }
+<incomment>FIXME		{	fprintf(OUTPUT, "<span class=\"fixme\">%s</span>", yytext); }
+<incomment>XXX			{	fprintf(OUTPUT, "<span class=\"xxx\">%s</span>", yytext); }
+<incomment>ARGSUSED		{	fprintf(OUTPUT, "<span class=\"argsused\">%s</span>", yytext); }
+<incomment>NEVERREACHED	{	fprintf(OUTPUT, "<U>%s</u>", yytext); }
+<incomment>"*/"			{	fprintf(OUTPUT, "*/</span>"); POP(); }
 
-"#"{sp}*\n				{	fprintf(OUTPUT, "<B>%s</b>", yytext); newline(FALSE); }
-"#"{directive}			{	PUSH(indirective);
-							fprintf(OUTPUT, "<FONT COLOR=\"maroon\"><B>%s</b><I>", yytext);
+"#"{sp}*{directive}		{	PUSH(indirective);
+							fprintf(OUTPUT, "<span class=\"directive\">%s", yytext);
 						}
-<indirective>defined		fprintf(OUTPUT, "<B>%s</b>", yytext);
-<indirective>\\\n		{	fputs("\\\n", OUTPUT); newline(FALSE); }
-<indirective>\n			{	fputs("</i></font>\n", OUTPUT); newline(FALSE); POP(); }
+"#"{sp}*include{sp}*	{	PUSH(ininclude);
+							fprintf(OUTPUT, "<span class=\"directive\">%s", yytext);
+						}
+<indirective>defined	{	fprintf(OUTPUT, "<span class=\"resvword\">%s", yytext); }
+<indirective>\\\n		{	fprintf(OUTPUT, "\\\n"); newline(FALSE); }
+<indirective>\n			{	fputs("</span>\n", OUTPUT); newline(FALSE); POP(); }
+<ininclude>{fn}			{	fprintf(OUTPUT, "<span class=\"include standard\">");
+							pr(OUTPUT, yytext);
+							fputs("</span>", OUTPUT);
+							POP();
+							PUSH(indirective);
+						}
+<ininclude>{fn2}		{	fprintf(OUTPUT, "<span class=\"include\">");
+							pr(OUTPUT, yytext);
+							fputs("</span>", OUTPUT);
+							POP();
+							PUSH(indirective);
+						}
 
 auto					|
 break					|
@@ -146,37 +165,35 @@ union					|
 unsigned				|
 void					|
 volatile				|
-while						fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
+while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 
-0{odig}*{lu}			|
-[1-9]{dig}*{lu}			|
-0[xX]{xdig}*{lu}		|
-{mant}({exp})?{fl}		|
-{mant2}{exp}{fl}			fprintf(OUTPUT, "<FONT COLOR=\"red\"><B><I>%s</i></b></font>", yytext);
+0{odig}*{lu}			{	fprintf(OUTPUT, "<span class=\"number octal\">%s</span>", yytext); }
+[1-9]{dig}*{lu}			{   fprintf(OUTPUT, "<span class=\"number decimal\">%s</span>", yytext); }
+0[xX]{xdig}*{lu}		{	fprintf(OUTPUT, "<span class=\"number hexadecimal\">%s</span>", yytext); }
+{mant}({exp})?{fl}		{	fprintf(OUTPUT, "<span class=\"number double\">%s</span>", yytext); }
+{mant2}{exp}{fl}		{	fprintf(OUTPUT, "<span class=\"number double\">%s</span>", yytext); }
 
-\"						{	PUSH(instring); fputs("<FONT COLOR=\"green\"><I>\"", OUTPUT); }
-<instring>\"			{	fputs("\"</i></font>", OUTPUT); POP(); }
-<instring>{esc}			{	fputs("<FONT COLOR=\"blue\"><U>", OUTPUT);pr(OUTPUT, yytext);
-							fputs("</u></font>", OUTPUT);
-						}
+\"						{	PUSH(instring); fprintf(OUTPUT, "<span class=\"string\">\""); }
+<instring>\"			{	fprintf(OUTPUT, "\"</span>"); POP(); }
+<instring>{esc}			{	fprintf(OUTPUT, "<span class=\"escapechar\">%s</span>", yytext); }
 <instring>\n			{	pr(OUTPUT, yytext); newline(FALSE); }
-<instring>.					pr(OUTPUT, yytext);
+<instring>.				{	pr(OUTPUT, yytext); }
 
-\'						{	PUSH(inchar); fputs("<FONT COLOR=\"red\"><B><I>\'", OUTPUT); }
-<inchar>\'				{	fputs("\'</i></b></font>", OUTPUT); POP(); }
-<inchar>{esc}			{	fputs("<FONT COLOR=\"blue\"><U>", OUTPUT);pr(OUTPUT, yytext);
-							fputs("</u></font>", OUTPUT);
-						}
-<inchar>\n				{	fputs(yytext, OUTPUT); newline(FALSE); }
-<inchar>.					fputs(yytext, OUTPUT);
+\'						{	PUSH(inchar); fprintf(OUTPUT, "<span class=\"charliteral\">\'"); }
+<inchar>\'				{	fprintf(OUTPUT, "\'</span>"); POP(); }
+<inchar>{esc}			{	fprintf(OUTPUT, "<span class=\"escapechar\">%s</span>", yytext); }
+<inchar>\n				{	pr(OUTPUT, yytext); newline(FALSE); }
+<inchar>.				{	pr(OUTPUT, yytext); }
 
-<INITIAL>^"(@"				fputs("<", OUTPUT); BEGIN(inATAG);
-<inATAG>"@)(@"				fputs("><", OUTPUT);
-<inATAG>"@)"				fputs(">", OUTPUT); BEGIN(INITIAL);
-<inATAG>.					fputs(yytext, OUTPUT);
+<INITIAL>^"(@"			{	fputs("<", OUTPUT); BEGIN(inATAG); }
+<inATAG>"@)(@"			{	fputs("><", OUTPUT); }
+<inATAG>"@)"			{	fputs(">", OUTPUT); BEGIN(INITIAL); }
+<inATAG>.				{	fputs(yytext, OUTPUT); }
 
-[a-zA-Z_\$]{alnum}*		{	/* identifier */
+{alpha}{alnum}*			{{	/* identifier */
+							fprintf(OUTPUT, "<span class=\"identifier\">%s</span>", yytext);
 #if 0
+							ctag *t = 
 							HashEntry *he;
 							he = hashTableLookup(&syms_table, yytext);
 							if (!he) {
@@ -209,7 +226,7 @@ while						fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 								fprintf(OUTPUT, "</a>");
 							}
 #endif
-						}
+						}}
 "..."					|
 "&&"					|
 "-="					|
@@ -248,17 +265,17 @@ while						fprintf(OUTPUT, "<FONT COLOR=\"red\"><B>%s</b></font>", yytext);
 "=="					|
 "!"						|
 "*"						|
-":"						pr(OUTPUT, yytext);
+":"						{	fputs("<span class=\"operator\">", OUTPUT);pr(OUTPUT, yytext);fputs("</span>", OUTPUT); }
 
 "["						|
 "]"						|
 "{"						|
 "}"						|
 "("						|
-")"						fputs(yytext, OUTPUT);
+")"						{	fputs("<span class=\"bracket\">", OUTPUT);pr(OUTPUT, yytext);fputs("</span>", OUTPUT); }
 
-\n						{ fputs(yytext, OUTPUT); newline(FALSE); }
-.						fputs(yytext, OUTPUT);
+\n						{	fputs(yytext, OUTPUT); newline(FALSE); }
+.						{	fputs(yytext, OUTPUT); }
 
 %%
 /* functions */
@@ -334,9 +351,9 @@ void newline(int do_reset)
 
 	if (do_reset) linenum = 0;
 	if (flags & FLAG_LINENUMBERS) {
-		fprintf(OUTPUT, "<FONT COLOR=\"grey\">%05d:</font> ",
+		fprintf(OUTPUT, "<span class=\"linenum\">%06d:</span> ",
 			++linenum);
-	}
+	} /* if */
 } /* newline */
 
 int trace(int s)
@@ -381,15 +398,11 @@ void scanfile (node *fin)
 	char buffer[64];
 	node *fout;
 
-	snprintf(buffer, sizeof buffer, "%s.html", fin->name);
-	fout = avl_tree_get(fin->parent->subnodes, buffer);
-	if (!fout) {
-		fout = new_node(buffer, fin->parent, FLAG_ISFILE);
-		fin->html_file = fout;
-		/* hidden, as it's not being put in his parent's subnodes */
-	} /* if */
+	assert(fout = fin->html_file);
 
+#if DEBUG
 	printf("Generating [%s-->%s]\n", fin->full_name, fout->full_name);
+#endif
 
 	INPUT = fopen (fin->full_name, "r");
 	if (!INPUT) {
@@ -415,7 +428,7 @@ void scanfile (node *fin)
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	fprintf(OUTPUT, "    </pre>\n");
 	fclose (INPUT);
-	html_close(OUTPUT);
+	html_close(fin);
 	yy_delete_buffer(bs);
 } /* scanfile */
 

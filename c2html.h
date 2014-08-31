@@ -79,19 +79,28 @@ typedef struct file_node {
 } FileNode;
 
 /* prototypes */
-FILE *html_create(const node *n);
-void html_close(FILE *f);
+FILE *html_create(node *n);
+void html_close(node *n);
 
 /* variables */
 extern HashTable syms_table, files_table;
 extern FileNode *files_first, *files_last;
+
+#define DEFAULT_TAG_FILE	"tags"
+#define DEFAULT_OUTPUT		"html"
+#define DEFAULT_BASE_DIR	NULL
+#define DEFAULT_BASE_DIR_STRING	"<NULL>"
+#define DEFAULT_STYLE_FILE	"style.css"
+#define DEFAULT_JS_FILE		"javascript.js"
 
 extern int flags;
 extern const char *tag_file;
 extern const char *output;
 extern const char *base_dir;
 extern const char *style_file;
-extern const node *style_node;
+extern node *style_node;
+extern const char *js_file;
+extern node *js_node;
 
 /* functions */
 
