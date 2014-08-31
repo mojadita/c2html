@@ -118,7 +118,7 @@ ident		({alpha}{alnum}*)
 "#"{sp}*include{sp}*	{	PUSH(ininclude);
 							fprintf(OUTPUT, "<span class=\"directive\">%s", yytext);
 						}
-<indirective>defined	{	fprintf(OUTPUT, "<span class=\"resvword\">%s", yytext); }
+<indirective>defined	{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 <indirective>\\\n		{	fprintf(OUTPUT, "\\\n"); newline(FALSE); }
 <indirective>\n			{	fputs("</span>\n", OUTPUT); newline(FALSE); POP(); }
 <ininclude>{fn}			{	fprintf(OUTPUT, "<span class=\"include standard\">");
