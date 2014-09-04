@@ -135,7 +135,6 @@ FILE *html_create(node *n)
 	path_print(f, n);
 	fprintf(f, "</div>\n"
 "    <hr/>\n"
-"    <ul>\n"
 		);
 	return f;
 } /* create_html */
@@ -143,10 +142,12 @@ FILE *html_create(node *n)
 void html_close(node *n)
 {
 	FILE *f;
+	node *hn;
 	char *typ;
 
 	assert(n);
-	assert(n->html_file);
+	assert(hn = n->html_file);
+	assert(n->html_file->index_f);
 
 	switch(n->type) {
 	case FLAG_ISDIR: typ = "Directory"; break;
@@ -154,9 +155,9 @@ void html_close(node *n)
 	default: typ = "<<file type unknown>>"; break;
 	} /* switch */
 
-	f = n->html_file->index_f;
+	assert(f = hn->index_f);
+
 	fprintf(f,
-"    </ul>\n"
 "    <hr/>\n"
 "    <div class=\"title\">%s ",
 		typ);
@@ -169,8 +170,9 @@ void html_close(node *n)
 "  </body>\n"
 "</html>\n"
 "<!-- %s -->\n",
-		n->html_file->full_name);
+		hn->full_name);
 	fclose(f);
+	hn->index_f = NULL;
 } /* close_html */
 
 /* $Id: html_output.c,v 1.6 2005/03/02 20:35:19 luis Exp $ */

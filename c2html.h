@@ -28,79 +28,57 @@
 #ifndef C2HTML_H
 #define C2HTML_H
 
-#include "multifree.h"
-#include "hashTable.h"
+#include "db.h" /* for the node types below */
 
 /* constants */
-#ifndef VERSION
-#error VERSION is not defined
+#ifndef	VERSION
+#error	VERSION is not defined
 #endif
-#define DEFAULT_TAGS	"tags"
-#ifndef EX_PATH
-#error EX_PATH must be defined to the path of the ex(1) command.
-#endif
-#define EXCMD_BUFSIZE	1024
-#define EXT1			".temp"
-#define EXT2			".html"
-#define PFX1			"ta-"
-#define PFX2			"i-"
 
-#define FLAG_MENU_CREATED	1
+#ifndef	EX_PATH
+#error	EX_PATH must be defined to the path of the ex(1) command.
+#endif
 
 #ifndef FALSE
 #define FALSE (1 == 0)
 #define TRUE	(!FALSE)
 #endif
 
+#define DEFAULT_BUFSIZE	4096
+#define EXT1			".temp"
+#define EXT2			".html"
+#define PFX1			"ta-"
+#define PFX2			"i-"
+
+#define PR(X)	PROGNAME":"__FILE__":%d:%s: "X, __LINE__, __PRETTY_FUNCTION__
 #undef TRACEON		/* 1 */
 
-#define FLAG_TWOLEVEL	(1 << 0)
-#define FLAG_VERBOSE	(1 << 1)
-#define FLAG_RELFILENAME	(1 << 2)
-#define FLAG_LINENUMBERS	(1 << 3)
-#define FLAG_PROGRESS		(1 << 4)
-
-/* types */
-typedef struct ctag_node {
-	unsigned int flags;
-	char *sym;  /* symbol */
-	char *file; /* file */
-	char *ctfile; /* ctag file */
-	int tag_num; /* tag number */
-	struct ctag_node *ctags_next;
-	struct ctag_node *next;
-} CtagNode;
-
-typedef struct file_node {
-	char *name;
-	struct file_node *files_next;
-	struct ctag_node *ctags_first;
-	struct ctag_node *ctags_last;
-} FileNode;
-
-/* prototypes */
-FILE *html_create(node *n);
-void html_close(node *n);
+#define FLAG_LINENUMBERS		(1 << 0)
+#define FLAG_PROGRESS			(1 << 1)
+#define FLAG_DEBUG_PROCESS1		(1 << 2)
+#define FLAG_DEBUG_DB			(1 << 3)
+#define FLAG_DEBUG_LEX			(1 << 4)
+#define FLAG_DEBUG_EX			(1 << 5)
+#define FLAG_DEBUG_CREATE_MENU	(1 << 6)
+#define FLAG_DEBUG_PROCESS2		(1 << 7)
 
 /* variables */
-extern HashTable syms_table, files_table;
-extern FileNode *files_first, *files_last;
 
-#define DEFAULT_TAG_FILE	"tags"
-#define DEFAULT_OUTPUT		"html"
-#define DEFAULT_BASE_DIR	NULL
+#define DEFAULT_TAG_FILE		"tags"
+#define DEFAULT_OUTPUT			"html"
+#define DEFAULT_BASE_DIR		NULL
 #define DEFAULT_BASE_DIR_STRING	"<NULL>"
-#define DEFAULT_STYLE_FILE	"style.css"
-#define DEFAULT_JS_FILE		"javascript.js"
+#define DEFAULT_STYLE_FILE		"style.css"
+#define DEFAULT_JS_FILE			"javascript.js"
 
-extern int flags;
-extern const char *tag_file;
-extern const char *output;
-extern const char *base_dir;
-extern const char *style_file;
-extern node *style_node;
-extern const char *js_file;
-extern node *js_node;
+extern int 			flags;
+extern const char	*tag_file;
+extern const char	*output;
+extern const char	*base_dir;
+extern const char	*style_file;
+extern node			*style_node;
+extern const char	*js_file;
+extern node			*js_node;
 
 /* functions */
 

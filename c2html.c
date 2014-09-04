@@ -43,12 +43,12 @@
 #include "db.h"
 #include "c2html.h"
 #include "intern.h"
-#include "db.h"
+#include "html_output.h"
 
 /* constants */
 
 #ifndef DEBUG
-#define DEBUG 1
+#define DEBUG 0
 #endif
 
 #define MAXLINELENGTH	4096
@@ -82,37 +82,46 @@ void process1(const char *fn)
 	tagfile = fopen (fn, "r");
 	if (!tagfile) {
 		fprintf (stderr,
-			PROGNAME": Error opening %s: %s\n",
+			PR("Error opening %s: %s\n"),
 			fn, strerror(errno));
 		exit (EXIT_FAILURE);
 	} /* if */
 
-#if DEBUG
-	printf("Processing %s...\n", fn);
-#endif
+	if (flags & FLAG_DEBUG_PROCESS1) {
+		printf(
+			PR("Processing %s...\n"),
+			fn);
+	} /* if */
 
 	/* file open, process lines */
 	while (fgets(line, sizeof line, tagfile)) {
 		const char *id, *fi, *st;
 		const ctag *tag;
 		
+		if (flags & FLAG_DEBUG_PROCESS1) {
+			printf(PR("step: %s\n"), line);
+		} /* if */
+
 		line_num++;
 
 		id = strtok (line, "\t\n"); if (!id) {
 			fprintf(stderr,
-				"%s:%lld:warning: bad syntax, unrecognized id.\n",
+				PR("%s:%lld:warning: "
+				"bad syntax, unrecognized id.\n"),
 				fn, line_num);
 			continue;
 		} /* if */
 		fi = strtok (NULL, "\t\n"); if (!fi) {
 			fprintf(stderr,
-				"%s:%lld:warning: bad syntax, unrecognized file name.\n",
+				PR("%s:%lld:warning: "
+				"bad syntax, unrecognized file name.\n"),
 				fn, line_num);
 			continue;
 		} /* if */
 		st = strtok (NULL, "\n"); if (!st) {
 			fprintf(stderr,
-				"%s:%lld:warning: bad syntax, unrecognized search string.\n",
+				PR("%s:%lld:warning: "
+				"bad syntax, unrecognized search string.\n"),
 				fn, line_num);
 			continue;
 		} /* if */
@@ -120,29 +129,27 @@ void process1(const char *fn)
 		/* Ignore VIM ctags(1) private symbols */
 		if (id[0] == '!') {
 			fprintf(stderr,
-				"%s:%lld:warning: ignoring \"%s\" vim private identifier\n",
+				PR("%s:%lld:warning: "
+				"ignoring \"%s\" vim private identifier\n"),
 				fn, line_num, id);
 			continue;
 		} /* if */
 
 		/* first, find the ctag entry */
-		tag = ctag_lookup(id, fi, st);
-#if DEBUG
-		printf(
-			"TAG:\n"
-			"  tag->id: %s\n"
-			"  tag->tag_no: %d\n"
-			"  tag->fi: %s\n"
-			"  tag->ss: %s\n"
-			"  tag->nod: %s\n",
-			tag->id,
-			tag->tag_no,
-			tag->fi,
-			tag->ss,
-			tag->nod->full_name);
-#endif
+		if (flags & FLAG_DEBUG_PROCESS1) {
+			printf(
+				PR("calling lookup ctag(%s, %s, %s);...\n"),
+				id, fi, st);
+		} /* if */
+		tag = lookup_ctag(id, fi, st);
 
 	} /* while ... */
+
+	if (flags & FLAG_DEBUG_PROCESS1) {
+		printf(
+			PR("%s:closing tagfile\n"),
+			fn);
+	} /* if */
 	fclose(tagfile);
 } /* process1 */
 
@@ -150,12 +157,12 @@ int send_ex(FILE *ex, const char *fmt, ...)
 {
 	va_list p;
 
-#if DEBUG
-	fprintf(stdout, ":");
-	va_start(p, fmt);
-	vfprintf(stdout, fmt, p);
-	va_end(p);
-#endif
+	if (flags & FLAG_DEBUG_EX) {
+		printf(PR("EX:"));
+		va_start(p, fmt);
+		vprintf(fmt, p);
+		va_end(p);
+	} /* if */
 	va_start(p, fmt);
 	vfprintf(ex, fmt, p);
 	va_end(p);
@@ -164,57 +171,61 @@ int send_ex(FILE *ex, const char *fmt, ...)
 void process2(node *n)
 {
 	assert(n);
-#if DEBUG
-	printf("process2: entering \"%s\"\n", n->full_name);
-#endif
+
+	if (flags & FLAG_DEBUG_PROCESS2) {
+		printf(PR("process2: entering \"%s\"\n"), n->full_name);
+	} /* if */
+
 	switch (n->type) {
 	case FLAG_ISDIR: {
+		int res;
+		FILE *ixf;
+		AVL_ITERATOR it;
+
 		/* 1.- mkdir */
-		{	int res;
-#if DEBUG
-			printf("process2:   mkdir(\"%s\");\n", n->full_name);
-#endif
-			res = mkdir(n->full_name, 0777);
-			if (res < 0) {
-				fprintf(stderr,
-					"process2:error:MKDIR:%s:%s(errno=%d)\n",
-					n->full_name, strerror(errno), errno);
-				return; /* cannot continue */
-			} /* if */
-		} /* block */
+		if (flags & FLAG_DEBUG_PROCESS2) {
+			printf(PR("process2:   mkdir(\"%s\");\n"),
+				n->full_name);
+		} /* if */
+		res = mkdir(n->full_name, 0777);
+		if (res < 0) {
+			fprintf(stderr,
+				"process2:error:MKDIR:%s:%s(errno=%d)\n",
+				n->full_name, strerror(errno), errno);
+			return; /* cannot continue */
+		} /* if */
 
-		/* 2.- make index.html */
-		
-		n->html_file = new_node("index.html", n, FLAG_ISFILE);
-#if DEBUG
-		printf("process2:   "
-			"html_create(\"%s\");\n",
-			n->full_name);
-#endif
-		n->index_f = html_create(n);
+		/* 2.- create html file and open it for writing */
+		assert(n->html_file);
+		if (flags & FLAG_DEBUG_PROCESS2) {
+			printf(PR("process2:   "
+				"html_create(\"%s\");\n"),
+				n->html_file->full_name);
+		} /* if */
+		ixf = html_create(n);
+		fprintf(ixf, "      <ul>\n");
 
-		/* write on the parent html file a reference to us */
+		/* 3.- write on the parent html file a reference to us
+		 * (of course if it has a parent) */
 		if (n->parent) {
 			fprintf(n->parent->html_file->index_f,
-				"      <li><span class=\"dir\"><a href=\"%s\">%s</a> directory.</span></li>\n",
+				"      <li><span class=\"dir\">"
+				"<a href=\"%s\">%s</a> directory."
+				"</span></li>\n",
 				rel_path(n->parent->html_file, n->html_file), n->name);
 		} /* if */
 				
-		/* 3.- recurse to subdirectories */
-		{	AVL_ITERATOR it;
-			for (	it = avl_tree_first(n->subnodes);
-				it;
-				it = avl_iterator_next(it))
-			{
-				process2(avl_iterator_data(it));
-			} /* for */
-		} /* block */
+		/* 4.- recurse to subdirectories/files */
+		for (	it = avl_tree_first(n->subnodes);
+			it;
+			it = avl_iterator_next(it))
+		{
+			process2(avl_iterator_data(it));
+		} /* for */
 
 		/* 4.- close files */
+		fprintf(ixf, "      </ul>\n");
 		html_close(n);
-		n->index_f = NULL;
-
-		/* 5.- and finish */
 	} break;
 
 	/* 4.- PROCESS FILE */
@@ -226,18 +237,6 @@ void process2(node *n)
 		assert(n->parent->html_file);
 		assert(n->parent->html_file->index_f);
 
-		{	char buffer[128];
-			snprintf(buffer, sizeof buffer, "%s.html", n->name);
-			n->html_file = avl_tree_get(n->parent->subnodes, buffer);
-			if (n->html_file) {
-				fprintf(stderr, PROGNAME":error:name clash with file %s\n",
-					n->html_file->full_name);
-				exit(EXIT_FAILURE);
-			} /* if */
-			n->html_file = new_node(buffer, n->parent, FLAG_ISFILE);
-			/* hidden, as it's not being put in his parent's subnodes */
-		} /* block */
-
 		fprintf(n->parent->html_file->index_f,
 			"      <li><span class=\"file\">"
 			"<a href=\"%s\">%s</a> file.</span>\n",
@@ -246,12 +245,19 @@ void process2(node *n)
 		ex_fd = popen(EX_PATH, "w");
 		send_ex(ex_fd, "set notagstack\n");
 		{	const char *s;
+
 			s = strchr(n->full_name, '/');
+			if (!s) s = n->full_name;
 			while (*s == '/') s++;
 			send_ex(ex_fd, "e! %s\n", s); /* edit file */
+			if (flags & FLAG_DEBUG_PROCESS2) {
+				printf(PR("editing sesion on file %s -> %s: begin\n"),
+					s, n->full_name);
+			} /* if */
 		} /* block */
 
 		/* for every tag in this file */
+		printf(PR("FILE name=[%s]\n"), n->full_name);
 		if (avl_tree_size(n->subnodes)) {
 			fprintf(n->parent->html_file->index_f, "        <ul>\n");
 			for (	it = avl_tree_first(n->subnodes);
@@ -259,21 +265,34 @@ void process2(node *n)
 					it = avl_iterator_next(it))
 			{
 				const ctag *p;
-				p = avl_iterator_data(it);
-				if (p->tag_no > 1) {
-					for (; p; p = p->next) {
+				assert(p = avl_iterator_data(it));
+				/* the first tag in the list contains the total number of tags in list */
+				if (p->tag_no_in_file > 1) {
+					for (; p; p = p->next_in_file) {
+						printf(PR("TAG[%p] id=[%s], fi=[%s], ss=<%s>, tag_no_in_file=%d, next_in_file=[%p]\n"),
+							p, p->id, p->fi, p->ss, p->tag_no_in_file, p->next_in_file);
 						fprintf(n->parent->html_file->index_f,
-							"          <li><span class=\"tag\"><a href=\"%s#%s-%d\">%s</a></span></li>\n",
-							n->html_file->name, p->id, p->tag_no, p->id);
-						send_ex(ex_fd, "ts %s\n%d\n", p->id, p->tag_no); /* tag select, se vim(1) help */
-						send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
+							"          <li><span class=\"tag\">"
+							"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
+							n->html_file->name, p->id, p->tag_no_in_file, p->id);
+						/* tag select, se vim(1) help */
+						send_ex(ex_fd,
+							"ts %s\n"
+							"%d\n",
+							p->id,
+							p->tag_no_in_file);
+						send_ex(ex_fd,
+							"s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
+							p->id, p->tag_no_in_file); /* change */
 					} /* for */
 				} else {
 					fprintf(n->parent->html_file->index_f,
-						"          <li><span class=\"tag\"><a href=\"%s#%s-%d\">%s</a></span></li>\n",
-						n->html_file->name, p->id, p->tag_no, p->id);
+						"          <li><span class=\"tag\">"
+						"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
+						n->html_file->name, p->id, p->tag_no_in_file, p->id);
 					send_ex(ex_fd, "ta %s\n", p->id); /* goto tag, only one tag in this file */
-					send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"/@):\n", p->id, p->tag_no); /* change */
+					send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
+						p->id, p->tag_no_in_file); /* change */
 				} /* if */
 			} /* for */
 			fprintf(n->parent->html_file->index_f, "        </ul>\n");
@@ -300,6 +319,10 @@ void process2(node *n)
 		} /* block */
 		pclose(ex_fd);
 		fprintf(n->parent->html_file->index_f, "      </li>\n");
+		if (flags & FLAG_DEBUG_PROCESS2) {
+			printf(PR("scanning file %s -> %s\n"),
+				n->full_name, n->html_file->full_name);
+		} /* if */
 		scanfile(n);
 	} break;
 
@@ -339,10 +362,16 @@ PROGNAME " " VERSION ": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n"
 "quickly and efficiently to the definition.\n"
 "Options:\n"
 "  -h   Help.  This help screen.\n"
-"  -t tag_file. The tag file to be used (default: " DEFAULT_TAG_FILE ")\n"
-"  -b base_dir.  Base directory for URL composition\n"
+"  -t <tag_file>  The tag file to be used (default: " DEFAULT_TAG_FILE ")\n"
+"  -b <base_dir>  Base directory for URL composition\n"
 "       This causes to generate <BASE> tags. (default: " DEFAULT_BASE_DIR_STRING ")\n"
-"  -d   Debug.\n"
+"  -d <debug_options>  Debug options can be several of:  \n"
+"         1  process1 debug.\n"
+"         2  process2 debug.\n"
+"         d  database debug.\n"
+"         l  lexical processing debug.\n"
+"         x  ex(1) commands debug.\n"
+"         m  create_menu debug.\n"
 "  -n   Output linenumbers.\n"
 "  -o   Output directory (default " DEFAULT_OUTPUT ")\n"
 "  -p   Progress is shown on stderr.\n"
@@ -360,17 +389,29 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "t:hb:2drno:ps:j:")) != EOF) {
+	while ((opt = getopt(argc, argv, "t:hb:2d:rno:ps:j:")) != EOF) {
 		switch(opt) {
 		case 'h': do_usage(); exit(EXIT_SUCCESS);
 		case 't': tag_file = optarg; break;
 		case 'b': base_dir = optarg; break;
-		case 'd': flags |= FLAG_VERBOSE; break;
 		case 'n': flags |= FLAG_LINENUMBERS; break;
 		case 'o': output = optarg; break;
 		case 'p': flags |= FLAG_PROGRESS; break;
 		case 's': style_file = optarg; break;
 		case 'j': js_file = optarg; break;
+		case 'd': {	char *p; /* debug */
+				for (p = optarg; *p; p++) {
+					switch(*p) {
+					case '1': flags |= FLAG_DEBUG_PROCESS1; break;
+					case 'd': flags |= FLAG_DEBUG_DB; break;
+					case 'l': flags |= FLAG_DEBUG_LEX; break;
+					case 'x': flags |= FLAG_DEBUG_EX; break;
+					case 'm': flags |= FLAG_DEBUG_CREATE_MENU; break;
+					case '2': flags |= FLAG_DEBUG_PROCESS2; break;
+					} /* switch */
+				} /* for */
+			} /* block */
+			break;
 		default:
 			do_usage(); exit(EXIT_FAILURE);
 		} /* switch */
@@ -383,6 +424,33 @@ int main (int argc, char **argv)
 	/* Process files */
 
 	process1(tag_file);
+
+	{	AVL_ITERATOR i;
+		for (	i = avl_tree_first(db_menus);
+				i;
+				i = avl_iterator_next(i))
+		{
+			tag_menu *men = avl_iterator_data(i);
+			AVL_ITERATOR j;
+			printf(PR("MENU[%s]: ntags=%d, nod=[%s], last_tag=<%s,%s,%p>\n"),
+				men->name, men->ntags, men->nod->full_name,
+				men->last_tag->id, men->last_tag->fi, men->last_tag->ss);	
+			for (	j = avl_tree_first(men->group_by_file);
+					j;
+					j = avl_iterator_next(j))
+			{
+				char *fn = avl_iterator_key(j);
+				ctag *tag;
+				printf(PR("  FILE: %s\n"), fn);
+				for (tag = avl_iterator_data(j); tag; tag = tag->next_in_file) {
+					printf(PR("    TAG[%p]: id=[%s], fi=[%s], tag_no_in_file=%d, next_in_file=[%p]\n"),
+						tag, tag->id, tag->fi, tag->tag_no_in_file, tag->next_in_file);
+				} /* for */
+			} /* for */
+			
+		} /* for */
+	} /* block */
+
 	process2(db_root_node);
 
 } /* main */

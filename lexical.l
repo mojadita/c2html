@@ -39,32 +39,33 @@
 
 #include <avl.h>
 
+#include "intern.h"
 #include "db.h"
 #include "c2html.h"
+#include "html_output.h"
 
 /* constants */
 #define PUSHSIZE		10
 #define PUSH(X)						\
 	if (pointer < PUSHSIZE) {		\
 		state[pointer++] = (X);		\
-		BEGIN (trace(X));			\
+		BEGIN(X);			\
 	}
 #define POP()						\
 	if (--pointer > 0)				\
-		BEGIN trace(state[pointer-1]);
+		BEGIN(state[pointer-1]);
 static int state[PUSHSIZE];
 static int pointer = 0;
 
-#define YY_DECL	int yylex(char *fnout)
+#define YY_DECL	int yylex(node *fin, node *fnout)
 
 /* types */
 
 /* prototypes */
 void pr(FILE *, char *);
 void scanfile(node *);
-void createmenu(CtagNode *);
+void create_menu(tag_menu *m);
 void newline(int do_reset);
-char *relfilename(char *fmt, char *fdest, char *fsour);
 
 /* variables */
 static FILE *OUTPUT;
@@ -191,41 +192,73 @@ while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 <inATAG>.				{	fputs(yytext, OUTPUT); }
 
 {alpha}{alnum}*			{{	/* identifier */
-							fprintf(OUTPUT, "<span class=\"identifier\">%s</span>", yytext);
-#if 0
-							ctag *t = 
-							HashEntry *he;
-							he = hashTableLookup(&syms_table, yytext);
-							if (!he) {
-								fprintf (stderr, PROGNAME": "__FILE__"(%d): "
-									"hashTableLookup: %s\n",
-									__LINE__, strerror(errno));
-								exit(EXIT_FAILURE);
-							}
-							if (he->data) {
-								CtagNode *ce = he->data;
-								if (!(ce->next)) {
-									fprintf(OUTPUT,
-										"<A HREF=\"%s#%s_%d\">",
-										relfilename("%s"EXT2, ce->file, fnout),
-										ce->sym, ce->tag_num);
-								} else {
-									fprintf(OUTPUT,
-										"<!-- FIXME --><A HREF=\"%s\">",
-										relfilename(
-											PFX1"%s"EXT2,
-											ce->sym,
-											fnout));
-									if (!(ce->flags & FLAG_MENU_CREATED)) {
-										createmenu(ce);
-									}
-								}
-							}
-							fprintf(OUTPUT, "%s", yytext);
-							if (he->data) {
-								fprintf(OUTPUT, "</a>");
-							}
-#endif
+							tag_menu *men;
+
+							if (flags & FLAG_DEBUG_LEX) {
+								printf(PR("identifier processing(%s): begin\n"),
+									yytext);
+							} /* if */
+
+							fprintf(OUTPUT, "<span class=\"identifier\">");
+							if (flags & FLAG_DEBUG_LEX) {
+								printf(PR("looking for menu_entry \"%s\" in db_menus\n"),
+									yytext);
+							} /* if */
+							men = avl_tree_get(db_menus, yytext);
+							if (men) { /* there is an entry in menus database */
+								if (flags & FLAG_DEBUG_LEX) {
+									printf(PR("\"%s\" found!!! check if ntags > 1\n"),
+										men->name);
+								} /* if */
+								if (men->ntags > 1) { /* multiple entry */
+									char *rp;
+									if (flags & FLAG_DEBUG_LEX) {
+										printf(PR("menu \"%s\":multiple menu entry(%d), "
+											"calling create_menu\n"),
+											men->name, men->ntags);
+									} /* if */
+
+									create_menu(men);
+
+									rp = rel_path(fin->html_file, men->nod->html_file);
+									if (flags & FLAG_DEBUG_LEX) {
+										printf(PR("<a href=\"%s\">%s</a>\n"),
+											rp, men->name);
+									} /* if */
+									fprintf(OUTPUT, "<a href=\"%s\">%s</a>",
+										rp, men->name);
+								} else { /* single entry */
+									ctag *t_aux = men->last_tag;
+									char *rp;
+
+									if (flags & FLAG_DEBUG_LEX) {
+										printf(PR("menu %s:single menu entry ctag=<%s,%s,%s>\n"),
+											men->name, t_aux->id, t_aux->fi, t_aux->ss);
+									} /* if */
+
+									assert(t_aux); /* ctag * */
+									assert(t_aux->nod); /* node * */
+									assert(t_aux->nod->html_file); /* node * */
+									rp = rel_path(fin->html_file, t_aux->nod->html_file);
+									if (flags & FLAG_DEBUG_LEX) {
+										printf(PR("menu %s:<a href=\"%s#%s-%d\">%s</a>\n"),
+											t_aux->id,
+											rp, t_aux->id, t_aux->tag_no_in_file,
+											t_aux->id);
+									} /* if */
+									fprintf(OUTPUT, "<a href=\"%s#%s-%d\">%s</a>",
+										rp, t_aux->id, t_aux->tag_no_in_file, t_aux->id);
+								} /* if */
+							} else { /* no entry found, print it plain */
+								if (flags & FLAG_DEBUG_LEX) {
+									printf(PR("%s not found, print plain.\n"), yytext);
+								} /* if */
+								fprintf(OUTPUT, "%s", yytext);
+							} /* if */
+							fprintf(OUTPUT, "</span>");
+							if (flags & FLAG_DEBUG_LEX) {
+								printf(PR("identifier(%s): end\n"), yytext);
+							} /* if */
 						}}
 "..."					|
 "&&"					|
@@ -265,72 +298,24 @@ while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 "=="					|
 "!"						|
 "*"						|
-":"						{	fputs("<span class=\"operator\">", OUTPUT);pr(OUTPUT, yytext);fputs("</span>", OUTPUT); }
+":"						{	fputs("<span class=\"operator\">", OUTPUT);
+							pr(OUTPUT, yytext);fputs("</span>", OUTPUT);
+						}
 
 "["						|
 "]"						|
 "{"						|
 "}"						|
 "("						|
-")"						{	fputs("<span class=\"bracket\">", OUTPUT);pr(OUTPUT, yytext);fputs("</span>", OUTPUT); }
+")"						{	fputs("<span class=\"bracket\">", OUTPUT);
+							pr(OUTPUT, yytext);fputs("</span>", OUTPUT);
+						}
 
 \n						{	fputs(yytext, OUTPUT); newline(FALSE); }
 .						{	fputs(yytext, OUTPUT); }
 
 %%
 /* functions */
-
-char *relfilename(char *fmt, char *fdest, char *fsour)
-{
-	static char buffer[10240];  /* we return a pointer to this buffer */
-	char *outname;
-	int not_found = TRUE;
-
-	{	char *f1, *f2, *f3;
-		f1 = buffer;
-		f2 = f1 + sprintf(buffer, fmt, fdest) + 1;
-		f3 = f2 + sprintf(f2, "%s", fsour) + 1;
-		fdest = f1; fsour = f2; outname = f3;
-	}
-#if 0
-	fprintf(stderr, "relfilename: \"%s\" -> \"%s\"", fsour, fdest);
-#endif
-	if (!(flags & FLAG_RELFILENAME)) return fdest;
-	while (not_found) {
-		char *p1 = strchr (fsour, '/');
-		char *p2 = strchr (fdest, '/');
-
-		if (!p1 || !p2) break;
-		*p1 = '\0'; *p2 = '\0';
-		not_found = (strcmp(fsour, fdest) == 0);
-		*p1++ = '/'; *p2++ = '/';
-		if (not_found) {
-			fsour = p1; fdest = p2;
-		}
-	}
-	/* we have eliminated the common part, now construct the output string */
-	{	char *p, *q = outname;
-		while (p = strchr(fsour, '/')) {
-			*p++ = '\0';
-			if (!strcmp(fsour, "..")) {
-				fprintf(stderr,
-					PROGNAME": "__FILE__"(%d): \"..\" in path, output can be damaged\n",
-					__LINE__);
-			}
-			if (strcmp(fsour, "."))  /* . implies NO OPERATION */
-				q += sprintf (q, "../");
-			fsour = p;
-		}
-		q += sprintf (q, "%s", fdest);
-	}
-
-#if 0
-	fprintf(stderr, " ==> \"%s\";\n", outname);
-#endif
-
-
-	return outname;
-} /* relfilename */
 
 void pr(FILE *f, char *s)
 {
@@ -351,44 +336,101 @@ void newline(int do_reset)
 
 	if (do_reset) linenum = 0;
 	if (flags & FLAG_LINENUMBERS) {
-		fprintf(OUTPUT, "<span class=\"linenum\">%06d:</span> ",
+		fprintf(OUTPUT, "<span class=\"linenum\">%06d</span> ",
 			++linenum);
 	} /* if */
 } /* newline */
 
-int trace(int s)
-{
-#if TRACEON
-	switch(s) {
-	case INITIAL:		fputs("<!-- INITIAL -->",		OUTPUT); break;
-	case incomment:		fputs("<!-- incomment -->",		OUTPUT); break;
-	case indirective:	fputs("<!-- indirective -->",	OUTPUT); break;
-	case instring:		fputs("<!-- instring -->",		OUTPUT); break;
-	case inchar:		fputs("<!-- inchar -->",		OUTPUT); break;
-	}
-#endif
-	return s;
-} /* trace */
-
-void createmenu(CtagNode *ce)
+void create_menu(tag_menu *m)
 {
 	FILE *outf;
-	char buffer[1024];
+	AVL_ITERATOR i;
 
-	sprintf (buffer, PFX1"%s"EXT2, ce->sym);
+	assert(m);
+
+	if (flags & FLAG_DEBUG_CREATE_MENU) {
+		printf(PR("begin: menu=\"%s\"\n"), m->name);
+	} /* if */
+
+	if (m->flags & TAG_MENU_FLAG_ALREADY_CREATED) {
+		if (flags & FLAG_DEBUG_CREATE_MENU) {
+			printf(PR("already created \"%s\", give up.\n"),
+				m->name);
+		} /* if */
+		return;
+	} /* if */
+	m->flags |= TAG_MENU_FLAG_ALREADY_CREATED;
+
+	assert(m->nod);
+
+	outf = html_create(m->nod);
+	fprintf(outf, "      <ul>\n");
+
+	printf(PR("MEN: name=\"%s\", ntags=%d\n"),
+		m->name, m->ntags);
+
+	/* follow the list of files for this id */
+	for (	i = avl_tree_first(m->group_by_file);
+			i;
+			i = avl_iterator_next(i))
+	{
+		ctag *t = avl_iterator_data(i);
+
 #if 0
-	fprintf (stderr, PROGNAME": creating menu %s\n", buffer);
+		assert(t);
+		assert(t->nod);
+		assert(t->nod->full_name);
 #endif
-	outf = html_create(NULL);
-	fprintf(outf, "    <UL>\n");
-	for (;ce; ce = ce->next) {
-		fprintf(outf, "      <LI><A HREF=\"%s"EXT2"#%s_%d\">%s</a>\n",
-			ce->file, ce->sym, ce->tag_num, ce->file);
-		ce->flags |= FLAG_MENU_CREATED;
-	}
-	fprintf(outf, "	   </ul>\n");
-	html_close(outf);
-} /* createmenu */
+
+		printf(PR("FILE: %s\n"), avl_iterator_key(i));
+
+		if (flags & FLAG_DEBUG_CREATE_MENU) {
+			printf(PR("step: file = %s\n"),
+				t->nod->full_name);
+		} /* if */
+
+		fprintf(outf,
+			"        <li class=\"menu file\">File "
+			"<span class=\"file\">%s</span>.\n"
+			"          <ul>\n",
+			t->nod->full_name);
+
+		if (0)
+		for (t = avl_iterator_data(i); t; t = t->next_in_file)
+			printf(PR("TAG[%p] id=[%s], fi=[%s], ss=<%s>, tag_no_in_file=%d, next_in_file=[%p]\n"),
+				t, t->id, t->fi, t->ss, t->tag_no_in_file, t->next_in_file);
+
+#if 0
+		do {
+			if (flags & FLAG_DEBUG_CREATE_MENU) {
+				printf(PR("substep: ctag = <%s,%s,%s>\n"),
+					t->id, t->nod->full_name, t->ss);
+			} /* if */
+			char *rp = rel_path(m->nod->html_file, t->nod->html_file);
+			if (flags & FLAG_DEBUG_CREATE_MENU) {
+				printf(PR("substep: <a href=\"%s#%s-%d\">%s(%d)</a>\n"),
+					rp, t->id, t->tag_no_in_file, t->id, t->tag_no_in_file);
+			} /* if */
+			fprintf(outf,
+				"            <li class=\"menu tag\">"
+				"<a href=\"%s#%s-%d\">%s(%d)</a></li>\n",
+				rp, t->id, t->tag_no_in_file, t->id, t->tag_no_in_file);
+			t = t->next_in_file;
+		} while(t);
+#endif
+
+		fprintf(outf,
+			"          </ul></li><!-- File %s -->\n",
+			t->nod->full_name); 
+		if (flags & FLAG_DEBUG_CREATE_MENU) {
+			printf(PR("step: end\n"));
+		} /* if */
+	} /* for */
+
+	fprintf(outf, "      </ul>\n");
+	html_close(m->nod);
+		
+} /* create_menu */
 		
 
 void scanfile (node *fin)
@@ -406,25 +448,27 @@ void scanfile (node *fin)
 
 	INPUT = fopen (fin->full_name, "r");
 	if (!INPUT) {
-		fprintf(stderr, PROGNAME":fopen:READ:%s:%s(errno=%d)\n",
+		fprintf(stderr,
+			PR("fopen(READ):%s:%s(errno=%d)\n"),
 			fin->full_name, strerror(errno), errno);
 		exit(EXIT_FAILURE);
 	} /* if */
 	OUTPUT = html_create(fin);
 	if (!OUTPUT) {
-		fprintf(stderr, PROGNAME":fopen:WRITE:%s:%s(errno=%d)\n",
+		fprintf(stderr,
+			PR("fopen(WRITE):%s:%s(errno=%d)\n"),
 			fout->full_name, strerror(errno), errno);
 		exit(EXIT_FAILURE);
 	} /* if */
 	bs = yy_create_buffer (INPUT, YY_BUF_SIZE);
 	yy_switch_to_buffer (bs);
 
-	fprintf(OUTPUT, "    <PRE>\n");
+	fprintf(OUTPUT, "    <pre class=\"listing\">\n");
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	pointer=0;
 	PUSH(INITIAL);
 	newline(TRUE);
-	yylex(fout);
+	yylex(fin, fout);
 	fprintf(OUTPUT, "<!---------------------------------------------------->\n");
 	fprintf(OUTPUT, "    </pre>\n");
 	fclose (INPUT);

@@ -1,16 +1,31 @@
 .linenum {
 	background-color: orange;
+	color: yellow;
+	height:15px;
 }
 .comment {
-	color: blue;
+	color: green;
 }
 .resvword {
 	/*font-family: courier; */
 	font-weight: bold;
+	/*color: cyan;*/
 }
 .string {
 	color: red;
 }
 .escapechar {
-	color: maroon;
+	color: purple;
+}
+.number {
+	color: red;
+}
+.todo,.fixme,.argsused,.xxx {
+	background: yellow;
+	color: red;
+}
+pre {
+	/*background: black;*/
+	color: gray;
+	padding: 1ex;
 }
