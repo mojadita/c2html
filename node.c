@@ -14,21 +14,12 @@
 
 #include "intern.h"
 #include "node.h"
-
-#ifndef DEBUG
-#define DEBUG	1
-#endif
-
-#if DEBUG
-#define DEB(X) printf X
-#else
-#define DEB(X)
-#endif
+#include "debug.h"
 
 #define BUFFER_SIZE				4096
 #define NULL_POINTER_STRING		"<<NULL>>"
-#define PR(X) __FILE__":%d:%s: "X,__LINE__,__func__
-#define INC_LEVEL	1
+
+static int print_string(FILE *f, const char *s);
 
 /* if you modify the enum node_type_e list,
  * you have also to modify here. */
@@ -37,11 +28,6 @@ static char *type2string[] = {
 	"TYPE_FILE",
 	"TYPE_HTML",
 };
-
-static int print_string(FILE *f, const char *s)
-{
-	return fputs(s, f);
-} /* print_string */
 
 node *new_node(const char *name, const node *parent, const node_type typ)
 {
@@ -272,8 +258,7 @@ char *rel_path(const node *a, const node *b)
 	return buffer;
 } /* rel_path */
 
-int
-do_recur(const node *nod,
+int do_recur(const node *nod,
 	node_callback pre,
 	void *val_pre,
 	node_callback fil,
@@ -319,5 +304,10 @@ do_recur(const node *nod,
 		type2string[nod->type]));
 	return res;
 } /* do_recur */
+
+static int print_string(FILE *f, const char *s)
+{
+	return fputs(s, f);
+} /* print_string */
 
 /* $Id$ */

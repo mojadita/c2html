@@ -25,65 +25,18 @@
 /* Do not include anything BEFORE the line below, as it would not be
  * protected against double inclusion from other files
  */
-#ifndef C2HTML_H
-#define C2HTML_H
+#ifndef _HTML_OUTPUT_H
+#define _HTML_OUTPUT_H
 
-#include "db.h" /* for the node types below */
+#include "db.h"
+#include "c2html.h"
 
-/* constants */
-#ifndef	VERSION
-#error	VERSION is not defined
-#endif
+/* prototypes */
+FILE *html_create(node *n);
+void html_close(node *n);
 
-#ifndef	EX_PATH
-#error	EX_PATH must be defined to the path of the ex(1) command.
-#endif
-
-#ifndef FALSE
-#define FALSE (1 == 0)
-#define TRUE	(!FALSE)
-#endif
-
-#define DEFAULT_BUFSIZE	4096
-#define EXT1			".temp"
-#define EXT2			".html"
-#define PFX1			"ta-"
-#define PFX2			"i-"
-
-#undef TRACEON		/* 1 */
-
-#define FLAG_LINENUMBERS		(1 << 0)
-#define FLAG_PROGRESS			(1 << 1)
-#define FLAG_DEBUG_PROCESS1		(1 << 2)
-#define FLAG_DEBUG_DB			(1 << 3)
-#define FLAG_DEBUG_LEX			(1 << 4)
-#define FLAG_DEBUG_EX			(1 << 5)
-#define FLAG_DEBUG_CREATE_MENU	(1 << 6)
-#define FLAG_DEBUG_PROCESS2		(1 << 7)
-
-/* variables */
-
-#define DEFAULT_TAG_FILE		"tags"
-#define DEFAULT_OUTPUT			"html"
-#define DEFAULT_BASE_DIR		NULL
-#define DEFAULT_BASE_DIR_STRING	"<NULL>"
-#define DEFAULT_STYLE_FILE		"style.css"
-#define DEFAULT_JS_FILE			"javascript.js"
-
-extern int 			flags;
-extern const char	*tag_file;
-extern const char	*output;
-extern const char	*base_dir;
-extern const char	*style_file;
-extern node			*style_node;
-extern const char	*js_file;
-extern node			*js_node;
-
-/* functions */
-
-#endif /* C2HTML_H */
+#endif /* _HTML_OUTPUT_H */
 /* Do not include anything AFTER the line above, as it would not be
  * protected against double inclusion from other files.
  */
-
 /* $Id: c2html.h,v 0.17 2009/01/03 22:23:11 luis Exp $ */

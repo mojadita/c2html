@@ -1,6 +1,6 @@
 /* $Id$
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
- * Date: sáb ago 23 21:13:42 EEST 2014
+ * Date: Fri Sep  5 15:59:13 EEST 2014
  * Disclaimer: (C) 2014 LUIS COLORADO.  All rights reserved.
  */
 #ifndef _MENU_H
@@ -24,5 +24,5 @@ extern AVL_TREE db_menus;
 
 tag_menu *lookup_menu(const char *id);
 
-#endif /* _DB_H */
+#endif /* _MENU_H */
 /* $Id$ */

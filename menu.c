@@ -1,6 +1,6 @@
 /* $Id$
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
- * Date: sáb ago 23 22:34:53 EEST 2014
+ * Date: Fri Sep  5 15:59:37 EEST 2014
  * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
  */
 
@@ -12,15 +12,14 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "debug.h"
 #include "intern.h"
 #include "menu.h"
 
 AVL_TREE db_menus = NULL;
 
-static void print_string(FILE *o, char *s)
-{
-	fputs(s, o);
-} /* print_string */
+/* forward prototype definition */
+static void print_string(FILE *o, char *s);
 
 tag_menu *lookup_menu(const char *id)
 {
@@ -58,5 +57,10 @@ tag_menu *lookup_menu(const char *id)
 
 	return res;
 } /* lookup_menu */
+
+static void print_string(FILE *o, char *s)
+{
+	fputs(s, o);
+} /* print_string */
 
 /* $Id$ */

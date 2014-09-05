@@ -29,11 +29,13 @@ INCLUDES=-DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
 #-DPACKAGE_URL=\""@PACKAGE_URL@"\"
 
 bin_PROGRAMS=c2html
-check_PROGRAMS=test_node
+check_PROGRAMS=test_node test_menu
 
 c2html_SOURCES = c2html.c lexical.l html_output.c intern.c db.c
 c2html_LDFLAGS = -lavl
 test_node_SOURCES = test_node.c node.c intern.c
 test_node_LDFLAGS = -lavl
+test_menu_SOURCES = test_menu.c menu.c intern.c
+test_menu_LDFLAGS = -lavl
 #
 # $Id: Makefile.am,v 1.2 2005/03/02 20:35:18 luis Exp $

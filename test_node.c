@@ -31,11 +31,12 @@
 #include <time.h>
 #include <assert.h>
 
+#include "debug.h"
 #include "node.h"
+
 
 /* constants */
 #define MAX		50
-#define PR(X) __FILE__":%d:%s: "X, __LINE__, __func__
 
 /* types */
 

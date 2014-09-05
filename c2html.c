@@ -40,24 +40,20 @@
 
 #include <avl.h>
 
+#include "intern.h"
+#include "node.h"
+#include "menu.h"
 #include "db.h"
 #include "c2html.h"
-#include "intern.h"
+#include "debug.h"
 #include "html_output.h"
 
 /* constants */
 
-#ifndef DEBUG
-#define DEBUG 0
-#endif
 
 #define MAXLINELENGTH	4096
 
 char *rcsId = "\n$Id: c2html.c,v 0.24 2009/01/03 22:23:11 luis Exp $\n";
-
-/* types */
-
-/* prototypes */
 
 /* variables */
 
@@ -87,20 +83,14 @@ void process1(const char *fn)
 		exit (EXIT_FAILURE);
 	} /* if */
 
-	if (flags & FLAG_DEBUG_PROCESS1) {
-		printf(
-			PR("Processing %s...\n"),
-			fn);
-	} /* if */
+	DEB((PR("Processing %s...\n"), fn));
 
 	/* file open, process lines */
 	while (fgets(line, sizeof line, tagfile)) {
 		const char *id, *fi, *st;
 		const ctag *tag;
 		
-		if (flags & FLAG_DEBUG_PROCESS1) {
-			printf(PR("step: %s\n"), line);
-		} /* if */
+		DEB(PR("step: %s\n"), line);
 
 		line_num++;
 
@@ -136,20 +126,13 @@ void process1(const char *fn)
 		} /* if */
 
 		/* first, find the ctag entry */
-		if (flags & FLAG_DEBUG_PROCESS1) {
-			printf(
-				PR("calling lookup ctag(%s, %s, %s);...\n"),
-				id, fi, st);
-		} /* if */
+		DEB((PR("calling lookup ctag(%s, %s, %s);...\n"),
+			id, fi, st));
 		tag = lookup_ctag(id, fi, st);
 
 	} /* while ... */
 
-	if (flags & FLAG_DEBUG_PROCESS1) {
-		printf(
-			PR("%s:closing tagfile\n"),
-			fn);
-	} /* if */
+	DEB((PR("%s:closing tagfile\n"), fn));
 	fclose(tagfile);
 } /* process1 */
 
@@ -157,16 +140,140 @@ int send_ex(FILE *ex, const char *fmt, ...)
 {
 	va_list p;
 
-	if (flags & FLAG_DEBUG_EX) {
-		printf(PR("EX:"));
-		va_start(p, fmt);
-		vprintf(fmt, p);
-		va_end(p);
-	} /* if */
+	DEB(PR("EX:"));
+#if DEBUG
+	va_start(p, fmt);
+	vprintf(fmt, p);
+	va_end(p);
+#endif
+
 	va_start(p, fmt);
 	vfprintf(ex, fmt, p);
 	va_end(p);
 } /* send_ex */
+
+int process_dir_pre(const node *d, void *)
+{
+	int res = mkdir(d->full_name, 0777);
+	FILE *h;
+	if (res < 0) {
+		fprintf(stderr,
+			PR("error:MKDIR:%s:%s(errno=%d)\n"),
+			d->full_name, strerror(errno), errno);
+		return -1;
+	} /* if */
+	DEB((PR("creating html file [%s] for directory [%s]\n"),
+		d->html_file->full_name, d->full_name));
+	h = html_create(d);
+	fprintf(h, "      <ul>\n");
+	if (d->parent) {
+		fprintf(d->parent->html_file->index_f,
+			"      <li><span class=\"dir\">"
+			"<a href=\"%s\">%s</a> directory."
+			"</span></li>\n",
+			rel_path(d->parent->html_file, d->html_file), n->name);
+	} /* if */
+	return 0;
+} /* process_dir_pre */
+
+int process_dir_post(const node *d, void *)
+{
+	FILE *h = d->html_file->index_f;
+	fprintf(h, "      </ul>\n");
+	html_close(d);
+	return 0;
+} /* process_dir_post */
+
+/* ARGSUSED */
+int process_file(const node *f, void *not_used)
+{
+	FILE *ex_fd;
+	fprintf(n->parent->html_file->index_f,
+		"      <li><span class=\"file\">"
+		"<a href=\"%s\">%s</a> file.</span>\n",
+		f->html_file->name, f->name);
+	ex_fd = popen(EX_PATH, "w");
+	send_ex(ex_fd, "set notagstack\n");
+	{	const char *s;
+		s = strchr(n->full_name, '/');
+		if (!s) s = n->full_name;
+		while (*s == '/') s++;
+		send_ex(ex_fd, "e! %s\n", s); /* edit original file */
+		DEB((PR("editing session on file %s -> %s\n"),
+			s, f->full_name));
+	} /* block */
+
+	/* for every tag in this file */
+	DEB((PR("FILE name=[%s]\n"), f->full_name));
+	if (avl_tree_size(f->subnodes)) {
+		fprintf(n->parent->html_file->index_f,
+			"        <ul>\n");
+		for (	it = avl_tree_first(n->subnodes);
+				it;
+				it = avl_iterator_next(it))
+		{
+			const ctag *tag;
+			assert(tag = avl_iterator_data(it));
+			/* the first tag in the list contains the total number of tag in this list */
+			if (p->tag_no_in_file > 1) { /* several tags for this id */
+				for (; tag; tag = tag->next_in_file) {
+					DEB((PR("TAG[%p] <%s|%s|%p>, tag_no_in_file=%d, next_in_file[%p]\n"),
+						tag, tag->id, tag->fi, tag->ss, tag->tag_no_in_file, tag->next_in_file));
+					fprintf(n->parent->html_file->index_f,
+						"          <li><span class=\"tag\">"
+						"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
+						tag->html_file->name, p->id, p->tag_no_in_file, p->id);
+					/* tag select, see vim(1) help for details */
+					send_ex(ex_fd,
+						"ts %s\n"
+						"%d\n",
+						tag->id,
+						tag->tag_no_in_file);
+					send_ex(ex_fd,
+						"s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
+						tag->id, tag->tag_no_in_file); /* change */
+				} /* for */
+			} else {
+				fprintf(tag->parent->html_file->index_f,
+					"            <li><span class=\"tag\">"
+					"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
+					tag->html_file->name, p->id, p->tag_no_in_file, p->id);
+				send_ex(ex_fd, "ta %s\n", p->id); /* goto tag, only one tag in this file */
+				send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
+					tag->id, tag->tag_no_in_file); /* change */
+			} /* if */
+		} /* for */
+		fprintf(f->parent->html_file->index_f,
+			"        </ul>\n");
+	} /* if */
+	send_ex(ex_fd, "w! %s\n", n->full_name); /* write file */
+	send_ex(ex_fd, "q!\n"); /* and terminate */
+
+	if (flags & FLAG_PROGRESS) {	/* print progress */
+		static int i=0;
+		static char *progress[] = { "\\", "|", "/", "-" };
+		static long acum; 
+		static int percent = 0;
+
+		if (!i++) acum = n_files >> 1;
+
+		acum += 100000;
+		if (acum >= n_files) {
+			percent += acum / n_files;
+			acum %= n_files;
+		} /* if */
+		fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s\033[K",
+			progress[i&3], i, n_files, percent / 1000,
+			percent % 1000, f->full_name);
+		if (i >= n_files) fprintf(stderr, "\n");
+	} /* block */
+	pclose(ex_fd);
+	fprintf(f->parent->html_file->index_f, "      </li>\n");
+	DEB((PR("scanning file %s -> %s\n"),
+		f->full_name, f->html_file->full_name));
+	scanfile(f);
+	return 0;
+} /* process_file */
 
 void process2(node *n)
 {
@@ -259,7 +366,8 @@ void process2(node *n)
 		/* for every tag in this file */
 		printf(PR("FILE name=[%s]\n"), n->full_name);
 		if (avl_tree_size(n->subnodes)) {
-			fprintf(n->parent->html_file->index_f, "        <ul>\n");
+			fprintf(n->parent->html_file->index_f,
+				"        <ul>\n");
 			for (	it = avl_tree_first(n->subnodes);
 					it;
 					it = avl_iterator_next(it))
