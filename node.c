@@ -14,10 +14,21 @@
 
 #include "intern.h"
 #include "node.h"
-#include "log.h"
 
-node *db_root_node = NULL;
-int n_files = 0;
+#ifndef DEBUG
+#define DEBUG	1
+#endif
+
+#if DEBUG
+#define DEB(X) printf X
+#else
+#define DEB(X)
+#endif
+
+#define BUFFER_SIZE				4096
+#define NULL_POINTER_STRING		"<<NULL>>"
+#define PR(X) __FILE__":%d:%s: "X,__LINE__,__func__
+#define INC_LEVEL	1
 
 /* if you modify the enum node_type_e list,
  * you have also to modify here. */
@@ -27,36 +38,33 @@ static char *type2string[] = {
 	"TYPE_HTML",
 };
 
-tag_menu *lookup_tag_menu(ctag *t);
-
 static int print_string(FILE *f, const char *s)
 {
-	return puts(s, f);
+	return fputs(s, f);
 } /* print_string */
 
-node *new_node(const char *name, node *parent, node_type typ)
+node *new_node(const char *name, const node *parent, const node_type typ)
 {
 	node *res;
-	int i;
-	char buffer[BUFFER_SIZE];
 
 	assert(name);
 
-	intern(name); /* intern is an idempotent function */
+	name = intern(name); /* intern is an idempotent function */
 
-	log(PR("begin: name=\"%s\", parent=\"%s\", typ=%d\n"),
+	DEB((PR("begin: name=[%s], parent=(%p), type=[%s]\n"),
 		name,
-		parent
-			? parent->full_name
-			: NULL_POINTER_STRING,
-		typ);
+		parent,
+		type2string[typ]));
 
-	assert(avl_tree_get(parent->subnodes, name));
+	if (parent)
+		assert(avl_tree_get(parent->subnodes, name) == NULL);
 	
 	assert(res = malloc(sizeof (node))); /* get memory */
-	res->name =  name;
+	DEB((PR("res = %p\n"), res));
+	res->name = name;
 	res->parent = parent;
 	res->type = typ;
+	res->flags = 0;
 	res->level = parent ? parent->level + 1 : 1;
 	assert(res->subnodes = new_avl_tree(
 		(AVL_FCOMP) strcmp, NULL, NULL,
@@ -66,20 +74,24 @@ node *new_node(const char *name, node *parent, node_type typ)
 	/* construct the path to it. use + 1
 	 * to alloc for a NULL pointer at end. */
 	assert(res->path = calloc(res->level + 1, sizeof (node *)));
-	{	node *p;
+	{	const node *p = res;
+		int i;
+
 		res->path[res->level] = NULL;
-		for (	i = res->level-1, p = res;
-				i >= 0 && p;
-				i--, p = p->parent)
+		for (i = res->level-1; i >= 0; i--)
 		{
+			DEB((PR("Setting res->path[%d] = p(%p/%s)\n"),
+				i, p, p->name));
 			res->path[i] = p;
+			p = p->parent;
 		} /* for */
-		assert((i == -1) && (p == NULL));
 	} /* block */
 
 	/* construct the full name */
-	{	size_t bs = sizeof buffer, n;
+	{	char buffer[BUFFER_SIZE];
+		size_t bs = sizeof buffer, n;
 		char *aux = buffer;
+		int i;
 
 		for (i = 0; i < res->level; i++) {
 			n = snprintf(aux, bs, "%s%s",
@@ -92,48 +104,58 @@ node *new_node(const char *name, node *parent, node_type typ)
 		res->full_name = intern(buffer);
 	} /* block */
 
-	switch(res->type) {
-	case TYPE_DIR:
-		res->html_file = new_node("index.html", res, TYPE_HTML);
-		avl_tree_put(res->subnodes, res->html_file->name, res->html_file);
-		break;
-	case TYPE_FILE:
-		assert(parent);
-		snprintf(buffer, sizeof buffer,
-			"%s.html", res->name);
-		res->html_file = new_node(buffer, parent, TYPE_HTML);
-		avl_tree_put(parent->subnodes, res->html_file->name, res->html_file);
-	case TYPE_HTML:
-		res->html_file = res;
-	} /* switch */
+	/* add to parent directory */
+	if (parent)
+		avl_tree_put(parent->subnodes, res->name, res);
 
-	log(PR("return {name:[%s], parent:[%s], type:[%s], level:[%s]}\n"),
+	DEB((PR("return name:[%s], parent:[%s], type:[%s], level:[%d], full_path:[%s]\n"),
 		res->name,
 		res->parent
 			? res->parent->full_name
 			: NULL_POINTER_STRING,
 		type2string[res->type],
-		res->level);
-	} /* if */
+		res->level,
+		res->full_name));
+
+	/* now, add its html_file, if existent. */
+	switch(res->type) {
+
+	case TYPE_DIR:
+		res->html_file = new_node("index.html", res, TYPE_HTML);
+		avl_tree_put(res->subnodes, res->html_file->name, (void *) res->html_file);
+		break;
+
+	case TYPE_FILE: {
+		char buffer[BUFFER_SIZE];
+		assert(parent);
+		snprintf(buffer, sizeof buffer, "%s.html", res->name);
+		res->html_file = new_node(buffer, parent, TYPE_HTML);
+		avl_tree_put(parent->subnodes, res->html_file->name, (void *) res->html_file);
+	} break;
+
+	case TYPE_HTML:
+		res->html_file = res;
+		break;
+
+	} /* switch */
 
 	return res;
 } /* new_node */
 
-static node *name2node(node *root, const char *p)
+node *name2node(const node *root, const char *p, const node_type typ)
 {
 	char *aux, *name;
 	const char *nam;
-	node *nod = root;
+	node *nod;
 
 	assert(root);
 	assert(p);
 
 	name = strdup(p);
-	nod = root;
+	nod = (node *) root;
 
-	log(PR("begin: root=\"%s\", path=\"%s\"\n"),
-			root->name, p);
-	} /* if */
+	DEB((PR("begin: root=\"%s\", path=\"%s\"\n"),
+			root->name, p));
 
 	/* we cannot have absolute paths */
 	assert(name[0] != '/');
@@ -141,7 +163,7 @@ static node *name2node(node *root, const char *p)
 	for(nam = name; nam; nam = aux) {
 		node *next;
 
-		log(PR("step: [%s][%s]\n"), nod->full_name, nam);
+		DEB((PR("step: [%s][%s]\n"), nod->full_name, nam));
 
 		aux = strchr(nam, '/'); /* search for a '/' character */
 		if (aux) /* if found, nullify it and every one char following it */
@@ -152,9 +174,7 @@ static node *name2node(node *root, const char *p)
 		/* nam is the component name of this element of the path */
 		/* CHECK FOR SPECIAL "." ENTRY */
 		if (!strcmp(nam, ".")) {
-			if (flags & FLAG_DEBUG_DB) {
-				printf(PR("component is \".\", ignored\n"));
-			} /* if */
+			DEB((PR("component is \".\", ignored\n")));
 			continue; /* it it's the . entry. */
 		} /* if */
 
@@ -165,8 +185,8 @@ static node *name2node(node *root, const char *p)
 					PR("error: \"..\" not allowed in %s\n"), p);
 				exit(EXIT_FAILURE);
 			} /* if */
-			log(PR("component is \"..\", special\n"));
-			nod = nod->parent;
+			DEB((PR("component is \"..\", special\n")));
+			nod = (node *) nod->parent;
 			continue;
 		} /* if */
 
@@ -174,39 +194,45 @@ static node *name2node(node *root, const char *p)
 		nam = intern(nam);
 
 		/* lookup it on the subnodes field */
-		log(PR("looking for [%s] in [%s]->subnodes\n"),
-			nam, nod->full_name);
+		DEB((PR("looking for [%s] in [%s]->subnodes\n"),
+			nam, nod->full_name));
 		next = avl_tree_get(nod->subnodes, nam);
 		if (!next) {
-			log(PR("[%s] not found, creating it in [%s]\n"),
-				nam, nod->full_name);
+			DEB((PR("[%s] not found, creating it in [%s]\n"),
+				nam, nod->full_name));
 
-			/* the last in the hierarchy is a directory */
+			if (nod->type != TYPE_DIR) {
+				fprintf(stderr,
+					PR("%s is not a directory, cannot create node [%s] on it\n"),
+					nod->full_name, nam);
+				return NULL;
+			} /* if */
+
+			/* all but the last in the hierarchy is a directory */
 			next = new_node(
 				nam, nod,
-				aux	? FLAG_ISDIR
-					: FLAG_ISFILE);
+				aux	? TYPE_DIR
+					: typ);
 		} /* if */
 
-		log(PR("step[%s]: end%s.\n"),
+		DEB((PR("step[%s]: end%s.\n"),
 			next->name,
 			aux
 				? "... next"
-				: "");
-		} /* if */
+				: ""));
 		nod = next;
 	} /* for */
 
 	/* free the temporary copy of the name */
 	free(name);
 
-	log(PR("end\n"));
+	DEB((PR("end\n")));
 	return nod;
 } /* name2node */
 
 /* returns the length of the common
  * prefix of two nodes, a and b. */
-int common_prefix(node *a, node *b)
+int common_prefix(const node *a, const node *b)
 {
 	int i = 0;
 	while (	   a->path[i]
@@ -218,7 +244,7 @@ int common_prefix(node *a, node *b)
 
 /* computes the relative path from a
  * to b. */
-char *rel_path(node *a, node *b)
+char *rel_path(const node *a, const node *b)
 {
 	int c = common_prefix(a, b);
 	int i;
@@ -245,5 +271,53 @@ char *rel_path(node *a, node *b)
 
 	return buffer;
 } /* rel_path */
+
+int
+do_recur(const node *nod,
+	node_callback pre,
+	void *val_pre,
+	node_callback fil,
+	void *val_fil,
+	node_callback pos,
+	void *val_pos)
+{
+	AVL_ITERATOR i;
+	int res = 0;
+
+	DEB((PR("%*sENTER: %s[%s]\n"),
+		nod->level-1, "",
+		nod->full_name,
+		type2string[nod->type]));
+
+	switch(nod->type) {
+	case TYPE_DIR:
+		if (!(nod->flags & NODE_FLAG_DONT_RECUR_PREORDER) && pre)
+			if (res = pre(nod, val_pre)) return res;
+		for (	i = avl_tree_first(nod->subnodes);
+				i;
+				i = avl_iterator_next(i))
+		{
+			if (res = do_recur(avl_iterator_data(i),
+				pre, val_pre,
+				fil, val_fil,
+				pos, val_pos)) return res;
+		} /* for */
+		if (!(nod->flags & NODE_FLAG_DONT_RECUR_POSTORDER) && pos)
+			if (res = pos(nod, val_pos)) return res;
+		break;
+	case TYPE_FILE:
+		if (!(nod->flags & NODE_FLAG_DONT_RECUR_INFILE) && fil)
+			if (res = fil(nod, val_fil)) return res;
+		break;
+	/* on TYPE_HTML we don't do anything */
+	case TYPE_HTML: break;
+	} /* switch */
+
+	DEB((PR("%*sLEAVE: %s[%s]\n"),
+		nod->level-1, "",
+		nod->full_name,
+		type2string[nod->type]));
+	return res;
+} /* do_recur */
 
 /* $Id$ */

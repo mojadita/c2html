@@ -29,6 +29,8 @@ AUTHOR_NAME="Luis Colorado"
 AUTHOR_EMAIL="lc@luiscoloradosistemas.com"
 PACKAGE_URL="http://www.luiscoloradosistemas.com/c2html/"
 
+AC_CONFIG_MACRO_DIR([m4])
+
 AC_SUBST(AUTHOR_NAME)
 AC_SUBST(AUTHOR_EMAIL)
 AC_SUBST(PACKAGE_URL)

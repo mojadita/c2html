@@ -73,6 +73,7 @@ static FILE *OUTPUT;
 /* gcc compiler allows \n in strings, so we allow them also */
 %}
 %x incomment
+%x incomment2
 %s indirective
 %x ininclude
 %x instring
@@ -98,11 +99,14 @@ sp			([\ \t])
 alnum		([a-zA-Z_0-9])
 alpha		([a-zA-Z_])
 
+dbeg		{sp}*"#"{sp}*
 directive	(define|undef|if|ifdef|ifndef|else|elif|endif|error|pragma)
 fn			("<"[^">"\n]*">")
 fn2			(\"[^"\n]*\")
 ident		({alpha}{alnum}*)
+
 %%
+
 "/*"					{	PUSH(incomment); fprintf(OUTPUT, "<span class=\"comment\">/*"); }
 <incomment>\n			{	pr(OUTPUT, yytext); newline(FALSE); }
 <incomment>.			{	pr(OUTPUT, yytext); }
@@ -110,8 +114,17 @@ ident		({alpha}{alnum}*)
 <incomment>FIXME		{	fprintf(OUTPUT, "<span class=\"fixme\">%s</span>", yytext); }
 <incomment>XXX			{	fprintf(OUTPUT, "<span class=\"xxx\">%s</span>", yytext); }
 <incomment>ARGSUSED		{	fprintf(OUTPUT, "<span class=\"argsused\">%s</span>", yytext); }
-<incomment>NEVERREACHED	{	fprintf(OUTPUT, "<U>%s</u>", yytext); }
+<incomment>NEVERREACHED	{	fprintf(OUTPUT, "<span class=\"neverreached\">%s</span>", yytext); }
 <incomment>"*/"			{	fprintf(OUTPUT, "*/</span>"); POP(); }
+
+"//"					{	PUSH(incomment2); fprintf(OUTPUT, "<span class=\"comment\">//"); }
+<incomment2>\n			{	newline(FALSE); fprintf(OUTPUT, "</span>\n"); POP(); }
+<incomment2>.			{	pr(OUTPUT, yytext); }
+<incomment2>TODO		{	fprintf(OUTPUT, "<span class=\"todo\">%s</span>", yytext); }
+<incomment2>FIXME		{	fprintf(OUTPUT, "<span class=\"fixme\">%s</span>", yytext); }
+<incomment2>XXX			{	fprintf(OUTPUT, "<span class=\"xxx\">%s</span>", yytext); }
+<incomment2>ARGSUSED	{	fprintf(OUTPUT, "<span class=\"argsused\">%s</span>", yytext); }
+<incomment2>NEVERREACHED	{	fprintf(OUTPUT, "<span class=\"neverreached\">%s</span>", yytext); }
 
 "#"{sp}*{directive}		{	PUSH(indirective);
 							fprintf(OUTPUT, "<span class=\"directive\">%s", yytext);

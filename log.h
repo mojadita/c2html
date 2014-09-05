@@ -35,8 +35,8 @@ static char LOG_H_RCSId[] = "\n$Id: header.h.m4,v 1.7 2005-11-07 19:39:53 luis E
 /* prototypes */
 
 /* produces a log message with the format of the FMT macro */
-size_t log(const char *fmt, const char *fi, const int li, const char *fn, ...);
-size_t vlog(const char *fmt, va_list p);
+size_t info(const char *fmt, const char *fi, const int li, const char *fn, ...);
+size_t vinfo(const char *fmt, va_list p);
 
 /* produces a warning message with the format of the FMT macro */
 size_t warning(const char *fmt, const char *fi, const int li, const char *fn, ...);

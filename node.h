@@ -9,31 +9,46 @@
 #include <stdio.h>
 #include <avl.h>
 
+/* if modify something to this type, do it also in
+ * node.c, definition of type2string string table. */
 typedef enum node_type_e {
 	TYPE_DIR,		/* used for directories */
 	TYPE_FILE,		/* used for normal files */
 	TYPE_HTML,		/* used for the HTML files associated */
 } node_type;
 
+#define NODE_FLAG_DONT_RECUR_PREORDER	0x00000001
+#define NODE_FLAG_DONT_RECUR_POSTORDER	0x00000002
+#define NODE_FLAG_DONT_RECUR_INFILE		0x00000004
+#define NODE_FLAG_ALL					0x00000007
+
 typedef struct node_s {
-	const char		*name; /* name of this node. */
-	struct node_s	*parent; /* parent node of this. */
-	node_type		type; /* type of this node. */
-	int 			level; /* level of this node, root node is at level 1 */
-	struct node_s	**path; /* path from the root */
-	const char		*full_name; /* full path name */
-	struct node_s	*html_file; /* html assoc. file. valid for files and directories */
-	AVL_TREE		subnodes; /* children of this node */
-	FILE			*index_f; /* index.html file descriptor (for html files) */
+	const char				*name; /* name of this node. */
+	const struct node_s		*parent; /* parent node of this. */
+	node_type				type; /* type of this node. */
+	int						flags; /* flags, see above. */
+	int 					level; /* level of this node, root node is at level 1 */
+	const struct node_s		**path; /* path from the root */
+	const char				*full_name; /* full path name */
+	const struct node_s		*html_file; /* html assoc. file. valid for files and directories */
+	AVL_TREE				subnodes; /* children of this node */
+	FILE					*index_f; /* index.html file descriptor (for html files) */
 } node;
 
-extern node *db_root_node;
-extern int n_files;
+node *new_node(const char *name, const node *parent, const node_type typ);
+node *name2node(const node *root, const char *path, const node_type typ);
+int common_prefix(const node *a, const node *b);
+char *rel_path(const node *a, const node *b);
 
-node *new_node(const char *name, node *parent, node_type typ);
+typedef int(*node_callback)(const node *dir, void *val);
 
-int common_prefix(node *a, node *b);
-char *rel_path(node *a, node *b);
+int do_recur(const node *nod,
+	node_callback dir_pre,
+	void *val_pre,
+	node_callback file_in,
+	void *val_in,
+	node_callback dir_pos,
+	void *val_pos);
 
 #endif /* _NODE_H */
 /* $Id$ */

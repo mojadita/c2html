@@ -20,6 +20,8 @@
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
+ACLOCAL_AMFLAGS = -I m4
+
 INCLUDES=-DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
 	-DVERSION=\""@VERSION@"\" -DEX_PATH=\""@EX_PATH@ >/dev/null 2>&1"\" \
 	-DAUTHOR_EMAIL=\""@AUTHOR_EMAIL@"\" \
@@ -27,8 +29,11 @@ INCLUDES=-DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
 #-DPACKAGE_URL=\""@PACKAGE_URL@"\"
 
 bin_PROGRAMS=c2html
+check_PROGRAMS=test_node
 
 c2html_SOURCES = c2html.c lexical.l html_output.c intern.c db.c
 c2html_LDFLAGS = -lavl
+test_node_SOURCES = test_node.c node.c intern.c
+test_node_LDFLAGS = -lavl
 #
 # $Id: Makefile.am,v 1.2 2005/03/02 20:35:18 luis Exp $
