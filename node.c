@@ -283,10 +283,10 @@ int do_recur(const node *nod,
 	AVL_ITERATOR i;
 	int res = 0;
 
-	DEB((PR("%*sENTER: %s[%s]\n"),
+	DEB((PR("%*sENTER: %s: %s\n"),
 		(nod->level<<2)-1, "",
-		nod->full_name,
-		type2string[nod->type]));
+		type2string[nod->type],
+		nod->full_name));
 
 	switch(nod->type) {
 	case TYPE_DIR:
@@ -318,10 +318,10 @@ int do_recur(const node *nod,
 	case TYPE_HTML: break;
 	} /* switch */
 
-	DEB((PR("%*sLEAVE: %s[%s]\n"),
+	DEB((PR("%*sLEAVE: %s: %s\n"),
 		(nod->level<<2)-1, "",
-		nod->full_name,
-		type2string[nod->type]));
+		type2string[nod->type],
+		nod->full_name));
 	return res;
 } /* do_recur */
 
