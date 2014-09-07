@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <assert.h>
 
+#include "debug.h"
 #include "intern.h"
 #include "node.h"
 #include "menu.h"
@@ -27,7 +28,7 @@ static int print_ctag_key(FILE *f, const ctag *a);
 static int print_string(FILE *f, const char *s);
 static int ctag_cmp(const ctag *a, const ctag *b);
 
-static ctag *lookup_ctag(
+ctag *lookup_ctag(
 	const char *id,
 	const char *fi,
 	const char *ss)
@@ -41,14 +42,14 @@ static ctag *lookup_ctag(
 		assert(db_ctag = new_avl_tree(
 			(AVL_FCOMP) ctag_cmp,
 			NULL, NULL,
-			(AVL_FCOMP) print_ctag_key));
+			(AVL_FPRNT) print_ctag_key));
 	} /* if */
 
 	key.id = id = intern(id);
 	key.fi = fi = intern(fi);
 	key.ss = ss = intern(ss);
 
-	DEB(PR("begin: id=[%s], fi=[%s], ss=[%p]\n"), id, fi, ss);
+	DEB((PR("begin: id=[%s], fi=[%s], ss=[%p]\n"), id, fi, ss));
 
 	if (res = avl_tree_get(db_ctag, &key)) {
 		fprintf(stderr,
@@ -66,7 +67,7 @@ static ctag *lookup_ctag(
 	/* get the node this tag belongs to */
 	assert(db_root_node);
 
-	nod = res->nod = name2node(db_root_node, fi);
+	nod = res->nod = name2node(db_root_node, fi, TYPE_FILE);
 
 	/* insert the ctag in list of tags in the same node.
 	 * we reuse the subnodes field of the file nod*/
@@ -76,7 +77,7 @@ static ctag *lookup_ctag(
 		: 1;
 	avl_tree_put(nod->subnodes, id, res);
 
-	assert(men = lookup_menu(res));
+	assert(men = lookup_menu(res->id));
 
 	/* insert ctag in list corresponding to file. */
 	avl_tree_put(men->group_by_file, res->nod->full_name, res);
@@ -84,7 +85,7 @@ static ctag *lookup_ctag(
 	men->last_tag = res; /* last registered tag, for one node menus */
 
 
-	DEB(PR("return:\n"
+	DEB((PR("return:\n"
 			"  id            : [%s]\n"
 			"  fi            : [%s]\n"
 			"  ss            : %p\n"
@@ -96,8 +97,7 @@ static ctag *lookup_ctag(
 			res->ss,
 			res->tag_no_in_file,
 			res->next_in_file,
-			res->nod->full_name);
-	} /* if */
+			res->nod->full_name));
 
 	return res;
 } /* new_ctag */

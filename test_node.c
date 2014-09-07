@@ -20,6 +20,8 @@
 
 #define IN_TEST_NODE_C
 
+#define DEBUG 	1
+
 /* Standard include files */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -81,8 +83,12 @@ int main (int argc, char **argv)
 	name2node(nodes[0], "home/eluscoo/a/b", TYPE_DIR);
 	name2node(nodes[0], "home/eluscoo/a/b/h", TYPE_DIR);
 	name2node(nodes[0], "home/eluscoo/profile/pepe", TYPE_FILE);
-	name2node(nodes[0], "home/eluscoo/pepe/../fich_1.html", TYPE_HTML);
-	do_recur(nodes[0], f, (void *)"pre", f, (void *)"in", f, (void *)"post");
+	res = name2node(nodes[0], "home/eluscoo/pepe/../fich_1.html", TYPE_HTML);
+	do_recur(nodes[0], f, (void *)">>> preprocess", f, (void *)"*** infile", f, (void *)"<<< postprocess");
+	printf(PR("rel_path(%s, %s) -> %s\n"), res->full_name, res->full_name,
+		rel_path(res, res));
+		
+		
 #if 0
 	for(i = 0; i < MAX-1; i++) {
 		char *s = rel_path(nodes[i]->html_file, nodes[i+1]->html_file);

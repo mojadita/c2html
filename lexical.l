@@ -40,6 +40,7 @@
 #include <avl.h>
 
 #include "intern.h"
+#include "debug.h"
 #include "db.h"
 #include "c2html.h"
 #include "html_output.h"
@@ -57,7 +58,7 @@
 static int state[PUSHSIZE];
 static int pointer = 0;
 
-#define YY_DECL	int yylex(node *fin, node *fnout)
+#define YY_DECL	int yylex(const node *fin, const node *fnout)
 
 /* types */
 
@@ -208,45 +209,45 @@ while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 							tag_menu *men;
 
 							if (flags & FLAG_DEBUG_LEX) {
-								printf(PR("identifier processing(%s): begin\n"),
-									yytext);
+								DEB((PR("identifier processing(%s): begin\n"),
+									yytext));
 							} /* if */
 
 							fprintf(OUTPUT, "<span class=\"identifier\">");
 							if (flags & FLAG_DEBUG_LEX) {
-								printf(PR("looking for menu_entry \"%s\" in db_menus\n"),
-									yytext);
+								DEB((PR("looking for menu_entry \"%s\" in db_menus\n"),
+									yytext));
 							} /* if */
 							men = avl_tree_get(db_menus, yytext);
 							if (men) { /* there is an entry in menus database */
 								if (flags & FLAG_DEBUG_LEX) {
-									printf(PR("\"%s\" found!!! check if ntags > 1\n"),
-										men->name);
+									DEB((PR("\"%s\" found!!! check if ntags > 1\n"),
+										men->id));
 								} /* if */
 								if (men->ntags > 1) { /* multiple entry */
 									char *rp;
 									if (flags & FLAG_DEBUG_LEX) {
-										printf(PR("menu \"%s\":multiple menu entry(%d), "
+										DEB((PR("menu \"%s\":multiple menu entry(%d), "
 											"calling create_menu\n"),
-											men->name, men->ntags);
+											men->id, men->ntags));
 									} /* if */
 
 									create_menu(men);
 
 									rp = rel_path(fin->html_file, men->nod->html_file);
 									if (flags & FLAG_DEBUG_LEX) {
-										printf(PR("<a href=\"%s\">%s</a>\n"),
-											rp, men->name);
+										DEB((PR("<a href=\"%s\">%s</a>\n"),
+											rp, men->id));
 									} /* if */
 									fprintf(OUTPUT, "<a href=\"%s\">%s</a>",
-										rp, men->name);
+										rp, men->id);
 								} else { /* single entry */
 									ctag *t_aux = men->last_tag;
 									char *rp;
 
 									if (flags & FLAG_DEBUG_LEX) {
-										printf(PR("menu %s:single menu entry ctag=<%s,%s,%s>\n"),
-											men->name, t_aux->id, t_aux->fi, t_aux->ss);
+										DEB((PR("menu %s:single menu entry ctag=<%s,%s,%s>\n"),
+											men->id, t_aux->id, t_aux->fi, t_aux->ss));
 									} /* if */
 
 									assert(t_aux); /* ctag * */
@@ -254,23 +255,23 @@ while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 									assert(t_aux->nod->html_file); /* node * */
 									rp = rel_path(fin->html_file, t_aux->nod->html_file);
 									if (flags & FLAG_DEBUG_LEX) {
-										printf(PR("menu %s:<a href=\"%s#%s-%d\">%s</a>\n"),
+										DEB((PR("menu %s:<a href=\"%s#%s-%d\">%s</a>\n"),
 											t_aux->id,
 											rp, t_aux->id, t_aux->tag_no_in_file,
-											t_aux->id);
+											t_aux->id));
 									} /* if */
 									fprintf(OUTPUT, "<a href=\"%s#%s-%d\">%s</a>",
 										rp, t_aux->id, t_aux->tag_no_in_file, t_aux->id);
 								} /* if */
 							} else { /* no entry found, print it plain */
 								if (flags & FLAG_DEBUG_LEX) {
-									printf(PR("%s not found, print plain.\n"), yytext);
+									DEB((PR("%s not found, print plain.\n"), yytext));
 								} /* if */
 								fprintf(OUTPUT, "%s", yytext);
 							} /* if */
 							fprintf(OUTPUT, "</span>");
 							if (flags & FLAG_DEBUG_LEX) {
-								printf(PR("identifier(%s): end\n"), yytext);
+								DEB((PR("identifier(%s): end\n"), yytext));
 							} /* if */
 						}}
 "..."					|
@@ -362,13 +363,13 @@ void create_menu(tag_menu *m)
 	assert(m);
 
 	if (flags & FLAG_DEBUG_CREATE_MENU) {
-		printf(PR("begin: menu=\"%s\"\n"), m->name);
+		DEB((PR("begin: menu=\"%s\"\n"), m->id));
 	} /* if */
 
 	if (m->flags & TAG_MENU_FLAG_ALREADY_CREATED) {
 		if (flags & FLAG_DEBUG_CREATE_MENU) {
-			printf(PR("already created \"%s\", give up.\n"),
-				m->name);
+			DEB((PR("already created \"%s\", give up.\n"),
+				m->id));
 		} /* if */
 		return;
 	} /* if */
@@ -379,8 +380,8 @@ void create_menu(tag_menu *m)
 	outf = html_create(m->nod);
 	fprintf(outf, "      <ul>\n");
 
-	printf(PR("MEN: name=\"%s\", ntags=%d\n"),
-		m->name, m->ntags);
+	DEB((PR("MEN: name=\"%s\", ntags=%d\n"),
+		m->id, m->ntags));
 
 	/* follow the list of files for this id */
 	for (	i = avl_tree_first(m->group_by_file);
@@ -395,11 +396,11 @@ void create_menu(tag_menu *m)
 		assert(t->nod->full_name);
 #endif
 
-		printf(PR("FILE: %s\n"), avl_iterator_key(i));
+		DEB((PR("FILE: %s\n"), (const char *)avl_iterator_key(i)));
 
 		if (flags & FLAG_DEBUG_CREATE_MENU) {
-			printf(PR("step: file = %s\n"),
-				t->nod->full_name);
+			DEB((PR("step: file = %s\n"),
+				t->nod->full_name));
 		} /* if */
 
 		fprintf(outf,
@@ -410,19 +411,19 @@ void create_menu(tag_menu *m)
 
 		if (0)
 		for (t = avl_iterator_data(i); t; t = t->next_in_file)
-			printf(PR("TAG[%p] id=[%s], fi=[%s], ss=<%s>, tag_no_in_file=%d, next_in_file=[%p]\n"),
-				t, t->id, t->fi, t->ss, t->tag_no_in_file, t->next_in_file);
+			DEB((PR("TAG[%p] id=[%s], fi=[%s], ss=<%s>, tag_no_in_file=%d, next_in_file=[%p]\n"),
+				t, t->id, t->fi, t->ss, t->tag_no_in_file, t->next_in_file));
 
 #if 0
 		do {
 			if (flags & FLAG_DEBUG_CREATE_MENU) {
-				printf(PR("substep: ctag = <%s,%s,%s>\n"),
-					t->id, t->nod->full_name, t->ss);
+				DEB((PR("substep: ctag = <%s,%s,%s>\n"),
+					t->id, t->nod->full_name, t->ss));
 			} /* if */
 			char *rp = rel_path(m->nod->html_file, t->nod->html_file);
 			if (flags & FLAG_DEBUG_CREATE_MENU) {
-				printf(PR("substep: <a href=\"%s#%s-%d\">%s(%d)</a>\n"),
-					rp, t->id, t->tag_no_in_file, t->id, t->tag_no_in_file);
+				DEB((PR("substep: <a href=\"%s#%s-%d\">%s(%d)</a>\n"),
+					rp, t->id, t->tag_no_in_file, t->id, t->tag_no_in_file));
 			} /* if */
 			fprintf(outf,
 				"            <li class=\"menu tag\">"
@@ -436,7 +437,7 @@ void create_menu(tag_menu *m)
 			"          </ul></li><!-- File %s -->\n",
 			t->nod->full_name); 
 		if (flags & FLAG_DEBUG_CREATE_MENU) {
-			printf(PR("step: end\n"));
+			DEB((PR("step: end\n")));
 		} /* if */
 	} /* for */
 
@@ -451,12 +452,12 @@ void scanfile (node *fin)
 	FILE *INPUT;
 	YY_BUFFER_STATE bs;
 	char buffer[64];
-	node *fout;
+	const node *fout;
 
 	assert(fout = fin->html_file);
 
 #if DEBUG
-	printf("Generating [%s-->%s]\n", fin->full_name, fout->full_name);
+	DEB(("Generating [%s-->%s]\n", fin->full_name, fout->full_name));
 #endif
 
 	INPUT = fopen (fin->full_name, "r");

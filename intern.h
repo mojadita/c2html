@@ -24,19 +24,17 @@
 #ifndef INTERN_H
 #define INTERN_H
 
+#include <stdio.h>
 #include <avl.h>
 
 static char INTERN_H_RCSId[] = "\n$Id: header.h.m4,v 1.7 2005-11-07 19:39:53 luis Exp $\n";
 
-/* constants */
-
-/* types */
-
 /* prototypes */
-
 const char *intern(const char *s);
+int print_string(FILE *o, const char *s);
 
-extern AVL_TREE strings_avl;
+/* variables */
+extern AVL_TREE intern_strings;
 
 #endif /* INTERN_H */
 /* Do not include anything AFTER the line above, as it would not be

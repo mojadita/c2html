@@ -16,10 +16,10 @@ typedef struct ctag_s {
 	const char		*ss; /* scan string for ex(1) */
 	int				tag_no_in_file; /* tag number in file. */
 	struct ctag_s	*next_in_file; /* next tag with the same id in this tag file */
-	struct node_s		*nod; /* file node this tag points to. */
+	node			*nod; /* file node this tag points to. */
 } ctag;
 
-ctag *lookup_ctag(const char *id, const char *fi, const char *ss);
+ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root);
 
 #endif /* _DB_H */
 /* $Id$ */

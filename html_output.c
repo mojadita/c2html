@@ -94,8 +94,8 @@ FILE *html_create(node *n)
 	} /* if */
 
 	switch(n->type) {
-	case FLAG_ISDIR: typ = "Directory"; break;
-	case FLAG_ISFILE: typ = "File"; break;
+	case TYPE_DIR: typ = "Directory"; break;
+	case TYPE_FILE: typ = "File"; break;
 	default: typ = "<<file type unknown>>"; break;
 	} /* switch */
 
@@ -150,8 +150,8 @@ void html_close(node *n)
 	assert(n->html_file->index_f);
 
 	switch(n->type) {
-	case FLAG_ISDIR: typ = "Directory"; break;
-	case FLAG_ISFILE: typ = "File"; break;
+	case TYPE_DIR: typ = "Directory"; break;
+	case TYPE_FILE: typ = "File"; break;
 	default: typ = "<<file type unknown>>"; break;
 	} /* switch */
 

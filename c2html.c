@@ -40,12 +40,12 @@
 
 #include <avl.h>
 
+#include "debug.h"
 #include "intern.h"
 #include "node.h"
 #include "menu.h"
-#include "db.h"
+#include "ctag.h"
 #include "c2html.h"
-#include "debug.h"
 #include "html_output.h"
 
 /* constants */
@@ -65,6 +65,9 @@ const char *style_file = DEFAULT_STYLE_FILE;
 node *style_node = NULL;
 const char *js_file = DEFAULT_JS_FILE;
 node *js_node = NULL;
+node *db_root_node = NULL;
+
+static AVL_TREE files_db = NULL;
 
 /* functions */
 
@@ -74,6 +77,10 @@ void process1(const char *fn)
 	FILE *tagfile;
 	char line [MAXLINELENGTH];
 	unsigned long long line_num = 0;
+	files_db = new_avl_tree(
+		(AVL_FCOMP) strcmp,
+		NULL, NULL,
+		(AVL_FPRNT) print_string);
 	
 	tagfile = fopen (fn, "r");
 	if (!tagfile) {
@@ -90,7 +97,7 @@ void process1(const char *fn)
 		const char *id, *fi, *st;
 		const ctag *tag;
 		
-		DEB(PR("step: %s\n"), line);
+		DEB((PR("step: %s\n"), line));
 
 		line_num++;
 
@@ -128,7 +135,9 @@ void process1(const char *fn)
 		/* first, find the ctag entry */
 		DEB((PR("calling lookup ctag(%s, %s, %s);...\n"),
 			id, fi, st));
-		tag = lookup_ctag(id, fi, st);
+		tag = lookup_ctag(id, fi, st, db_root_node);
+
+		avl_tree_put(files_db, tag->nod->full_name, tag->nod);
 
 	} /* while ... */
 
@@ -140,7 +149,7 @@ int send_ex(FILE *ex, const char *fmt, ...)
 {
 	va_list p;
 
-	DEB(PR("EX:"));
+	DEB((PR("EX:")));
 #if DEBUG
 	va_start(p, fmt);
 	vprintf(fmt, p);
@@ -152,10 +161,12 @@ int send_ex(FILE *ex, const char *fmt, ...)
 	va_end(p);
 } /* send_ex */
 
-int process_dir_pre(const node *d, void *)
+int process_dir_pre(const node *d, void *arg_not_used)
 {
-	int res = mkdir(d->full_name, 0777);
 	FILE *h;
+
+	DEB((PR("Creating directory %s\n"), d->full_name));
+	int res = mkdir(d->full_name, 0777);
 	if (res < 0) {
 		fprintf(stderr,
 			PR("error:MKDIR:%s:%s(errno=%d)\n"),
@@ -167,20 +178,26 @@ int process_dir_pre(const node *d, void *)
 	h = html_create(d);
 	fprintf(h, "      <ul>\n");
 	if (d->parent) {
+		DEB((PR("Writing an entry for %s in parent html file %s\n"),
+			d->html_file->full_name, d->parent->html_file->full_name));
 		fprintf(d->parent->html_file->index_f,
 			"      <li><span class=\"dir\">"
 			"<a href=\"%s\">%s</a> directory."
 			"</span></li>\n",
-			rel_path(d->parent->html_file, d->html_file), n->name);
+			d->html_file->name, d->name);
 	} /* if */
+	DEB((PR("end\n")));
 	return 0;
 } /* process_dir_pre */
 
-int process_dir_post(const node *d, void *)
+int process_dir_post(const node *d, void *arg_not_used)
 {
 	FILE *h = d->html_file->index_f;
+	DEB((PR("Cleaning and closing %s\n"),
+		d->html_file->full_name));
 	fprintf(h, "      </ul>\n");
 	html_close(d);
+	DEB((PR("end\n")));
 	return 0;
 } /* process_dir_post */
 
@@ -188,41 +205,55 @@ int process_dir_post(const node *d, void *)
 int process_file(const node *f, void *not_used)
 {
 	FILE *ex_fd;
-	fprintf(n->parent->html_file->index_f,
+	int ntags;
+
+	DEB((PR("begin [%s]\n"), f->html_file->full_name));
+	DEB((PR("writing an entry for %s in parent html file %s\n"),
+		f->html_file->name, f->parent->html_file->name));
+	fprintf(f->parent->html_file->index_f,
 		"      <li><span class=\"file\">"
 		"<a href=\"%s\">%s</a> file.</span>\n",
 		f->html_file->name, f->name);
+	DEB((PR("launching an instance of "EX_PATH"\n")));
 	ex_fd = popen(EX_PATH, "w");
 	send_ex(ex_fd, "set notagstack\n");
 	{	const char *s;
-		s = strchr(n->full_name, '/');
-		if (!s) s = n->full_name;
+		s = strchr(f->full_name, '/');
+		if (!s) s = f->full_name;
 		while (*s == '/') s++;
 		send_ex(ex_fd, "e! %s\n", s); /* edit original file */
-		DEB((PR("editing session on file %s -> %s\n"),
+		DEB((PR("begin editing session on file %s -> %s\n"),
 			s, f->full_name));
 	} /* block */
 
 	/* for every tag in this file */
+	DEB((PR("for every tag in this file:\n")));
 	DEB((PR("FILE name=[%s]\n"), f->full_name));
-	if (avl_tree_size(f->subnodes)) {
-		fprintf(n->parent->html_file->index_f,
+	DEB((PR("it has %d tags:\n"), ntags = avl_tree_size(f->subnodes)));
+	if (ntags) {
+		AVL_ITERATOR it, it2;
+		DEB((PR("begin list of tags: ")));
+		fprintf(f->parent->html_file->index_f,
 			"        <ul>\n");
-		for (	it = avl_tree_first(n->subnodes);
+		for (	it2 = it = avl_tree_first(f->subnodes);
 				it;
 				it = avl_iterator_next(it))
 		{
 			const ctag *tag;
+
 			assert(tag = avl_iterator_data(it));
+			printf("%s[%s]", it == it2 ? "" : "; ", tag->id);
 			/* the first tag in the list contains the total number of tag in this list */
-			if (p->tag_no_in_file > 1) { /* several tags for this id */
-				for (; tag; tag = tag->next_in_file) {
-					DEB((PR("TAG[%p] <%s|%s|%p>, tag_no_in_file=%d, next_in_file[%p]\n"),
-						tag, tag->id, tag->fi, tag->ss, tag->tag_no_in_file, tag->next_in_file));
-					fprintf(n->parent->html_file->index_f,
+			if (tag->tag_no_in_file > 1) { /* several tags for this id */
+				const ctag *tag_it;
+				for (tag_it = tag; tag_it; tag_it = tag_it->next_in_file) {
+					printf("%s%d", tag_it == tag ? ": " : ", ", tag_it->tag_no_in_file);
+					fprintf(f->parent->html_file->index_f,
 						"          <li><span class=\"tag\">"
 						"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
-						tag->html_file->name, p->id, p->tag_no_in_file, p->id);
+						f->html_file->name,
+						tag->id, tag->tag_no_in_file,
+						tag->id);
 					/* tag select, see vim(1) help for details */
 					send_ex(ex_fd,
 						"ts %s\n"
@@ -234,19 +265,23 @@ int process_file(const node *f, void *not_used)
 						tag->id, tag->tag_no_in_file); /* change */
 				} /* for */
 			} else {
-				fprintf(tag->parent->html_file->index_f,
+				fprintf(f->parent->html_file->index_f,
 					"            <li><span class=\"tag\">"
 					"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
-					tag->html_file->name, p->id, p->tag_no_in_file, p->id);
-				send_ex(ex_fd, "ta %s\n", p->id); /* goto tag, only one tag in this file */
+					f->html_file->name, tag->id, tag->tag_no_in_file, tag->id);
+				send_ex(ex_fd, "ta %s\n", tag->id); /* goto tag, only one tag in this file */
 				send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
 					tag->id, tag->tag_no_in_file); /* change */
 			} /* if */
 		} /* for */
+		printf(".\n"); /* end list of tags */
 		fprintf(f->parent->html_file->index_f,
 			"        </ul>\n");
 	} /* if */
-	send_ex(ex_fd, "w! %s\n", n->full_name); /* write file */
+	DEB((PR("terminate "EX_PATH" editing session and write on parent [%s]\n"),
+		f->parent->html_file->full_name));
+	fprintf(f->parent->html_file->index_f, "      </li>\n");
+	send_ex(ex_fd, "w! %s\n", f->full_name); /* write file */
 	send_ex(ex_fd, "q!\n"); /* and terminate */
 
 	if (flags & FLAG_PROGRESS) {	/* print progress */
@@ -254,6 +289,10 @@ int process_file(const node *f, void *not_used)
 		static char *progress[] = { "\\", "|", "/", "-" };
 		static long acum; 
 		static int percent = 0;
+		static int n_files = 0;
+
+		if (!n_files)
+			n_files = avl_tree_size(files_db);
 
 		if (!i++) acum = n_files >> 1;
 
@@ -262,21 +301,25 @@ int process_file(const node *f, void *not_used)
 			percent += acum / n_files;
 			acum %= n_files;
 		} /* if */
-		fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s\033[K",
+		fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s\033[K\r",
 			progress[i&3], i, n_files, percent / 1000,
 			percent % 1000, f->full_name);
 		if (i >= n_files) fprintf(stderr, "\n");
 	} /* block */
+
 	pclose(ex_fd);
-	fprintf(f->parent->html_file->index_f, "      </li>\n");
 	DEB((PR("scanning file %s -> %s\n"),
 		f->full_name, f->html_file->full_name));
 	scanfile(f);
+	DEB((PR("end [%s]\n"),
+		f->full_name));
+
 	return 0;
 } /* process_file */
 
 void process2(node *n)
 {
+#if 0
 	assert(n);
 
 	if (flags & FLAG_DEBUG_PROCESS2) {
@@ -446,6 +489,7 @@ void process2(node *n)
 #if DEBUG
 	printf("process2: leaving \"%s\"\n", n->full_name);
 #endif
+#endif
 } /* process2 */
 
 /* print help message */
@@ -525,9 +569,11 @@ int main (int argc, char **argv)
 		} /* switch */
 	} /* while */
 
-	db_init(output);
-	style_node = new_node(style_file, db_root_node, FLAG_ISFILE);
-	js_node = new_node(js_file, db_root_node, FLAG_ISFILE);
+	assert(db_root_node = new_node(output, NULL, TYPE_DIR));
+	style_node = new_node(style_file, db_root_node, TYPE_FILE);
+	style_node->flags |= NODE_FLAG_DONT_RECUR_INFILE; /* so we don't process this file */
+	js_node = new_node(js_file, db_root_node, TYPE_FILE);
+	js_node->flags |= NODE_FLAG_DONT_RECUR_INFILE; /* ... */
 
 	/* Process files */
 
@@ -541,13 +587,13 @@ int main (int argc, char **argv)
 			tag_menu *men = avl_iterator_data(i);
 			AVL_ITERATOR j;
 			printf(PR("MENU[%s]: ntags=%d, nod=[%s], last_tag=<%s,%s,%p>\n"),
-				men->name, men->ntags, men->nod->full_name,
+				men->id, men->ntags, men->nod->full_name,
 				men->last_tag->id, men->last_tag->fi, men->last_tag->ss);	
 			for (	j = avl_tree_first(men->group_by_file);
 					j;
 					j = avl_iterator_next(j))
 			{
-				char *fn = avl_iterator_key(j);
+				const char *fn = (const char *) avl_iterator_key(j);
 				ctag *tag;
 				printf(PR("  FILE: %s\n"), fn);
 				for (tag = avl_iterator_data(j); tag; tag = tag->next_in_file) {

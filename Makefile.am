@@ -25,17 +25,19 @@ ACLOCAL_AMFLAGS = -I m4
 INCLUDES=-DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
 	-DVERSION=\""@VERSION@"\" -DEX_PATH=\""@EX_PATH@ >/dev/null 2>&1"\" \
 	-DAUTHOR_EMAIL=\""@AUTHOR_EMAIL@"\" \
-	-DAUTHOR_NAME=\""@AUTHOR_NAME@"\"
+	-DAUTHOR_NAME=\""@AUTHOR_NAME@"\" -DDEBUG=1
 #-DPACKAGE_URL=\""@PACKAGE_URL@"\"
 
 bin_PROGRAMS=c2html
-check_PROGRAMS=test_node test_menu
+check_PROGRAMS=test_node test_menu test_ctag
 
-c2html_SOURCES = c2html.c lexical.l html_output.c intern.c db.c
+c2html_SOURCES = c2html.c lexical.l html_output.c intern.c ctag.c menu.c node.c
 c2html_LDFLAGS = -lavl
 test_node_SOURCES = test_node.c node.c intern.c
 test_node_LDFLAGS = -lavl
 test_menu_SOURCES = test_menu.c menu.c intern.c
 test_menu_LDFLAGS = -lavl
+test_ctag_SOURCES = test_ctag.c ctag.c menu.c node.c intern.c
+test_ctag_LDFLAGS = -lavl
 #
 # $Id: Makefile.am,v 1.2 2005/03/02 20:35:18 luis Exp $

@@ -36,12 +36,15 @@ static char DEBUG_H_RCSId[] = "\n$Id: header.h.m4,v 1.7 2005/11/07 19:39:53 luis
 #endif
 
 #if DEBUG
-#define DEB(X) printf X
+#define DEB(X) do { printf X; fflush(stdout); } while (0)
+#define D(X) DEB((PR("%s;\n"), #X)); X
 #else
 #define DEB(X)
+#define D(X) X
 #endif
 
 #define PR(X) "%s:%d:%s: " X, __FILE__,__LINE__,__func__
+
 
 /* types */
 

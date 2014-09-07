@@ -32,8 +32,8 @@
 #include "c2html.h"
 
 /* prototypes */
-FILE *html_create(node *n);
-void html_close(node *n);
+FILE *html_create(const node *n);
+void html_close(const node *n);
 
 #endif /* _HTML_OUTPUT_H */
 /* Do not include anything AFTER the line above, as it would not be

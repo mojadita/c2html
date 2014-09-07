@@ -37,4 +37,6 @@ strace.out
 tags_cortito
 test_menu
 test_node
+test_ctag
+core
 valgrind.out

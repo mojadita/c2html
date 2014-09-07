@@ -6,7 +6,7 @@
 #ifndef _NODE_H
 #define _NODE_H
 
-#include <stdio.h>
+#include <stdio.h> /* for FILE */
 #include <avl.h>
 
 /* if modify something to this type, do it also in
@@ -17,10 +17,15 @@ typedef enum node_type_e {
 	TYPE_HTML,		/* used for the HTML files associated */
 } node_type;
 
+#define NODE_FLAG_NONE					0x00000000
 #define NODE_FLAG_DONT_RECUR_PREORDER	0x00000001
 #define NODE_FLAG_DONT_RECUR_POSTORDER	0x00000002
 #define NODE_FLAG_DONT_RECUR_INFILE		0x00000004
 #define NODE_FLAG_ALL					0x00000007
+
+extern int n_dir;
+extern int n_file;
+extern int n_html;
 
 typedef struct node_s {
 	const char				*name; /* name of this node. */
@@ -30,13 +35,13 @@ typedef struct node_s {
 	int 					level; /* level of this node, root node is at level 1 */
 	const struct node_s		**path; /* path from the root */
 	const char				*full_name; /* full path name */
-	const struct node_s		*html_file; /* html assoc. file. valid for files and directories */
+	struct node_s			*html_file; /* html assoc. file. valid for files and directories */
 	AVL_TREE				subnodes; /* children of this node */
 	FILE					*index_f; /* index.html file descriptor (for html files) */
 } node;
 
 node *new_node(const char *name, const node *parent, const node_type typ);
-node *name2node(const node *root, const char *path, const node_type typ);
+node *name2node(node *root, const char *path, const node_type typ);
 int common_prefix(const node *a, const node *b);
 char *rel_path(const node *a, const node *b);
 

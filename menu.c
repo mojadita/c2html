@@ -3,6 +3,7 @@
  * Date: Fri Sep  5 15:59:37 EEST 2014
  * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
  */
+#define DEBUG	1
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -19,7 +20,6 @@
 AVL_TREE db_menus = NULL;
 
 /* forward prototype definition */
-static void print_string(FILE *o, char *s);
 
 tag_menu *lookup_menu(const char *id)
 {
@@ -57,10 +57,5 @@ tag_menu *lookup_menu(const char *id)
 
 	return res;
 } /* lookup_menu */
-
-static void print_string(FILE *o, char *s)
-{
-	fputs(s, o);
-} /* print_string */
 
 /* $Id$ */
