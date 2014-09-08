@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <avl.h>
 
+#include "node.h"
+
 #define TAG_MENU_FLAG_ALREADY_CREATED	0x00000001
 
 typedef struct tag_menu_s {
@@ -21,8 +23,9 @@ typedef struct tag_menu_s {
 } tag_menu;
 
 extern AVL_TREE db_menus;
+extern char *default_menu_name;
 
-tag_menu *lookup_menu(const char *id);
+tag_menu *lookup_menu(const char *id, node *rt);
 
 #endif /* _MENU_H */
 /* $Id$ */

@@ -70,7 +70,7 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
 			: 1;
 		avl_tree_put(nod->subnodes, id, res);
 
-		men = lookup_menu(res->id);
+		men = lookup_menu(res->id, root);
 		DEB((PR("lookup_menu(%s)\n"), men->id));
 
 		/* insert ctag in list corresponding to file. */

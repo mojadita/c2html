@@ -77,6 +77,7 @@ void process1(const char *fn)
 	FILE *tagfile;
 	char line [MAXLINELENGTH];
 	unsigned long long line_num = 0;
+
 	files_db = new_avl_tree(
 		(AVL_FCOMP) strcmp,
 		NULL, NULL,
@@ -97,9 +98,9 @@ void process1(const char *fn)
 		const char *id, *fi, *st;
 		const ctag *tag;
 		
-		DEB((PR("step: %s\n"), line));
-
 		line_num++;
+
+		DEB((PR("line[%lld]: %s\n"), line_num, line));
 
 		id = strtok (line, "\t\n"); if (!id) {
 			fprintf(stderr,
@@ -133,15 +134,13 @@ void process1(const char *fn)
 		} /* if */
 
 		/* first, find the ctag entry */
-		DEB((PR("calling lookup ctag(%s, %s, %s);...\n"),
-			id, fi, st));
-		tag = lookup_ctag(id, fi, st, db_root_node);
+		D(tag = lookup_ctag(id, fi, st, db_root_node));
 
 		avl_tree_put(files_db, tag->nod->full_name, tag->nod);
 
 	} /* while ... */
 
-	DEB((PR("%s:closing tagfile\n"), fn));
+	DEB((PR("closing tagfile [%s]\n"), fn));
 	fclose(tagfile);
 } /* process1 */
 
@@ -570,42 +569,21 @@ int main (int argc, char **argv)
 	} /* while */
 
 	assert(db_root_node = new_node(output, NULL, TYPE_DIR));
-	style_node = new_node(style_file, db_root_node, TYPE_FILE);
-	style_node->flags |= NODE_FLAG_DONT_RECUR_INFILE; /* so we don't process this file */
-	js_node = new_node(js_file, db_root_node, TYPE_FILE);
-	js_node->flags |= NODE_FLAG_DONT_RECUR_INFILE; /* ... */
+	style_node = new_node(style_file, db_root_node, TYPE_HTML);
+	js_node = new_node(js_file, db_root_node, TYPE_HTML);
 
 	/* Process files */
 
 	process1(tag_file);
 
-	{	AVL_ITERATOR i;
-		for (	i = avl_tree_first(db_menus);
-				i;
-				i = avl_iterator_next(i))
-		{
-			tag_menu *men = avl_iterator_data(i);
-			AVL_ITERATOR j;
-			printf(PR("MENU[%s]: ntags=%d, nod=[%s], last_tag=<%s,%s,%p>\n"),
-				men->id, men->ntags, men->nod->full_name,
-				men->last_tag->id, men->last_tag->fi, men->last_tag->ss);	
-			for (	j = avl_tree_first(men->group_by_file);
-					j;
-					j = avl_iterator_next(j))
-			{
-				const char *fn = (const char *) avl_iterator_key(j);
-				ctag *tag;
-				printf(PR("  FILE: %s\n"), fn);
-				for (tag = avl_iterator_data(j); tag; tag = tag->next_in_file) {
-					printf(PR("    TAG[%p]: id=[%s], fi=[%s], tag_no_in_file=%d, next_in_file=[%p]\n"),
-						tag, tag->id, tag->fi, tag->tag_no_in_file, tag->next_in_file);
-				} /* for */
-			} /* for */
-			
-		} /* for */
-	} /* block */
+	D(fflush(stdout));
 
-	process2(db_root_node);
+	D(do_recur(db_root_node,
+		process_dir_pre, NULL,
+		process_file, NULL,
+		process_dir_post, NULL));
+		
+	//process2(db_root_node);
 
 } /* main */
 

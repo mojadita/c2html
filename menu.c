@@ -15,15 +15,18 @@
 
 #include "debug.h"
 #include "intern.h"
+
 #include "menu.h"
 
 AVL_TREE db_menus = NULL;
+char *default_menu_name = "00-menus-directory";
 
 /* forward prototype definition */
 
-tag_menu *lookup_menu(const char *id)
+tag_menu *lookup_menu(const char *id, node *root)
 {
 	tag_menu *res;
+	static node *menus_dir;
 
 	DEB((PR("begin: id=[%s]\n"), id));
 	
@@ -34,13 +37,15 @@ tag_menu *lookup_menu(const char *id)
 			NULL,
 			NULL,
 			(AVL_FPRNT) print_string));
+		//menus_dir = new_node(default_menu_name, root, TYPE_DIR);
 	} /* if */
 
 	id = intern(id);
 
 	DEB((PR("searching for [%s] in db_menus\n"), id));
-	res = avl_tree_get(db_menus, id);
+	D(res = avl_tree_get(db_menus, id));
 	if (!res) {
+		char buffer[4096];
 		assert(res = malloc(sizeof (tag_menu)));
 		res->id = id;
 		res->flags = 0;
@@ -49,9 +54,18 @@ tag_menu *lookup_menu(const char *id)
 				(AVL_FCOMP) strcmp,
 				NULL, NULL,
 				(AVL_FPRNT) print_string));
-		res->nod = NULL;
+		D(snprintf(buffer, sizeof buffer,
+			"%s/%c/%s.html",
+			default_menu_name,
+			res->id[0], res->id));
+		D(res->nod = name2node(root, buffer, TYPE_HTML));
+		DEB((PR("res->nod=%p res->nod->full_name=[%s], "
+			"res->nod->html_file->full_name=[%s]\n"),
+			res->nod,
+			res->nod->full_name,
+			res->nod->html_file->full_name));
 		res->last_tag = NULL;
-		avl_tree_put(db_menus, id, res);
+		D(avl_tree_put(db_menus, id, res));
 	} /* if */
 	DEB((PR("end [%p]\n"), res));
 
