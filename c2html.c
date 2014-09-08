@@ -148,7 +148,7 @@ int send_ex(FILE *ex, const char *fmt, ...)
 {
 	va_list p;
 
-#if DEBUG & 0
+#if DEBUG
 	DEB((PR("EX:")));
 	va_start(p, fmt);
 	vprintf(fmt, p);
@@ -177,13 +177,16 @@ int process_dir_pre(const node *d, void *arg_not_used)
 	h = html_create(d);
 	fprintf(h, "      <ul>\n");
 	if (d->parent) {
-		DEB((PR("Writing an entry for %s in parent html file %s\n"),
-			d->html_file->full_name, d->parent->html_file->full_name));
+		char *rp = rel_path(
+			d->parent->html_file,
+			d->html_file);
+		DEB((PR("Writing an entry [%s] in parent html file [%s] for [%s]\n"),
+			rp, d->parent->html_file->full_name, d->html_file->full_name));
 		fprintf(d->parent->html_file->index_f,
 			"      <li><span class=\"dir\">"
 			"<a href=\"%s\">%s</a> directory."
 			"</span></li>\n",
-			d->html_file->name, d->name);
+			rp, d->name);
 	} /* if */
 	DEB((PR("end\n")));
 	return 0;
@@ -192,11 +195,13 @@ int process_dir_pre(const node *d, void *arg_not_used)
 int process_dir_post(const node *d, void *arg_not_used)
 {
 	FILE *h = d->html_file->index_f;
+
 	DEB((PR("Cleaning and closing %s\n"),
 		d->html_file->full_name));
 	fprintf(h, "      </ul>\n");
 	html_close(d);
 	DEB((PR("end\n")));
+
 	return 0;
 } /* process_dir_post */
 
@@ -331,181 +336,6 @@ int process_file(const node *f, void *not_used)
 
 	return 0;
 } /* process_file */
-
-void process2(node *n)
-{
-#if 0
-	assert(n);
-
-	if (flags & FLAG_DEBUG_PROCESS2) {
-		printf(PR("process2: entering \"%s\"\n"), n->full_name);
-	} /* if */
-
-	switch (n->type) {
-	case FLAG_ISDIR: {
-		int res;
-		FILE *ixf;
-		AVL_ITERATOR it;
-
-		/* 1.- mkdir */
-		if (flags & FLAG_DEBUG_PROCESS2) {
-			printf(PR("process2:   mkdir(\"%s\");\n"),
-				n->full_name);
-		} /* if */
-		res = mkdir(n->full_name, 0777);
-		if (res < 0) {
-			fprintf(stderr,
-				"process2:error:MKDIR:%s:%s(errno=%d)\n",
-				n->full_name, strerror(errno), errno);
-			return; /* cannot continue */
-		} /* if */
-
-		/* 2.- create html file and open it for writing */
-		assert(n->html_file);
-		if (flags & FLAG_DEBUG_PROCESS2) {
-			printf(PR("process2:   "
-				"html_create(\"%s\");\n"),
-				n->html_file->full_name);
-		} /* if */
-		ixf = html_create(n);
-		fprintf(ixf, "      <ul>\n");
-
-		/* 3.- write on the parent html file a reference to us
-		 * (of course if it has a parent) */
-		if (n->parent) {
-			fprintf(n->parent->html_file->index_f,
-				"      <li><span class=\"dir\">"
-				"<a href=\"%s\">%s</a> directory."
-				"</span></li>\n",
-				rel_path(n->parent->html_file, n->html_file), n->name);
-		} /* if */
-				
-		/* 4.- recurse to subdirectories/files */
-		for (	it = avl_tree_first(n->subnodes);
-			it;
-			it = avl_iterator_next(it))
-		{
-			process2(avl_iterator_data(it));
-		} /* for */
-
-		/* 4.- close files */
-		fprintf(ixf, "      </ul>\n");
-		html_close(n);
-	} break;
-
-	/* 4.- PROCESS FILE */
-	case FLAG_ISFILE: {
-		FILE *ex_fd;
-		AVL_ITERATOR it;
-
-		assert(n->parent);
-		assert(n->parent->html_file);
-		assert(n->parent->html_file->index_f);
-
-		fprintf(n->parent->html_file->index_f,
-			"      <li><span class=\"file\">"
-			"<a href=\"%s\">%s</a> file.</span>\n",
-			n->html_file->name, n->name);
-
-		ex_fd = popen(EX_PATH, "w");
-		send_ex(ex_fd, "set notagstack\n");
-		{	const char *s;
-
-			s = strchr(n->full_name, '/');
-			if (!s) s = n->full_name;
-			while (*s == '/') s++;
-			send_ex(ex_fd, "e! %s\n", s); /* edit file */
-			if (flags & FLAG_DEBUG_PROCESS2) {
-				printf(PR("editing sesion on file %s -> %s: begin\n"),
-					s, n->full_name);
-			} /* if */
-		} /* block */
-
-		/* for every tag in this file */
-		printf(PR("FILE name=[%s]\n"), n->full_name);
-		if (avl_tree_size(n->subnodes)) {
-			fprintf(n->parent->html_file->index_f,
-				"        <ul>\n");
-			for (	it = avl_tree_first(n->subnodes);
-					it;
-					it = avl_iterator_next(it))
-			{
-				const ctag *p;
-				assert(p = avl_iterator_data(it));
-				/* the first tag in the list contains the total number of tags in list */
-				if (p->tag_no_in_file > 1) {
-					for (; p; p = p->next_in_file) {
-						printf(PR("TAG[%p] id=[%s], fi=[%s], ss=<%s>, tag_no_in_file=%d, next_in_file=[%p]\n"),
-							p, p->id, p->fi, p->ss, p->tag_no_in_file, p->next_in_file);
-						fprintf(n->parent->html_file->index_f,
-							"          <li><span class=\"tag\">"
-							"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
-							n->html_file->name, p->id, p->tag_no_in_file, p->id);
-						/* tag select, se vim(1) help */
-						send_ex(ex_fd,
-							"ts %s\n"
-							"%d\n",
-							p->id,
-							p->tag_no_in_file);
-						send_ex(ex_fd,
-							"s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
-							p->id, p->tag_no_in_file); /* change */
-					} /* for */
-				} else {
-					fprintf(n->parent->html_file->index_f,
-						"          <li><span class=\"tag\">"
-						"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
-						n->html_file->name, p->id, p->tag_no_in_file, p->id);
-					send_ex(ex_fd, "ta %s\n", p->id); /* goto tag, only one tag in this file */
-					send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
-						p->id, p->tag_no_in_file); /* change */
-				} /* if */
-			} /* for */
-			fprintf(n->parent->html_file->index_f, "        </ul>\n");
-		} /* if */
-		send_ex(ex_fd, "w! %s\n", n->full_name); /* write file */
-		send_ex(ex_fd, "q!\n"); /* terminate */
-		if (flags & FLAG_PROGRESS) {	/* print progress */
-			static int i=0;
-			static char *progress[] = { "\\", "|", "/", "-" };
-			static long acum; 
-			static int percent = 0;
-
-			if (!i++) acum = n_files >> 1;
-
-			acum += 100000;
-			if (acum >= n_files) {
-				percent += acum / n_files;
-				acum %= n_files;
-			} /* if */
-			fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s\033[K",
-				progress[i&3], i, n_files, percent / 1000,
-				percent % 1000, n->full_name);
-			if (i >= n_files) fprintf(stderr, "\n");
-		} /* block */
-		pclose(ex_fd);
-		fprintf(n->parent->html_file->index_f, "      </li>\n");
-		if (flags & FLAG_DEBUG_PROCESS2) {
-			printf(PR("scanning file %s -> %s\n"),
-				n->full_name, n->html_file->full_name);
-		} /* if */
-		scanfile(n);
-	} break;
-
-	/* 5.- DATABASE INCONSISTENCY */
-	default:
-		fprintf(stderr,
-			PROGNAME":"__FILE__"(%d): DATABASE "
-			"INCONSISTENCY (n->type == %d)\n",
-			__LINE__, n->type);
-		abort();
-	} /* switch */
-
-#if DEBUG
-	printf("process2: leaving \"%s\"\n", n->full_name);
-#endif
-#endif
-} /* process2 */
 
 /* print help message */
 void do_usage (void)

@@ -35,6 +35,8 @@
 FILE *html_create(const node *n);
 void html_close(const node *n);
 
+void fprintf_html(FILE *f, const char *fmt, ...);
+
 #endif /* _HTML_OUTPUT_H */
 /* Do not include anything AFTER the line above, as it would not be
  * protected against double inclusion from other files.

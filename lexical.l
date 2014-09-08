@@ -55,15 +55,18 @@
 #define POP()						\
 	if (--pointer > 0)				\
 		BEGIN(state[pointer-1]);
+
+#define COL()	
+
 static int state[PUSHSIZE];
 static int pointer = 0;
 
+static void process_identifier(const char *s, const node *fin, FILE *o);
 #define YY_DECL	int yylex(const node *fin, const node *fnout)
 
 /* types */
 
 /* prototypes */
-void pr(FILE *, char *);
 void scanfile(node *);
 void create_menu(tag_menu *m);
 void newline(int do_reset);
@@ -73,6 +76,7 @@ static FILE *OUTPUT;
 
 /* gcc compiler allows \n in strings, so we allow them also */
 %}
+
 %x incomment
 %x incomment2
 %s indirective
@@ -96,6 +100,7 @@ fl			(([flFL]|[fF][lL]|[lL][fF])?)
 
 esc			(\\(.|\n|{odig}{odig}?{odig}?|[xX]{xdig}+))
 sp			([\ \t])
+fmtesc		(
 
 alnum		([a-zA-Z_0-9])
 alpha		([a-zA-Z_])
@@ -108,46 +113,50 @@ ident		({alpha}{alnum}*)
 
 %%
 
-"/*"					{	PUSH(incomment); fprintf(OUTPUT, "<span class=\"comment\">/*"); }
-<incomment>\n			{	pr(OUTPUT, yytext); newline(FALSE); }
-<incomment>.			{	pr(OUTPUT, yytext); }
-<incomment>TODO			{	fprintf(OUTPUT, "<span class=\"todo\">%s</span>", yytext); }
-<incomment>FIXME		{	fprintf(OUTPUT, "<span class=\"fixme\">%s</span>", yytext); }
-<incomment>XXX			{	fprintf(OUTPUT, "<span class=\"xxx\">%s</span>", yytext); }
-<incomment>ARGSUSED		{	fprintf(OUTPUT, "<span class=\"argsused\">%s</span>", yytext); }
-<incomment>NEVERREACHED	{	fprintf(OUTPUT, "<span class=\"neverreached\">%s</span>", yytext); }
-<incomment>"*/"			{	fprintf(OUTPUT, "*/</span>"); POP(); }
+"/*"					{	PUSH(incomment); fputs("<span class=\"comment\">/*", OUTPUT); COL(); }
+<incomment>\n			{	fputs("\n", OUTPUT); newline(FALSE); }
+<incomment>TODO			{	fputs("<span class=\"todo\">TODO</span>", OUTPUT); COL(); }
+<incomment>FIXME		{	fputs("<span class=\"fixme\">FIXME</span>", OUTPUT); COL(); }
+<incomment>XXX			{	fputs("<span class=\"xxx\">XXX</span>", OUTPUT); COL(); }
+<incomment>ARGSUSED		{	fputs("<span class=\"argsused\">ARGSUSED</span>", OUTPUT); COL(); }
+<incomment>NOTREACHED	{	fputs("<span class=\"notreached\">NOTREACHED</span>", OUTPUT); COL(); }
+<incomment>"*/"			{	fputs("*/</span>", OUTPUT); POP(); COL(); }
+<incomment>.			{	fprintf_html(OUTPUT, "%s", yytext); COL(); }
 
-"//"					{	PUSH(incomment2); fprintf(OUTPUT, "<span class=\"comment\">//"); }
-<incomment2>\n			{	fprintf(OUTPUT, "</span>\n"); POP(); newline(FALSE); }
-<incomment2>.			{	pr(OUTPUT, yytext); }
-<incomment2>TODO		{	fprintf(OUTPUT, "<span class=\"todo\">%s</span>", yytext); }
-<incomment2>FIXME		{	fprintf(OUTPUT, "<span class=\"fixme\">%s</span>", yytext); }
-<incomment2>XXX			{	fprintf(OUTPUT, "<span class=\"xxx\">%s</span>", yytext); }
-<incomment2>ARGSUSED	{	fprintf(OUTPUT, "<span class=\"argsused\">%s</span>", yytext); }
-<incomment2>NEVERREACHED	{	fprintf(OUTPUT, "<span class=\"neverreached\">%s</span>", yytext); }
+"//"					{	PUSH(incomment2); fprintf(OUTPUT, "<span class=\"comment\">//"); COL(); }
+<incomment2>TODO		{	fputs("<span class=\"todo\">TODO</span>", OUTPUT); COL(); }
+<incomment2>FIXME		{	fputs("<span class=\"fixme\">FIXME</span>", OUTPUT); COL(); }
+<incomment2>XXX			{	fputs("<span class=\"xxx\">XXX</span>", OUTPUT); COL(); }
+<incomment2>ARGSUSED		{	fputs("<span class=\"argsused\">ARGSUSED</span>", OUTPUT); COL(); }
+<incomment2>NOTREACHED	{	fputs("<span class=\"notreached\">NOTREACHED</span>", OUTPUT); COL(); }
+<incomment2>\n			{	fputs("</span>\n", OUTPUT); POP(); newline(FALSE); }
+<incomment2>.			{	fprintf_html(OUTPUT, "%s", yytext); COL(); }
 
-"#"{sp}*{directive}		{	PUSH(indirective);
-							fprintf(OUTPUT, "<span class=\"directive\">%s", yytext);
-						}
-"#"{sp}*include{sp}*	{	PUSH(ininclude);
-							fprintf(OUTPUT, "<span class=\"directive\">%s", yytext);
-						}
-<indirective>defined	{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
-<indirective>\\\n		{	fprintf(OUTPUT, "\\\n"); newline(FALSE); }
+"#"						{	PUSH(indirective); fputs("<span class=\"directive\"><span class=\"hash\">#</span>", OUTPUT); COL(); }
+<indirective>\\\n		{	fputs("\\\n", OUTPUT); newline(FALSE); }
+<indirective>define		|
+<indirective>undef		|
+<indirective>ifdef		|
+<indirective>ifndef		|
+<indirective>if			|
+<indirective>endif		|
+<indirective>else		|
+<indirective>elif		|
+<indirective>line		|
+<indirective>error		|
+<indirective>warning	|
+<indirective>include	|
+<indirective>pragma		|
+<indirective>defined	{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); COL(); }
+<indirective>{alpha}{alnum}	{ process_identifier(yytext, fin, OUTPUT); COL(); }
+<indirective>"<"[^>\n\ \t]*">"	{ fputs("<span class=\"standardinclude\">", OUTPUT);
+									fprintf_html(OUTPUT, "%s", yytext);
+									fputs("</span>", OUTPUT); COL(); }
+<indirective>\"[^\"\n\ \t]*\"	{ fputs("<span class=\"nonstandardinclude\">", OUTPUT);
+									fprintf_html(OUTPUT, "%s", yytext);
+									fputs("</span>", OUTPUT); COL(); }
 <indirective>\n			{	fputs("</span>\n", OUTPUT); newline(FALSE); POP(); }
-<ininclude>{fn}			{	fprintf(OUTPUT, "<span class=\"include standard\">");
-							pr(OUTPUT, yytext);
-							fputs("</span>", OUTPUT);
-							POP();
-							PUSH(indirective);
-						}
-<ininclude>{fn2}		{	fprintf(OUTPUT, "<span class=\"include\">");
-							pr(OUTPUT, yytext);
-							fputs("</span>", OUTPUT);
-							POP();
-							PUSH(indirective);
-						}
+<indirective>.			{	fprintf_html(OUTPUT, "%s", yytext); COL(); }
 
 auto					|
 break					|
@@ -190,78 +199,22 @@ while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 
 \"						{	PUSH(instring); fprintf(OUTPUT, "<span class=\"string\">\""); }
 <instring>\"			{	fprintf(OUTPUT, "\"</span>"); POP(); }
-<instring>{esc}			{	fprintf(OUTPUT, "<span class=\"escapechar\">%s</span>", yytext); }
-<instring>\n			{	pr(OUTPUT, yytext); newline(FALSE); }
-<instring>.				{	pr(OUTPUT, yytext); }
+<instring>{esc}			{	fprintf(OUTPUT, "<span class=\"escape char\">%s</span>", yytext); }
+<instring>\n			{	fputs("\n", OUTPUT); newline(FALSE); }
+<instring>.				{	fprintf_html(OUTPUT, "%s", yytext); }
 
 \'						{	PUSH(inchar); fprintf(OUTPUT, "<span class=\"charliteral\">\'"); }
 <inchar>\'				{	fprintf(OUTPUT, "\'</span>"); POP(); }
 <inchar>{esc}			{	fprintf(OUTPUT, "<span class=\"escapechar\">%s</span>", yytext); }
-<inchar>\n				{	pr(OUTPUT, yytext); newline(FALSE); }
-<inchar>.				{	pr(OUTPUT, yytext); }
+<inchar>\n				{	fprintf_html(OUTPUT, "%s", yytext); newline(FALSE); }
+<inchar>.				{	fprintf_html(OUTPUT, "%s", yytext); }
 
 <INITIAL>^"(@"			{	fputs("<", OUTPUT); BEGIN(inATAG); }
 <inATAG>"@)(@"			{	fputs("><", OUTPUT); }
 <inATAG>"@)"			{	fputs(">", OUTPUT); BEGIN(INITIAL); }
 <inATAG>.				{	fputs(yytext, OUTPUT); }
 
-{alpha}{alnum}*			{{	/* identifier */
-							tag_menu *men;
-
-							DEB((PR("identifier processing(%s): begin\n"), yytext));
-
-							fprintf(OUTPUT, "<span class=\"identifier\">");
-
-							DEB((PR("looking for menu_entry \"%s\" in db_menus\n"),
-								yytext));
-							men = avl_tree_get(db_menus, yytext);
-							if (men) { /* there is an entry in menus database */
-								DEB((PR("\"%s\" found!!! check if ntags > 1\n"),
-									men->id));
-								if (men->ntags > 1) { /* multiple entry */
-									char *rp;
-
-									D(create_menu(men));
-
-									D(rp = rel_path(fin->html_file, men->nod->html_file));
-									DEB((
-										PR("<a href=\"%s\">%s</a>\n"),
-										rp, men->id));
-
-									fprintf(OUTPUT,
-										"<a href=\"%s\">%s</a>",
-										rp, men->id);
-
-								} else { /* single entry */
-
-									ctag *tag = men->last_tag;
-									char *rp;
-
-									DEB((
-										PR("menu %s:single menu entry "
-											"ctag=<%s,%s,%s>\n"),
-										men->id, tag->id,
-										tag->fi, tag->ss));
-
-									assert(tag); /* ctag * */
-									assert(tag->nod); /* node * */
-									assert(tag->nod->html_file); /* node * */
-
-									rp = rel_path(fin->html_file, tag->nod->html_file);
-									DEB((PR("menu %s:<a href=\"%s#%s-%d\">%s</a>\n"),
-										tag->id,
-										rp, tag->id, tag->tag_no_in_file,
-										tag->id));
-									fprintf(OUTPUT, "<a href=\"%s#%s-%d\">%s</a>",
-										rp, tag->id, tag->tag_no_in_file, tag->id);
-								} /* if */
-							} else { /* no entry found, print it plain */
-								DEB((PR("%s not found, print plain.\n"), yytext));
-								fprintf(OUTPUT, "%s", yytext);
-							} /* if */
-							fprintf(OUTPUT, "</span>");
-							DEB((PR("identifier(%s): end\n"), yytext));
-						}}
+{alpha}{alnum}*			{	process_identifier(yytext, fin, OUTPUT); COL(); }
 "..."					|
 "&&"					|
 "-="					|
@@ -301,7 +254,8 @@ while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 "!"						|
 "*"						|
 ":"						{	fputs("<span class=\"operator\">", OUTPUT);
-							pr(OUTPUT, yytext);fputs("</span>", OUTPUT);
+							fprintf_html(OUTPUT, "%s", yytext);
+							fputs("</span>", OUTPUT);
 						}
 
 "["						|
@@ -310,27 +264,75 @@ while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 "}"						|
 "("						|
 ")"						{	fputs("<span class=\"bracket\">", OUTPUT);
-							pr(OUTPUT, yytext);fputs("</span>", OUTPUT);
+							fputs(yytext, OUTPUT);
+							fputs("</span>", OUTPUT);
 						}
 
 \n						{	fputs(yytext, OUTPUT); newline(FALSE); }
-.						{	fputs(yytext, OUTPUT); }
+.						{	fprintf_html(OUTPUT, "%s", yytext); }
 
 %%
+
 /* functions */
 
-void pr(FILE *f, char *s)
-{
-	while (*s) {
-		switch (*s) {
-		case '<': fprintf(f, "&lt;"); break;
-		case '>': fprintf(f, "&gt;"); break;
-		case '&': fprintf(f, "&amp;"); break;
-		default: fputc(*s, f); break;
-		}
-		s++;
-	} /* while */
-} /* pr */
+static void process_identifier(const char *s, const node *fin, FILE *o)
+{	/* identifier */
+	tag_menu *men;
+
+	DEB((PR("identifier processing(%s): begin\n"), yytext));
+
+	fprintf(o, "<span class=\"identifier\">");
+
+	DEB((PR("looking for menu_entry \"%s\" in db_menus\n"),
+		yytext));
+	men = avl_tree_get(db_menus, yytext);
+	if (men) { /* there is an entry in menus database */
+		DEB((PR("\"%s\" found!!! check if ntags > 1\n"),
+			men->id));
+		if (men->ntags > 1) { /* multiple entry */
+			char *rp;
+
+			D(create_menu(men));
+
+			D(rp = rel_path(fin->html_file, men->nod->html_file));
+			DEB((
+				PR("<a href=\"%s\">%s</a>\n"),
+				rp, men->id));
+
+			fprintf(o,
+				"<a href=\"%s\">%s</a>",
+				rp, men->id);
+
+		} else { /* single entry */
+
+			ctag *tag = men->last_tag;
+			char *rp;
+
+			DEB((
+				PR("menu %s:single menu entry "
+					"ctag=<%s,%s,%s>\n"),
+				men->id, tag->id,
+				tag->fi, tag->ss));
+
+			assert(tag); /* ctag * */
+			assert(tag->nod); /* node * */
+			assert(tag->nod->html_file); /* node * */
+
+			rp = rel_path(fin->html_file, tag->nod->html_file);
+			DEB((PR("menu %s:<a href=\"%s#%s-%d\">%s</a>\n"),
+				tag->id,
+				rp, tag->id, tag->tag_no_in_file,
+				tag->id));
+			fprintf(o, "<a href=\"%s#%s-%d\">%s</a>",
+				rp, tag->id, tag->tag_no_in_file, tag->id);
+		} /* if */
+	} else { /* no entry found, print it plain */
+		DEB((PR("%s not found, print plain.\n"), yytext));
+		fprintf(o, "%s", yytext);
+	} /* if */
+	fprintf(o, "</span>");
+	DEB((PR("identifier(%s): end\n"), yytext));
+}
 
 void newline(int do_reset)
 {

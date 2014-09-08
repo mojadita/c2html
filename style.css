@@ -3,6 +3,7 @@
 	color: yellow;
 	padding-left: 1em;
 	padding-right: 1em;
+	font-family: times;
 }
 .comment {
 	color: green;
@@ -28,4 +29,8 @@
 pre {
 	/*background: black;*/
 	color: gray;
+	font-family: courier;
+}
+.directive {
+	color: purple;
 }

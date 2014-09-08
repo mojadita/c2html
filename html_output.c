@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -38,10 +39,9 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <assert.h>
-#include "multifree.h"
-#include "hashTable.h"
-#include "db.h"
+
 #include "c2html.h"
+#include "node.h"
 
 /* constants */
 
@@ -52,6 +52,27 @@
 /* variables */
 
 /* functions */
+void fprintf_html(FILE *f, const char *fmt, ...)
+{
+	char buffer[4096];
+	va_list p;
+	char *s = buffer;
+
+	va_start(p, fmt);
+	vsnprintf(buffer, sizeof buffer, fmt, p);
+	va_end(p);
+
+	while (*s) {
+		switch (*s) {
+		case '<': fprintf(f, "&lt;"); break;
+		case '>': fprintf(f, "&gt;"); break;
+		case '&': fprintf(f, "&amp;"); break;
+		default: fputc(*s, f); break;
+		}
+		s++;
+	} /* while */
+} /* fprintf_html */
+
 
 int path_print(FILE *f, node *p)
 {
