@@ -23,11 +23,11 @@ dnl
 
 AC_INIT
 
-AM_INIT_AUTOMAKE(c2html,1.00a)
+AM_INIT_AUTOMAKE(c2html,2.00a)
 
 AUTHOR_NAME="Luis Colorado"
 AUTHOR_EMAIL="lc@luiscoloradosistemas.com"
-PACKAGE_URL="http://www.luiscoloradosistemas.com/c2html/"
+PACKAGE_URL="http://www.lcssl.es/c2html/"
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -41,7 +41,8 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
-AC_PATH_PROG(EX_PATH, [ex],,$PATH:/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin)
+AC_PATH_PROG(EX_PATH, [ex],,
+	[$PATH:/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin])
 
 AC_SUBST(EX_PATH)
 

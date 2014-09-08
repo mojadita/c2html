@@ -1,7 +1,8 @@
 .linenum {
 	background-color: gray;
-	color: white;
-	height:15px;
+	color: yellow;
+	padding-left: 1em;
+	padding-right: 1em;
 }
 .comment {
 	color: green;
@@ -9,7 +10,7 @@
 .resvword {
 	/*font-family: courier; */
 	font-weight: bold;
-	/*color: cyan;*/
+	color: black;
 }
 .string {
 	color: red;
@@ -27,5 +28,4 @@
 pre {
 	/*background: black;*/
 	color: gray;
-	padding: 1ex;
 }

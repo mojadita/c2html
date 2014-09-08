@@ -119,7 +119,7 @@ ident		({alpha}{alnum}*)
 <incomment>"*/"			{	fprintf(OUTPUT, "*/</span>"); POP(); }
 
 "//"					{	PUSH(incomment2); fprintf(OUTPUT, "<span class=\"comment\">//"); }
-<incomment2>\n			{	newline(FALSE); fprintf(OUTPUT, "</span>\n"); POP(); }
+<incomment2>\n			{	fprintf(OUTPUT, "</span>\n"); POP(); newline(FALSE); }
 <incomment2>.			{	pr(OUTPUT, yytext); }
 <incomment2>TODO		{	fprintf(OUTPUT, "<span class=\"todo\">%s</span>", yytext); }
 <incomment2>FIXME		{	fprintf(OUTPUT, "<span class=\"fixme\">%s</span>", yytext); }

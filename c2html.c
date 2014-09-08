@@ -148,8 +148,8 @@ int send_ex(FILE *ex, const char *fmt, ...)
 {
 	va_list p;
 
+#if DEBUG & 0
 	DEB((PR("EX:")));
-#if DEBUG
 	va_start(p, fmt);
 	vprintf(fmt, p);
 	va_end(p);
@@ -209,11 +209,14 @@ int process_file(const node *f, void *not_used)
 	DEB((PR("begin [%s]\n"), f->html_file->full_name));
 	DEB((PR("writing an entry for %s in parent html file %s\n"),
 		f->html_file->name, f->parent->html_file->name));
+
 	fprintf(f->parent->html_file->index_f,
 		"      <li><span class=\"file\">"
 		"<a href=\"%s\">%s</a> file.</span>\n",
 		f->html_file->name, f->name);
+
 	DEB((PR("launching an instance of "EX_PATH"\n")));
+
 	ex_fd = popen(EX_PATH, "w");
 	send_ex(ex_fd, "set notagstack\n");
 	{	const char *s;
@@ -221,6 +224,7 @@ int process_file(const node *f, void *not_used)
 		if (!s) s = f->full_name;
 		while (*s == '/') s++;
 		send_ex(ex_fd, "e! %s\n", s); /* edit original file */
+
 		DEB((PR("begin editing session on file %s -> %s\n"),
 			s, f->full_name));
 	} /* block */
@@ -228,52 +232,64 @@ int process_file(const node *f, void *not_used)
 	/* for every tag in this file */
 	DEB((PR("for every tag in this file:\n")));
 	DEB((PR("FILE name=[%s]\n"), f->full_name));
-	DEB((PR("it has %d tags:\n"), ntags = avl_tree_size(f->subnodes)));
+	D(ntags = avl_tree_size(f->subnodes));
+	DEB((PR("it has %d tags:\n"), ntags));
 	if (ntags) {
-		AVL_ITERATOR it, it2;
-		DEB((PR("begin list of tags: ")));
+		AVL_ITERATOR it1, it2;
+
+#if DEBUG
+		printf(PR("begin list of tags: "));
+#endif
+
 		fprintf(f->parent->html_file->index_f,
 			"        <ul>\n");
-		for (	it2 = it = avl_tree_first(f->subnodes);
-				it;
-				it = avl_iterator_next(it))
+		for (	it2 = it1 = avl_tree_first(f->subnodes);
+				it1;
+				it1 = avl_iterator_next(it1))
 		{
-			const ctag *tag;
+			const ctag *tag1;
 
-			assert(tag = avl_iterator_data(it));
-			printf("%s[%s]", it == it2 ? "" : "; ", tag->id);
+			assert(tag1 = avl_iterator_data(it1));
+
+#if DEBUG
+			printf("%s[%s]", it1 == it2 ? "" : "; ", tag1->id);
+#endif
 			/* the first tag in the list contains the total number of tag in this list */
-			if (tag->tag_no_in_file > 1) { /* several tags for this id */
-				const ctag *tag_it;
-				for (tag_it = tag; tag_it; tag_it = tag_it->next_in_file) {
-					printf("%s%d", tag_it == tag ? ": " : ", ", tag_it->tag_no_in_file);
+			if (tag1->tag_no_in_file > 1) { /* several tags for this id */
+				const ctag *tag2;
+				for (tag2 = tag1; tag2; tag2 = tag2->next_in_file) {
+#if DEBUG
+					printf("%s%d", tag2 == tag1 ? ": " : ", ", tag2->tag_no_in_file);
+#endif
 					fprintf(f->parent->html_file->index_f,
 						"          <li><span class=\"tag\">"
 						"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
 						f->html_file->name,
-						tag->id, tag->tag_no_in_file,
-						tag->id);
+						tag2->id, tag2->tag_no_in_file,
+						tag2->id);
 					/* tag select, see vim(1) help for details */
 					send_ex(ex_fd,
 						"ts %s\n"
 						"%d\n",
-						tag->id,
-						tag->tag_no_in_file);
+						tag2->id,
+						tag2->tag_no_in_file);
 					send_ex(ex_fd,
 						"s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
-						tag->id, tag->tag_no_in_file); /* change */
+						tag2->id, tag2->tag_no_in_file); /* change */
 				} /* for */
 			} else {
 				fprintf(f->parent->html_file->index_f,
 					"            <li><span class=\"tag\">"
 					"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
-					f->html_file->name, tag->id, tag->tag_no_in_file, tag->id);
-				send_ex(ex_fd, "ta %s\n", tag->id); /* goto tag, only one tag in this file */
+					f->html_file->name, tag1->id, tag1->tag_no_in_file, tag1->id);
+				send_ex(ex_fd, "ta %s\n", tag1->id); /* goto tag, only one tag in this file */
 				send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
-					tag->id, tag->tag_no_in_file); /* change */
+					tag1->id, tag1->tag_no_in_file); /* change */
 			} /* if */
 		} /* for */
+#if DEBUG
 		printf(".\n"); /* end list of tags */
+#endif
 		fprintf(f->parent->html_file->index_f,
 			"        </ul>\n");
 	} /* if */
@@ -540,16 +556,9 @@ int main (int argc, char **argv)
 	extern char *optarg;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "t:hb:2d:rno:ps:j:")) != EOF) {
+	while ((opt = getopt(argc, argv, "b:d:hj:m:no:prs:t:")) != EOF) {
 		switch(opt) {
-		case 'h': do_usage(); exit(EXIT_SUCCESS);
-		case 't': tag_file = optarg; break;
 		case 'b': base_dir = optarg; break;
-		case 'n': flags |= FLAG_LINENUMBERS; break;
-		case 'o': output = optarg; break;
-		case 'p': flags |= FLAG_PROGRESS; break;
-		case 's': style_file = optarg; break;
-		case 'j': js_file = optarg; break;
 		case 'd': {	char *p; /* debug */
 				for (p = optarg; *p; p++) {
 					switch(*p) {
@@ -563,6 +572,14 @@ int main (int argc, char **argv)
 				} /* for */
 			} /* block */
 			break;
+		case 'h': do_usage(); exit(EXIT_SUCCESS);
+		case 'j': js_file = optarg; break;
+		case 'm': default_menu_name = optarg; break;
+		case 'n': flags |= FLAG_LINENUMBERS; break;
+		case 'o': output = optarg; break;
+		case 'p': flags |= FLAG_PROGRESS; break;
+		case 's': style_file = optarg; break;
+		case 't': tag_file = optarg; break;
 		default:
 			do_usage(); exit(EXIT_FAILURE);
 		} /* switch */
