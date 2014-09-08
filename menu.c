@@ -3,7 +3,6 @@
  * Date: Fri Sep  5 15:59:37 EEST 2014
  * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
  */
-#define DEBUG	1
 
 #include <sys/stat.h>
 #include <sys/types.h>

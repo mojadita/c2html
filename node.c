@@ -4,8 +4,6 @@
  * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
  */
 
-#define DEBUG 1
-
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdio.h>

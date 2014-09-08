@@ -33,6 +33,7 @@
 #include <avl.h>
 #include "debug.h"
 #include "menu.h"
+#include "node.h"
 
 /* constants */
 
@@ -56,9 +57,11 @@ int main (int argc, char **argv)
 	tag_menu *res;
 	AVL_ITERATOR i;
 
-	res = lookup_menu("TEST_MENU");
-	res = lookup_menu("TEST_MENU2");
-	res = lookup_menu("ANOTHER_TEST_MENU");
+	node *root = new_node("test", NULL, TYPE_DIR);
+
+	res = lookup_menu("TEST_MENU", root);
+	res = lookup_menu("TEST_MENU2", root);
+	res = lookup_menu("ANOTHER_TEST_MENU", root);
 	for (	i = avl_tree_first(db_menus);
 			i;
 			i = avl_iterator_next(i))

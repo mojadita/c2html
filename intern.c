@@ -4,8 +4,6 @@
  * Disclaimer: (C) 2014 LUIS COLORADO SISTEMAS S.L.U.  All rights reserved.
  */
 
-#define DEBUG 1
-
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
