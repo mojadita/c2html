@@ -46,7 +46,7 @@
 #include "html_output.h"
 
 /* constants */
-#define PUSHSIZE		10
+#define PUSHSIZE		32
 #define PUSH(X)						\
 	if (pointer < PUSHSIZE) {		\
 		state[pointer++] = (X);		\
