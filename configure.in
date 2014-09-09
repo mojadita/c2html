@@ -23,7 +23,7 @@ dnl
 
 AC_INIT
 
-AM_INIT_AUTOMAKE(c2html,2.00a)
+AM_INIT_AUTOMAKE(c2html,2.11b-20140909)
 
 AUTHOR_NAME="Luis Colorado"
 AUTHOR_EMAIL="lc@luiscoloradosistemas.com"
