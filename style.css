@@ -1,10 +1,3 @@
-.linenum {
-	background-color: gray;
-	color: yellow;
-	padding-left: 1em;
-	padding-right: 1em;
-	font-family: times;
-}
 .comment {
 	color: green;
 }
@@ -27,10 +20,40 @@
 	color: red;
 }
 pre {
-	/*background: black;*/
-	color: gray;
 	font-family: courier;
+}
+
+body {
+	background: url(background.png);
+}
+.linenum {
+	background-color: #666;
+	color: orange;
+	padding-left: 1em;
+	padding-right: 1em;
+	font-family: times;
 }
 .directive {
 	color: purple;
 }
+.standardinclude {
+	color: green;
+}
+.nonstandardinclude {
+	color: #840;
+}
+
+ul li ul li {
+	display: inline;
+}
+
+span.dir {
+	background-color: #fa4;
+}
+span.file {
+	background-color: #dfd;
+}
+span.tag {
+	background-color: #fdd;
+}
+
