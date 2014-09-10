@@ -21,33 +21,67 @@
 }
 pre {
 	font-family: courier;
+	background: url(background.png);
+	box-shadow: 4px 4px 5px #888888;
+	border-top-right-radius: 16px;
+	border-bottom-right-radius: 16px;
+}
+
+span.file,span.dir {
+	font-weight: bold;
 }
 
 body {
-	background: url(background.png);
+	font-family: helvetica;
 }
+.title {
+	font-size: 140%;
+}
+
 .linenum {
 	background-color: #666;
-	color: orange;
-	padding-left: 1em;
-	padding-right: 1em;
-	font-family: times;
+	color: #ccf;
+	padding-left: 1ex;
+	padding-right: 1ex;
 }
 .directive {
 	color: purple;
 }
 .standardinclude {
-	color: green;
+	color: #080;
 }
 .nonstandardinclude {
 	color: #840;
 }
 
-ul li ul li {
-	display: inline;
+li ul {
+	-moz-column-count: 3;
+	-webkit-column-count: 3;
+	column-count: 3;
 }
 
-span.dir {
+li li {
+	word-wrap: break-word;
+	margin-left: 2em;
+	/*text-indent: -2em; */
+}
+body>ul>li{
+	margin: 2em 0 2em 0;
+}
+
+/* li li:before {
+	content: ", ";
+}
+
+li li:first-child:before {
+	content: none;
+}
+
+li li::after {
+	content: none;
+} */
+
+/* span.dir {
 	background-color: #fa4;
 }
 span.file {
@@ -55,5 +89,5 @@ span.file {
 }
 span.tag {
 	background-color: #fdd;
-}
+} */
 

@@ -132,7 +132,24 @@ ident		({alpha}{alnum}*)
 <incomment2>\n			{	fputs("</span>\n", OUTPUT); POP(); newline(FALSE); }
 <incomment2>.			{	fprintf_html(OUTPUT, "%s", yytext); COL(); }
 
-"#"						{	PUSH(indirective); fputs("<span class=\"directive\"><span class=\"hash\">#</span>", OUTPUT); COL(); }
+"#"						{	PUSH(indirective);
+							fputs("<span class=\"directive\">"
+								"<span class=\"hash\">#</span>",
+								OUTPUT);
+							COL();
+						}
+<indirective>"#"{sp}*{ident} {
+							fprintf(OUTPUT,
+								"<span class=\"stringmacroparameter\">"
+								"%s</span>",
+								yytext);
+							COL();
+						}
+<indirective>"##"		{	fputs("<span class=\"doublehash\">##</span>",
+								OUTPUT);
+							COL();
+						}
+<indirective>####*		{	fputs(yytext, OUTPUT); COL(); }
 <indirective>\\\n		{	fputs("\\\n", OUTPUT); newline(FALSE); }
 <indirective>define		|
 <indirective>undef		|
