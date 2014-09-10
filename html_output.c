@@ -185,7 +185,7 @@ void html_close(node *n)
 	path_print(f, n);
 	fprintf(f, "</div>\n"
 "    <p><a href=\""PACKAGE_URL "\">"
-		PROGNAME" "VERSION "</a>: Copyright (C) 1999 "
+		PROGNAME" "VERSION "</a>: Copyright (C) 1999-2014 "
 		"<a href=\"mailto:"AUTHOR_EMAIL "?subject=c2html\">"
 		AUTHOR_NAME" &lt;"AUTHOR_EMAIL "&gt;</a>\n"
 "  </body>\n"
