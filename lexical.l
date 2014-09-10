@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.21 2009/01/03 22:23:11 luis Exp $
+/* $Id: lexical.l,v 0.22 2014/09/09 20:23:04 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * 
@@ -465,4 +465,4 @@ void scanfile (node *fin)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.21 2009/01/03 22:23:11 luis Exp $ */
+/* $Id: lexical.l,v 0.22 2014/09/09 20:23:04 luis Exp $ */

@@ -1,4 +1,4 @@
-/* $Id: header.h.m4,v 1.7 2005-11-07 19:39:53 luis Exp $
+/* $Id: log.h,v 1.1 2014/09/09 20:23:05 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: Wed Sep  3 22:09:54 EEST 2014
  *
@@ -28,7 +28,7 @@
 
 #define PR(X)	"%s:%d:%s: " X, __FILE__, __LINE__, __func__
 
-static char LOG_H_RCSId[] = "\n$Id: header.h.m4,v 1.7 2005-11-07 19:39:53 luis Exp $\n";
+static char LOG_H_RCSId[] = "\n$Id: log.h,v 1.1 2014/09/09 20:23:05 luis Exp $\n";
 
 /* constants */
 
@@ -52,4 +52,4 @@ void verror(const char *fmt, va_list p);
  * protected against double inclusion from other files.
  */
 
-/* $Id: header.h.m4,v 1.7 2005-11-07 19:39:53 luis Exp $ */
+/* $Id: log.h,v 1.1 2014/09/09 20:23:05 luis Exp $ */

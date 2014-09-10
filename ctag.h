@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ctag.h,v 1.1 2014/09/09 20:22:06 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: sáb ago 23 21:13:42 EEST 2014
  * Disclaimer: (C) 2014 LUIS COLORADO.  All rights reserved.
@@ -22,4 +22,4 @@ typedef struct ctag_s {
 ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root);
 
 #endif /* _DB_H */
-/* $Id$ */
+/* $Id: ctag.h,v 1.1 2014/09/09 20:22:06 luis Exp $ */

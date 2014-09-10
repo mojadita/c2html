@@ -1,4 +1,4 @@
-/* $Id: header.h.m4,v 1.7 2005/11/07 19:39:53 luis Exp $
+/* $Id: debug.h,v 1.1 2014/09/09 20:22:06 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: Fri Sep  5 15:47:29 EEST 2014
  *
@@ -28,7 +28,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-static char DEBUG_H_RCSId[] = "\n$Id: header.h.m4,v 1.7 2005/11/07 19:39:53 luis Exp $\n";
+static char DEBUG_H_RCSId[] = "\n$Id: debug.h,v 1.1 2014/09/09 20:22:06 luis Exp $\n";
 
 /* constants */
 #ifndef DEBUG
@@ -59,4 +59,4 @@ static char DEBUG_H_RCSId[] = "\n$Id: header.h.m4,v 1.7 2005/11/07 19:39:53 luis
  * protected against double inclusion from other files.
  */
 
-/* $Id: header.h.m4,v 1.7 2005/11/07 19:39:53 luis Exp $ */
+/* $Id: debug.h,v 1.1 2014/09/09 20:22:06 luis Exp $ */

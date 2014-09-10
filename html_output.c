@@ -1,4 +1,4 @@
-/* $Id: html_output.c,v 1.6 2005/03/02 20:35:19 luis Exp $
+/* $Id: html_output.c,v 1.7 2014/09/09 20:22:07 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Mon Jun 14 23:55:37 MEST 1999
  * Disclaimer:
@@ -185,7 +185,7 @@ void html_close(node *n)
 	path_print(f, n);
 	fprintf(f, "</div>\n"
 "    <p><a href=\""PACKAGE_URL "\">"
-		PROGNAME" "VERSION "</a>: Copyright (C) 1999 "
+		PROGNAME" "VERSION "</a>: Copyright (C) 1999-2014 "
 		"<a href=\"mailto:"AUTHOR_EMAIL "?subject=c2html\">"
 		AUTHOR_NAME" &lt;"AUTHOR_EMAIL "&gt;</a>\n"
 "  </body>\n"
@@ -196,4 +196,4 @@ void html_close(node *n)
 	hn->index_f = NULL;
 } /* close_html */
 
-/* $Id: html_output.c,v 1.6 2005/03/02 20:35:19 luis Exp $ */
+/* $Id: html_output.c,v 1.7 2014/09/09 20:22:07 luis Exp $ */

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ctag.c,v 1.1 2014/09/09 20:22:06 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: sáb ago 23 22:34:53 EEST 2014
  * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
@@ -113,4 +113,4 @@ static int ctag_cmp(const ctag *a, const ctag *b)
 	return res;
 } /* ctag_cmp */
 
-/* $Id$ */
+/* $Id: ctag.c,v 1.1 2014/09/09 20:22:06 luis Exp $ */

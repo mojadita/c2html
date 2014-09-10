@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.2 2005/03/02 20:35:18 luis Exp $
+# $Id: Makefile.am,v 1.3 2014/09/09 20:22:03 luis Exp $
 # Author: Luis.Colorado@SLUG.HispaLinux.ES
 # Date: Sun Jun  6 15:43:44 MEST 1999
 # C2HTML -- A program to convert a C source package into a cross reference HTML
@@ -41,4 +41,4 @@ test_menu_LDFLAGS = -lavl
 test_ctag_SOURCES = test_ctag.c ctag.c menu.c node.c intern.c
 test_ctag_LDFLAGS = -lavl
 #
-# $Id: Makefile.am,v 1.2 2005/03/02 20:35:18 luis Exp $
+# $Id: Makefile.am,v 1.3 2014/09/09 20:22:03 luis Exp $

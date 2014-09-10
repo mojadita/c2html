@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Id: configure.in,v 0.19 2005/03/02 20:36:50 luis Exp $
+dnl $Id: configure.in,v 0.20 2014/09/09 20:22:05 luis Exp $
 dnl Author: Luis.Colorado@SLUG.HispaLinux.ES
 dnl Copyright: GPL (C) 1999 Luis.Colorado@SLUG.HispaLinux.ES
 dnl
@@ -67,4 +67,4 @@ AC_CHECK_FUNCS(strdup)
 
 AC_OUTPUT(Makefile c2html.man)
 
-dnl $Id: configure.in,v 0.19 2005/03/02 20:36:50 luis Exp $
+dnl $Id: configure.in,v 0.20 2014/09/09 20:22:05 luis Exp $

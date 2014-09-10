@@ -1,4 +1,4 @@
-/* $Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $
+/* $Id: test_ctag.c,v 1.1 2014/09/09 20:23:07 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: Sat Sep  6 13:59:16 EEST 2014
  *
@@ -37,7 +37,7 @@
 #include "ctag.h"
 
 /* variables */
-static char TEST_CTAG_C_RCSId[]="\n$Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $\n";
+static char TEST_CTAG_C_RCSId[]="\n$Id: test_ctag.c,v 1.1 2014/09/09 20:23:07 luis Exp $\n";
 
 node *root;
 
@@ -80,4 +80,4 @@ int main (int argc, char **argv)
 		do_dir_post, "postprocess");
 } /* main */
 
-/* $Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $ */
+/* $Id: test_ctag.c,v 1.1 2014/09/09 20:23:07 luis Exp $ */

@@ -1,4 +1,4 @@
-/* $Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $
+/* $Id: test_node.c,v 1.1 2014/09/09 20:23:07 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: Thu Sep  4 20:14:34 EEST 2014
  *
@@ -45,7 +45,7 @@
 /* prototypes */
 
 /* variables */
-static char TEST_NODE_C_RCSId[]="\n$Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $\n";
+static char TEST_NODE_C_RCSId[]="\n$Id: test_node.c,v 1.1 2014/09/09 20:23:07 luis Exp $\n";
 
 node **nodes;
 int nodes_n = 0;
@@ -99,4 +99,4 @@ int main (int argc, char **argv)
 #endif
 } /* main */
 
-/* $Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $ */
+/* $Id: test_node.c,v 1.1 2014/09/09 20:23:07 luis Exp $ */
