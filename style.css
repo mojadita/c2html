@@ -6,7 +6,7 @@
 	font-weight: bold;
 	color: black;
 }
-.string {
+.string,.stringmacroparameter {
 	color: red;
 }
 .escapechar {
