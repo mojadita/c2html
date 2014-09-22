@@ -1,4 +1,4 @@
-/* $Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $
+/* $Id: log.c,v 1.1 2014/09/09 20:23:04 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: Wed Sep  3 22:10:16 EEST 2014
  *
@@ -33,7 +33,7 @@
 #include "log.h"
 
 /* variables */
-static char LOG_C_RCSId[]="\n$Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $\n";
+static char LOG_C_RCSId[]="\n$Id: log.c,v 1.1 2014/09/09 20:23:04 luis Exp $\n";
 
 /* functions */
 size_t log(const char *fmt, ...)
@@ -86,4 +86,4 @@ void verror(const char *fmt, va_list p)
 	exit(EXIT_FAILURE);
 } /* error */
 
-/* $Id: main.c.m4,v 1.7 2005-11-07 19:39:53 luis Exp $ */
+/* $Id: log.c,v 1.1 2014/09/09 20:23:04 luis Exp $ */

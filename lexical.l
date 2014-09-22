@@ -1,5 +1,5 @@
 %{
-/* $Id: lexical.l,v 0.21 2009/01/03 22:23:11 luis Exp $
+/* $Id: lexical.l,v 0.22 2014/09/09 20:23:04 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 21:01:12 MEST 1999
  * 
@@ -226,9 +226,9 @@ while					{	fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
 <inchar>\n				{	fprintf_html(OUTPUT, "%s", yytext); newline(FALSE); }
 <inchar>.				{	fprintf_html(OUTPUT, "%s", yytext); }
 
-<INITIAL>^"(@"			{	fputs("<", OUTPUT); BEGIN(inATAG); }
+<INITIAL,incomment,instring,inchar>^"(@"	{	fputs("<", OUTPUT); PUSH(inATAG); }
 <inATAG>"@)(@"			{	fputs("><", OUTPUT); }
-<inATAG>"@)"			{	fputs(">", OUTPUT); BEGIN(INITIAL); }
+<inATAG>"@)"			{	fputs(">", OUTPUT); POP(); }
 <inATAG>.				{	fputs(yytext, OUTPUT); }
 
 {alpha}{alnum}*			{	process_identifier(yytext, fin, OUTPUT); COL(); }
@@ -482,4 +482,4 @@ void scanfile (node *fin)
 	yy_delete_buffer(bs);
 } /* scanfile */
 
-/* $Id: lexical.l,v 0.21 2009/01/03 22:23:11 luis Exp $ */
+/* $Id: lexical.l,v 0.22 2014/09/09 20:23:04 luis Exp $ */

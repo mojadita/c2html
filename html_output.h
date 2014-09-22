@@ -1,4 +1,4 @@
-/* $Id: c2html.h,v 0.17 2009/01/03 22:23:11 luis Exp $
+/* $Id: html_output.h,v 1.1 2014/09/09 20:22:07 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Sat Jun  5 22:45:02 MEST 1999
  * Disclaimer: (c) 1999 Luis Colorado <luis.colorado@SLUG.CTV.ES>
@@ -41,4 +41,4 @@ void fprintf_html(FILE *f, const char *fmt, ...);
 /* Do not include anything AFTER the line above, as it would not be
  * protected against double inclusion from other files.
  */
-/* $Id: c2html.h,v 0.17 2009/01/03 22:23:11 luis Exp $ */
+/* $Id: html_output.h,v 1.1 2014/09/09 20:22:07 luis Exp $ */

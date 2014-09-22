@@ -1,4 +1,4 @@
-/* $Id: header.h.m4,v 1.7 2005-11-07 19:39:53 luis Exp $
+/* $Id: intern.h,v 1.1 2014/09/09 20:22:07 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: Fri Aug  8 19:22:29 EEST 2014
  *
@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <avl.h>
 
-static char INTERN_H_RCSId[] = "\n$Id: header.h.m4,v 1.7 2005-11-07 19:39:53 luis Exp $\n";
+static char INTERN_H_RCSId[] = "\n$Id: intern.h,v 1.1 2014/09/09 20:22:07 luis Exp $\n";
 
 /* prototypes */
 const char *intern(const char *s);
@@ -41,4 +41,4 @@ extern AVL_TREE intern_strings;
  * protected against double inclusion from other files.
  */
 
-/* $Id: header.h.m4,v 1.7 2005-11-07 19:39:53 luis Exp $ */
+/* $Id: intern.h,v 1.1 2014/09/09 20:22:07 luis Exp $ */

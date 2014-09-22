@@ -1,4 +1,4 @@
-/* $Id: html_output.c,v 1.6 2005/03/02 20:35:19 luis Exp $
+/* $Id: html_output.c,v 1.7 2014/09/09 20:22:07 luis Exp $
  * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
  * Date: Mon Jun 14 23:55:37 MEST 1999
  * Disclaimer:
@@ -196,4 +196,4 @@ void html_close(node *n)
 	hn->index_f = NULL;
 } /* close_html */
 
-/* $Id: html_output.c,v 1.6 2005/03/02 20:35:19 luis Exp $ */
+/* $Id: html_output.c,v 1.7 2014/09/09 20:22:07 luis Exp $ */

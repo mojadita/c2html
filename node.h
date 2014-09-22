@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: node.h,v 1.1 2014/09/09 20:23:06 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: sáb ago 23 21:13:42 EEST 2014
  * Disclaimer: (C) 2014 LUIS COLORADO.  All rights reserved.
@@ -56,4 +56,4 @@ int do_recur(const node *nod,
 	void *val_pos);
 
 #endif /* _NODE_H */
-/* $Id$ */
+/* $Id: node.h,v 1.1 2014/09/09 20:23:06 luis Exp $ */
