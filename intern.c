@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
@@ -12,11 +13,6 @@
 #include "intern.h"
 
 AVL_TREE intern_strings = NULL;
-
-int print_string(FILE *o, const char *s)
-{
-	return fprintf(o, "%s", s);
-} /* print_string */
 
 const char *intern(const char *s)
 {
@@ -29,7 +25,7 @@ const char *intern(const char *s)
 			(AVL_FCOMP) strcmp,
 			NULL,
 			NULL,
-			(AVL_FPRNT) print_string));
+			(AVL_FPRNT) fputs));
 	} /* if */
 	DEB((PR("looking for [%s]\n"), s));
 	res = avl_tree_get(intern_strings, s);
