@@ -6,8 +6,11 @@
 	font-weight: bold;
 	color: black;
 }
-.string {
+.stringmacroparameter,.string {
 	color: red;
+}
+.stringmacroparameter {
+	background-color: yellow;
 }
 .escapechar {
 	color: purple;
@@ -47,11 +50,16 @@ body {
 .directive {
 	color: purple;
 }
+.nonstandardinclude,.standardinclude {
+	background-color: #588;
+	opacity: 0.7;
+	border-radius: 0.7ex;
+}
 .standardinclude {
-	color: #080;
+	color: #ff0;
 }
 .nonstandardinclude {
-	color: #840;
+	color: #fc0;
 }
 
 li ul {
