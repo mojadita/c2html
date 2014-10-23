@@ -81,7 +81,7 @@ void process1(const char *fn)
 	files_db = new_avl_tree(
 		(AVL_FCOMP) strcmp,
 		NULL, NULL,
-		(AVL_FPRNT) print_string);
+		(AVL_FPRNT) fputs);
 	
 	tagfile = fopen (fn, "r");
 	if (!tagfile) {

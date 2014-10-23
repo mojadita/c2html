@@ -35,7 +35,7 @@ tag_menu *lookup_menu(const char *id, node *root)
 			(AVL_FCOMP) strcmp,
 			NULL,
 			NULL,
-			(AVL_FPRNT) print_string));
+			(AVL_FPRNT) fputs));
 		//menus_dir = new_node(default_menu_name, root, TYPE_DIR);
 	} /* if */
 
@@ -52,7 +52,7 @@ tag_menu *lookup_menu(const char *id, node *root)
 		assert(res->group_by_file = new_avl_tree(
 				(AVL_FCOMP) strcmp,
 				NULL, NULL,
-				(AVL_FPRNT) print_string));
+				(AVL_FPRNT) fputs));
 		D(snprintf(buffer, sizeof buffer,
 			"%s/%c/%s.html",
 			default_menu_name,

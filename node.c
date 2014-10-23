@@ -55,7 +55,7 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 	res->level = parent ? parent->level + 1 : 1;
 	assert(res->subnodes = new_avl_tree(
 		(AVL_FCOMP) strcmp, NULL, NULL,
-		(AVL_FPRNT) print_string));
+		(AVL_FPRNT) fputs));
 	DEB((PR("res->subnodes = %p\n"), res->subnodes));
 	res->index_f = NULL;
 
