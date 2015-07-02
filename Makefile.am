@@ -22,7 +22,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-INCLUDES=-DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
+AM_CPPFLAGS= -DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
 	-DVERSION=\""@VERSION@"\" -DEX_PATH=\""@EX_PATH@"\" \
 	-DAUTHOR_EMAIL=\""@AUTHOR_EMAIL@"\" \
 	-DAUTHOR_NAME=\""@AUTHOR_NAME@"\" \
@@ -40,5 +40,6 @@ test_menu_SOURCES = test_menu.c menu.c intern.c node.c
 test_menu_LDFLAGS = -lavl
 test_ctag_SOURCES = test_ctag.c ctag.c menu.c node.c intern.c
 test_ctag_LDFLAGS = -lavl
+
 #
 # $Id: Makefile.am,v 1.3 2014/09/09 20:22:03 luis Exp $

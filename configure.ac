@@ -21,9 +21,10 @@ dnl along with this program; if not, write to the Free Software
 dnl Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 dnl
 
-AC_INIT
+AC_INIT(c2html,2.12b-20150702)
 
-AM_INIT_AUTOMAKE(c2html,2.11b-20140909)
+AC_CONFIG_SRCDIR(./c2html.c)
+AM_INIT_AUTOMAKE
 
 AUTHOR_NAME="Luis Colorado"
 AUTHOR_EMAIL="lc@luiscoloradosistemas.com"
