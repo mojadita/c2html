@@ -119,6 +119,7 @@ FILE *html_create(node *n)
 	switch(n->type) {
 	case TYPE_DIR: typ = "Directory"; break;
 	case TYPE_FILE: typ = "File"; break;
+    case TYPE_HTML: typ = "Menu"; break;
 	default: typ = "<<file type unknown>>"; break;
 	} /* switch */
 
