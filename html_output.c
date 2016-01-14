@@ -86,6 +86,7 @@ int path_print(FILE *f, node *p)
 #endif
 	assert(p->html_file);
 
+    res += fprintf(f, "<span class=\"path\">");
 	for (i = 0; i < p->level-1; i++) {
 		res += fprintf(f,
 			"%s<a href=\"%s\">%s</a>",
@@ -95,6 +96,7 @@ int path_print(FILE *f, node *p)
 	} /* for */
 	res += fprintf(f,
 		"%s%s", i ? "/" : "", p->name);
+    res += fprintf(f, "</span>");
 	return res;
 } /* path_print */
 			

@@ -31,6 +31,10 @@ span.file,span.dir {
 	font-weight: bold;
 }
 
+span.path {
+    font-style: italic;
+}
+
 body {
 	font-family: helvetica;
 }
