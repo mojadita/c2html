@@ -9,6 +9,7 @@ c2html.err
 c2html.man
 *.o
 c2thml.err
+/compile
 config.guess
 config.log
 config.status
