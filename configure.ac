@@ -30,6 +30,11 @@ AUTHOR_NAME="Luis Colorado"
 AUTHOR_EMAIL="lc@luiscoloradosistemas.com"
 PACKAGE_URL="http://www.lcssl.es/c2html/"
 
+AM_PROG_LEX
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_SUBST(AUTHOR_NAME)
@@ -37,11 +42,6 @@ AC_SUBST(AUTHOR_EMAIL)
 AC_SUBST(PACKAGE_URL)
 
 dnl Checks for programs.
-AM_PROG_LEX
-AC_PROG_CC
-AC_PROG_INSTALL
-AC_PROG_LIBTOOL
-
 AC_PATH_PROG(EX_PATH, [ex],,
 	[$PATH:/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin])
 

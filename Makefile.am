@@ -32,8 +32,9 @@ AM_CPPFLAGS= -DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
 bin_PROGRAMS=c2html
 check_PROGRAMS=test_node test_menu test_ctag
 
+c2html_CFLAGS = -I/usr/local/include
 c2html_SOURCES = c2html.c lexical.l html_output.c intern.c ctag.c menu.c node.c
-c2html_LDFLAGS = -lavl
+c2html_LDFLAGS = -L/usr/local/lib -lavl
 test_node_SOURCES = test_node.c node.c intern.c
 test_node_LDFLAGS = -lavl
 test_menu_SOURCES = test_menu.c menu.c intern.c node.c

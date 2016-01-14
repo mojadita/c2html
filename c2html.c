@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -166,7 +167,7 @@ int process_dir_pre(const node *d, void *arg_not_used)
 
 	DEB((PR("Creating directory %s\n"), d->full_name));
 	int res = mkdir(d->full_name, 0777);
-	if (res < 0) {
+	if (res < 0 && (errno != EEXIST)) {
 		fprintf(stderr,
 			PR("error:MKDIR:%s:%s(errno=%d)\n"),
 			d->full_name, strerror(errno), errno);
