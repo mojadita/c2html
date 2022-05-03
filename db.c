@@ -49,7 +49,7 @@ ctag *lookup_ctag(
 	key.fi = fi = intern(fi);
 	key.ss = ss = intern(ss);
 
-	DEB((PR("begin: id=[%s], fi=[%s], ss=[%p]\n"), id, fi, ss));
+	DEB("begin: id=[%s], fi=[%s], ss=[%p]\n", id, fi, ss);
 
 	if (res = avl_tree_get(db_ctag, &key)) {
 		fprintf(stderr,
@@ -85,19 +85,19 @@ ctag *lookup_ctag(
 	men->last_tag = res; /* last registered tag, for one node menus */
 
 
-	DEB((PR("return:\n"
+	DEB("return:\n"
 			"  id            : [%s]\n"
 			"  fi            : [%s]\n"
 			"  ss            : %p\n"
 			"  tag_no_in_file: %d\n"
 			"  next_in_file  : %p\n"
-			"  nod           : %s\n"),
+			"  nod           : %s\n",
 			res->id,
 			res->fi,
 			res->ss,
 			res->tag_no_in_file,
 			res->next_in_file,
-			res->nod->full_name));
+			res->nod->full_name);
 
 	return res;
 } /* new_ctag */

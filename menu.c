@@ -14,6 +14,7 @@
 
 #include "debug.h"
 #include "intern.h"
+#include "c2html.h"
 
 #include "menu.h"
 
@@ -27,10 +28,12 @@ tag_menu *lookup_menu(const char *id, node *root)
 	tag_menu *res;
 	static node *menus_dir;
 
-	DEB((PR("begin: id=[%s]\n"), id));
+	DEB(FLAG_DEBUG_PROCESS_MENU,
+			"begin: id=[%s]\n", id);
 	
 	if (!db_menus) {
-		DEB((PR("initializing db_menus\n")));
+		DEB(FLAG_DEBUG_PROCESS_MENU,
+				"initializing db_menus\n");
 		assert(db_menus = new_avl_tree(
 			(AVL_FCOMP) strcmp,
 			NULL,
@@ -41,7 +44,8 @@ tag_menu *lookup_menu(const char *id, node *root)
 
 	id = intern(id);
 
-	DEB((PR("searching for [%s] in db_menus\n"), id));
+	DEB(FLAG_DEBUG_PROCESS_MENU,
+			"searching for [%s] in db_menus\n", id);
 	D(res = avl_tree_get(db_menus, id));
 	if (!res) {
 		char buffer[4096];
@@ -58,15 +62,17 @@ tag_menu *lookup_menu(const char *id, node *root)
 			default_menu_name,
 			res->id[0], res->id));
 		D(res->nod = name2node(root, buffer, TYPE_HTML));
-		DEB((PR("res->nod=%p res->nod->full_name=[%s], "
-			"res->nod->html_file->full_name=[%s]\n"),
+		DEB(FLAG_DEBUG_PROCESS_MENU,
+				"res->nod=%p res->nod->full_name=[%s], "
+			"res->nod->html_file->full_name=[%s]\n",
 			res->nod,
 			res->nod->full_name,
-			res->nod->html_file->full_name));
+			res->nod->html_file->full_name);
 		res->last_tag = NULL;
 		D(avl_tree_put(db_menus, id, res));
 	} /* if */
-	DEB((PR("end [%p]\n"), res));
+	DEB(FLAG_DEBUG_PROCESS_MENU,
+			"end [%p]\n", res);
 
 	return res;
 } /* lookup_menu */

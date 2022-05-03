@@ -44,22 +44,22 @@ node *root;
 /* functions */
 int do_dir_pre(const node *dir, const char *s)
 {
-	DEB((PR("%s: begin: dir=[%s]\n"), s, dir->full_name));
-	DEB((PR("%s: end: dir=[%s]\n"), s, dir->full_name));
+	DEB("%s: begin: dir=[%s]\n", s, dir->full_name);
+	DEB("%s: end: dir=[%s]\n", s, dir->full_name);
 	return 0;
 } /* do_file */
 
 int do_dir_post(const node *dir, const char *s)
 {
-	DEB((PR("%s: begin: dir=[%s]\n"), s, dir->full_name));
-	DEB((PR("%s: end: dir=[%s]\n"), s, dir->full_name));
+	DEB("%s: begin: dir=[%s]\n", s, dir->full_name);
+	DEB("%s: end: dir=[%s]\n", s, dir->full_name);
 	return 0;
 } /* do_file */
 
 int do_file(const node *fil, const char *s)
 {
-	DEB((PR("%s: begin: file=[%s]\n"), s, fil->full_name));
-	DEB((PR("%s: end: file=[%s]\n"), s, fil->full_name));
+	DEB("%s: begin: file=[%s]\n", s, fil->full_name);
+	DEB("%s: end: file=[%s]\n", s, fil->full_name);
 	return 0;
 } /* do_file */
 

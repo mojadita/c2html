@@ -40,6 +40,7 @@
 #include <stdarg.h>
 #include <assert.h>
 
+#include "debug.h"
 #include "c2html.h"
 #include "node.h"
 
@@ -80,11 +81,13 @@ int path_print(FILE *f, node *p)
 	int res = 0;
 
 	assert(p);
-#if DEBUG
-	printf(__FILE__":%d: path_print(FILE, %s);\n",
-		__LINE__, p->full_name);
-#endif
-	assert(p->html_file);
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"path_print(FILE, %s);\n",
+			p->full_name);
+	if (!p->html_file) {
+		ERR(1, "f is NULL!!! (in node %s)\n",
+			p->full_name);	
+	}
 
     res += fprintf(f, "<span class=\"path\">");
 	for (i = 0; i < p->level-1; i++) {
@@ -111,9 +114,8 @@ FILE *html_create(node *n)
 
 	f = n->html_file->index_f = fopen (n->html_file->full_name, "w");
 	if (!f) {
-		fprintf(stderr, PROGNAME": "__FILE__"(%d):fopen:%s:%s(errno=%d)\n",
-			__LINE__, n->html_file->full_name, strerror(errno), errno);
-		exit(EXIT_FAILURE);
+		ERR(EXIT_FAILURE, "fopen:%s:%s(errno=%d)\n",
+			n->html_file->full_name, strerror(errno), errno);
 	} /* if */
 
 	switch(n->type) {

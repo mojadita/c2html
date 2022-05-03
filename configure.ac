@@ -21,14 +21,12 @@ dnl along with this program; if not, write to the Free Software
 dnl Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 dnl
 
-AC_INIT(c2html,2.12b-20150702)
-
-AC_CONFIG_SRCDIR(./c2html.c)
+AC_INIT(c2html,2.12b-20150702,http://www.lcssl.es/c2html/)
 AM_INIT_AUTOMAKE
+AC_CONFIG_SRCDIR(./c2html.c)
 
 AUTHOR_NAME="Luis Colorado"
 AUTHOR_EMAIL="lc@luiscoloradosistemas.com"
-PACKAGE_URL="http://www.lcssl.es/c2html/"
 
 AM_PROG_LEX
 AC_PROG_CC
@@ -54,6 +52,7 @@ then
 fi
 
 dnl Checks for libraries.
+AC_CHECK_HEADERS(avl.h)
 
 dnl Checks for header files.
 AC_HEADER_STDC

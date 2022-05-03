@@ -17,6 +17,7 @@
 #include "node.h"
 #include "menu.h"
 #include "ctag.h"
+#include "c2html.h"
 
 static AVL_TREE db_ctag = NULL;
 
@@ -31,26 +32,33 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
 	tag_menu *men;
 	ctag key;
 
-	DEB((PR("begin <%s|%s|%p>\n"), id, fi, ss));
+	DEB(FLAG_DEBUG_CTAGS,
+			"begin <%s|%s|%p>\n", id, fi, ss);
 
 	if (!db_ctag) {
-		DEB((PR("initializing db_ctag database\n")));
-		assert(db_ctag = new_avl_tree(
+		DEB(FLAG_DEBUG_CTAGS,
+				"initializing db_ctag database\n");
+		D(db_ctag = new_avl_tree(
 			(AVL_FCOMP) ctag_cmp,
 			NULL,
 			NULL,
 			(AVL_FPRNT) print_ctag_key));
+		if (!db_ctag) {
+			ERR(1, "Cannot allocate AVL_TREE\n");
+		}
 	} /* if */
 
 	key.id = id = intern(id);
 	key.fi = fi = intern(fi);
 	key.ss = ss = intern(ss);
 
-	DEB((PR("looking for tag <%s|%s|%p>\n"),
-		id, fi, ss));
+	DEB(FLAG_DEBUG_CTAGS,
+			"looking for tag <%s|%s|%p>\n",
+			id, fi, ss);
 	res = avl_tree_get(db_ctag, &key);
 	if (!res) {
-		DEB((PR("not found, creating it\n")));
+		DEB(FLAG_DEBUG_CTAGS,
+				"not found, creating it\n");
 		assert(res = malloc(sizeof(ctag))); /* allocate memory */
 
 		res->id = id;
@@ -71,7 +79,8 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
 		avl_tree_put(nod->subnodes, id, res);
 
 		men = lookup_menu(res->id, root);
-		DEB((PR("lookup_menu(%s)\n"), men->id));
+		DEB(FLAG_DEBUG_CTAGS,
+				"lookup_menu(%s)\n", men->id);
 
 		/* insert ctag in list corresponding to file. */
 		avl_tree_put(men->group_by_file, nod->full_name, res);
@@ -79,7 +88,8 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
 		men->last_tag = res; /* last registered tag, for one node menus */
 	} /* if */
 
-	DEB((PR("end\n")));
+	DEB(FLAG_DEBUG_CTAGS,
+			"end\n");
 	return res;
 } /* lookup_ctag */
 

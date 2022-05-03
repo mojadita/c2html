@@ -48,6 +48,7 @@
 #include "ctag.h"
 #include "c2html.h"
 #include "html_output.h"
+#include "lexical.h"
 
 /* constants */
 
@@ -92,7 +93,7 @@ void process1(const char *fn)
 		exit (EXIT_FAILURE);
 	} /* if */
 
-	DEB((PR("Processing %s...\n"), fn));
+	DEB(FLAG_DEBUG_PROCESS1, "Processing %s...\n", fn);
 
 	/* file open, process lines */
 	while (fgets(line, sizeof line, tagfile)) {
@@ -101,7 +102,7 @@ void process1(const char *fn)
 		
 		line_num++;
 
-		DEB((PR("line[%lld]: %s\n"), line_num, line));
+		DEB(FLAG_DEBUG_PROCESS1, "line[%lld]: %s\n", line_num, line);
 
 		id = strtok (line, "\t\n"); if (!id) {
 			fprintf(stderr,
@@ -141,20 +142,13 @@ void process1(const char *fn)
 
 	} /* while ... */
 
-	DEB((PR("closing tagfile [%s]\n"), fn));
+	DEB(FLAG_DEBUG_PROCESS1, "closing tagfile [%s]\n", fn);
 	fclose(tagfile);
 } /* process1 */
 
 int send_ex(FILE *ex, const char *fmt, ...)
 {
 	va_list p;
-
-#if DEBUG
-	DEB((PR("EX:")));
-	va_start(p, fmt);
-	vprintf(fmt, p);
-	va_end(p);
-#endif
 
 	va_start(p, fmt);
 	vfprintf(ex, fmt, p);
@@ -165,7 +159,8 @@ int process_dir_pre(const node *d, void *arg_not_used)
 {
 	FILE *h;
 
-	DEB((PR("Creating directory %s\n"), d->full_name));
+	DEB(FLAG_DEBUG_PROCESS_DIR,
+			"Creating directory %s\n", d->full_name);
 	int res = mkdir(d->full_name, 0777);
 	if (res < 0 && (errno != EEXIST)) {
 		fprintf(stderr,
@@ -173,23 +168,25 @@ int process_dir_pre(const node *d, void *arg_not_used)
 			d->full_name, strerror(errno), errno);
 		return -1;
 	} /* if */
-	DEB((PR("creating html file [%s] for directory [%s]\n"),
-		d->html_file->full_name, d->full_name));
+	DEB(FLAG_DEBUG_PROCESS_DIR,
+			"creating html file [%s] for directory [%s]\n",
+		d->html_file->full_name, d->full_name);
 	h = html_create(d);
 	fprintf(h, "      <ul>\n");
 	if (d->parent) {
 		char *rp = rel_path(
 			d->parent->html_file,
 			d->html_file);
-		DEB((PR("Writing an entry [%s] in parent html file [%s] for [%s]\n"),
-			rp, d->parent->html_file->full_name, d->html_file->full_name));
+		DEB(FLAG_DEBUG_PROCESS_DIR,
+				"Writing an entry [%s] in parent html file [%s] for [%s]\n",
+			rp, d->parent->html_file->full_name, d->html_file->full_name);
 		fprintf(d->parent->html_file->index_f,
 			"      <li><span class=\"dir\">"
 			"<a href=\"%s\">%s</a> directory."
 			"</span></li>\n",
 			rp, d->name);
 	} /* if */
-	DEB((PR("end\n")));
+	DEB(FLAG_DEBUG_PROCESS_DIR, "end\n");
 	return 0;
 } /* process_dir_pre */
 
@@ -197,11 +194,12 @@ int process_dir_post(const node *d, void *arg_not_used)
 {
 	FILE *h = d->html_file->index_f;
 
-	DEB((PR("Cleaning and closing %s\n"),
-		d->html_file->full_name));
+	DEB(FLAG_DEBUG_PROCESS_DIR,
+			"Cleaning and closing %s\n",
+			d->html_file->full_name);
 	fprintf(h, "      </ul>\n");
 	html_close(d);
-	DEB((PR("end\n")));
+	DEB(FLAG_DEBUG_PROCESS_DIR, "end\n");
 
 	return 0;
 } /* process_dir_post */
@@ -212,16 +210,19 @@ int process_file(const node *f, void *not_used)
 	FILE *ex_fd;
 	int ntags;
 
-	DEB((PR("begin [%s]\n"), f->html_file->full_name));
-	DEB((PR("writing an entry for %s in parent html file %s\n"),
-		f->html_file->name, f->parent->html_file->name));
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"begin [%s]\n", f->html_file->full_name);
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"writing an entry for %s in parent html file %s\n",
+		f->html_file->name, f->parent->html_file->name);
 
 	fprintf(f->parent->html_file->index_f,
 		"      <li><span class=\"file\">"
 		"<a href=\"%s\">%s</a> file.</span>\n",
 		f->html_file->name, f->name);
 
-	DEB((PR("launching an instance of "EX_PATH"\n")));
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"launching an instance of "EX_PATH"\n");
 
 	ex_fd = popen(EX_PATH, "w");
 	send_ex(ex_fd, "set notagstack\n");
@@ -231,21 +232,23 @@ int process_file(const node *f, void *not_used)
 		while (*s == '/') s++;
 		send_ex(ex_fd, "e! %s\n", s); /* edit original file */
 
-		DEB((PR("begin editing session on file %s -> %s\n"),
-			s, f->full_name));
+		DEB(FLAG_DEBUG_PROCESS_FILE,
+			"begin editing session on file %s -> %s\n",
+			s, f->full_name);
 	} /* block */
 
 	/* for every tag in this file */
-	DEB((PR("for every tag in this file:\n")));
-	DEB((PR("FILE name=[%s]\n"), f->full_name));
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"for every tag in this file:\n");
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"FILE name=[%s]\n", f->full_name);
 	D(ntags = avl_tree_size(f->subnodes));
-	DEB((PR("it has %d tags:\n"), ntags));
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"it has %d tags:\n", ntags);
 	if (ntags) {
 		AVL_ITERATOR it1, it2;
 
-#if DEBUG
-		printf(PR("begin list of tags: "));
-#endif
+		DEB(FLAG_DEBUG_PROCESS_FILE, "begin list of tags: ");
 
 		fprintf(f->parent->html_file->index_f,
 			"        <ul>\n");
@@ -257,16 +260,15 @@ int process_file(const node *f, void *not_used)
 
 			assert(tag1 = avl_iterator_data(it1));
 
-#if DEBUG
-			printf("%s[%s]", it1 == it2 ? "" : "; ", tag1->id);
-#endif
+			DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
+					"%s[%s]", it1 == it2 ? "" : "; ", tag1->id);
+
 			/* the first tag in the list contains the total number of tag in this list */
 			if (tag1->tag_no_in_file > 1) { /* several tags for this id */
 				const ctag *tag2;
 				for (tag2 = tag1; tag2; tag2 = tag2->next_in_file) {
-#if DEBUG
-					printf("%s%d", tag2 == tag1 ? ": " : ", ", tag2->tag_no_in_file);
-#endif
+					DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
+							"%s%d", tag2 == tag1 ? ": " : ", ", tag2->tag_no_in_file);
 					fprintf(f->parent->html_file->index_f,
 						"          <li><span class=\"tag\">"
 						"<a href=\"%s#%s-%d\">%s</a></span></li>\n",
@@ -293,14 +295,13 @@ int process_file(const node *f, void *not_used)
 					tag1->id, tag1->tag_no_in_file); /* change */
 			} /* if */
 		} /* for */
-#if DEBUG
-		printf(".\n"); /* end list of tags */
-#endif
+		DEB_TAIL(FLAG_DEBUG_PROCESS_FILE, ".\n"); /* end list of tags */
 		fprintf(f->parent->html_file->index_f,
-			"        </ul>\n");
+				"        </ul>\n");
 	} /* if */
-	DEB((PR("terminate "EX_PATH" editing session and write on parent [%s]\n"),
-		f->parent->html_file->full_name));
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"terminate "EX_PATH" editing session and write on parent [%s]\n",
+			f->parent->html_file->full_name);
 	fprintf(f->parent->html_file->index_f, "      </li>\n");
 	send_ex(ex_fd, "w! %s\n", f->full_name); /* write file */
 	send_ex(ex_fd, "q!\n"); /* and terminate */
@@ -329,11 +330,13 @@ int process_file(const node *f, void *not_used)
 	} /* block */
 
 	pclose(ex_fd);
-	DEB((PR("scanning file %s -> %s\n"),
-		f->full_name, f->html_file->full_name));
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"scanning file %s -> %s\n",
+			f->full_name, f->html_file->full_name);
 	scanfile(f);
-	DEB((PR("end [%s]\n"),
-		f->full_name));
+	DEB(FLAG_DEBUG_PROCESS_FILE,
+			"end [%s]\n",
+			f->full_name);
 
 	return 0;
 } /* process_file */
@@ -366,10 +369,18 @@ PROGNAME " " VERSION ": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n"
 "  -d <debug_options>  Debug options can be several of:  \n"
 "         1  process1 debug.\n"
 "         2  process2 debug.\n"
-"         d  database debug.\n"
+"         D  database debug.\n"
 "         l  lexical processing debug.\n"
 "         x  ex(1) commands debug.\n"
-"         m  create_menu debug.\n"
+"         M  create_menu debug.\n"
+"         d  process dir debug.\n"
+"         f  process file debug.\n"
+"         i  process ident debug.\n"
+"         m  process menu debug.\n"
+"         s  process scanfile debug.\n"
+"         I  string intern debug.\n"
+"         c  ctags debug.\n"
+"         n  nodes debug.\n"
 "  -n   Output linenumbers.\n"
 "  -o   Output directory (default " DEFAULT_OUTPUT ")\n"
 "  -p   Progress is shown on stderr.\n"
@@ -394,11 +405,19 @@ int main (int argc, char **argv)
 				for (p = optarg; *p; p++) {
 					switch(*p) {
 					case '1': flags |= FLAG_DEBUG_PROCESS1; break;
-					case 'd': flags |= FLAG_DEBUG_DB; break;
+					case 'D': flags |= FLAG_DEBUG_DB; break;
 					case 'l': flags |= FLAG_DEBUG_LEX; break;
 					case 'x': flags |= FLAG_DEBUG_EX; break;
-					case 'm': flags |= FLAG_DEBUG_CREATE_MENU; break;
+					case 'M': flags |= FLAG_DEBUG_CREATE_MENU; break;
 					case '2': flags |= FLAG_DEBUG_PROCESS2; break;
+					case 'd': flags |= FLAG_DEBUG_PROCESS_DIR; break;
+					case 'f': flags |= FLAG_DEBUG_PROCESS_FILE; break;
+					case 'i': flags |= FLAG_DEBUG_PROCESS_IDENT; break;
+					case 'm': flags |= FLAG_DEBUG_PROCESS_MENU; break;
+					case 's': flags |= FLAG_DEBUG_SCANFILE; break;
+					case 'I': flags |= FLAG_DEBUG_INTERN; break;
+					case 'c': flags |= FLAG_DEBUG_CTAGS; break;
+					case 'n': flags |= FLAG_DEBUG_NODES; break;
 					} /* switch */
 				} /* for */
 			} /* block */

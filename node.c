@@ -15,6 +15,7 @@
 #include "debug.h"
 #include "intern.h"
 #include "node.h"
+#include "c2html.h"
 
 #define BUFFER_SIZE				4096
 #define NULL_POINTER_STRING		"<<NULL>>"
@@ -38,16 +39,18 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 	assert(name);
 	name = intern(name); /* intern is an idempotent function */
 
-	DEB((PR("begin: name=[%s], parent=(%p), type=[%s]\n"),
+	DEB(FLAG_DEBUG_NODES,
+		"begin: name=[%s], parent=(%p), type=[%s]\n",
 		name,
 		parent,
-		type2string[typ]));
+		type2string[typ]);
 
 	if (parent)
 		assert(avl_tree_get(parent->subnodes, name) == NULL);
 	
 	assert(res = malloc(sizeof (node))); /* get memory */
-	DEB((PR("malloc() -> %p\n"), res));
+	DEB(FLAG_DEBUG_NODES,
+		"malloc() -> %p\n", res);
 	res->name = name;
 	res->parent = parent;
 	res->type = typ;
@@ -56,21 +59,24 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 	assert(res->subnodes = new_avl_tree(
 		(AVL_FCOMP) strcmp, NULL, NULL,
 		(AVL_FPRNT) fputs));
-	DEB((PR("res->subnodes = %p\n"), res->subnodes));
+	DEB(FLAG_DEBUG_NODES,
+		"res->subnodes = %p\n", res->subnodes);
 	res->index_f = NULL;
 
 	/* construct the path to it. use + 1
 	 * to alloc for a NULL pointer at end. */
 	assert(res->path = calloc(res->level + 1, sizeof (node *)));
-	DEB((PR("construct res->path = %p\n"), res->path));
+	DEB(FLAG_DEBUG_NODES,
+		"construct res->path = %p\n", res->path);
 	{	const node *p = res;
 		int i;
 
 		res->path[res->level] = NULL;
 		for (i = res->level-1; i >= 0; i--)
 		{
-			DEB((PR("Setting res->path[%d] = p(%p/%s)\n"),
-				i, p, p->name));
+			DEB(FLAG_DEBUG_NODES,
+				"Setting res->path[%d] = p(%p/%s)\n",
+				i, p, p->name);
 			res->path[i] = p;
 			p = p->parent;
 		} /* for */
@@ -92,13 +98,15 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 
 		res->full_name = intern(buffer);
 	} /* block */
-	DEB((PR("res->full_name = %p[%s]\n"),
-		res->full_name, res->full_name));
+	DEB(FLAG_DEBUG_NODES,
+			"res->full_name = %p[%s]\n",
+		res->full_name, res->full_name);
 
 	/* add to parent directory */
 	if (parent) {
 		avl_tree_put(parent->subnodes, res->name, res);
-		DEB((PR("added to parent\n")));
+		DEB(FLAG_DEBUG_NODES,
+				"added to parent\n");
 	} /* if */
 
 	/* now, add its html_file, if existent. */
@@ -106,7 +114,8 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 
 	case TYPE_DIR: {
 			char *name = "index.html";
-			DEB((PR("create subnode [%s] for TYPE_DIR\n"), name));
+			DEB(FLAG_DEBUG_NODES,
+					"create subnode [%s] for TYPE_DIR\n", name);
 			res->html_file = new_node(name, res, TYPE_HTML);
 			avl_tree_put(res->subnodes, name, res->html_file);
 			res->flags = NODE_FLAG_NONE;
@@ -117,8 +126,9 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 			char name[BUFFER_SIZE];
 			assert(parent);
 			snprintf(name, sizeof name, "%s.html", res->name);
-			DEB((PR("create subnode [%s] in parent [%s] for TYPE_FILE\n"),
-				name, parent->full_name));
+			DEB(FLAG_DEBUG_NODES,
+					"create subnode [%s] in parent [%s] for TYPE_FILE\n",
+				name, parent->full_name);
 			res->html_file = new_node(name, parent, TYPE_HTML);
 			avl_tree_put(parent->subnodes, res->html_file->name, (void *) res->html_file);
 			res->flags = NODE_FLAG_DONT_RECUR_PREORDER | NODE_FLAG_DONT_RECUR_POSTORDER;
@@ -133,7 +143,8 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 
 	} /* switch */
 
-	DEB((PR("end [res=%p]\n"), res));
+	DEB(FLAG_DEBUG_NODES,
+		"end [res=%p]\n", res);
 	return res;
 } /* new_node */
 
@@ -149,8 +160,9 @@ node *name2node(node *root, const char *p, const node_type typ)
 	name = strdup(p); /* alloc a copy, to be returned at end */
 	nod = root;
 
-	DEB((PR("begin: root=\"%s\", path=\"%s\"\n"),
-			root->name, p));
+	DEB(FLAG_DEBUG_NODES,
+		"begin: root=\"%s\", path=\"%s\"\n",
+			root->name, p);
 
 	/* we cannot have absolute paths */
 	assert(name[0] != '/');
@@ -158,7 +170,8 @@ node *name2node(node *root, const char *p, const node_type typ)
 	for(nam = name; nam; nam = aux) {
 		node *next;
 
-		DEB((PR("step: parsing [%s][%s]\n"), nod->full_name, nam));
+		DEB(FLAG_DEBUG_NODES,
+			"step: parsing [%s][%s]\n", nod->full_name, nam);
 
 		aux = strchr(nam, '/'); /* search for a '/' character */
 		if (aux) /* if found, nullify it and every one char following it */
@@ -169,7 +182,8 @@ node *name2node(node *root, const char *p, const node_type typ)
 		/* nam is the component name of this element of the path */
 		/* CHECK FOR SPECIAL "." ENTRY */
 		if (!strcmp(nam, ".")) {
-			DEB((PR("component is \".\", ignored\n")));
+			DEB(FLAG_DEBUG_NODES,
+				"component is \".\", ignored\n");
 			continue; /* it it's the . entry. */
 		} /* if */
 
@@ -180,7 +194,8 @@ node *name2node(node *root, const char *p, const node_type typ)
 					PR("error: \"..\" not allowed in %s\n"), p);
 				exit(EXIT_FAILURE);
 			} /* if */
-			DEB((PR("component is \"..\", special\n")));
+			DEB(FLAG_DEBUG_NODES,
+				"component is \"..\", special\n");
 			nod = (node *) nod->parent;
 			continue;
 		} /* if */
@@ -196,12 +211,14 @@ node *name2node(node *root, const char *p, const node_type typ)
 			return NULL;
 		} /* if */
 
-		DEB((PR("looking for [%s] in [%s]->subnodes\n"),
-			nam, nod->full_name));
+		DEB(FLAG_DEBUG_NODES,
+			"looking for [%s] in [%s]->subnodes\n",
+			nam, nod->full_name);
 		next = avl_tree_get(nod->subnodes, nam);
 		if (!next) {
-			DEB((PR("[%s] not found, creating it in [%s]\n"),
-				nam, nod->full_name));
+			DEB(FLAG_DEBUG_NODES,
+				"[%s] not found, creating it in [%s]\n",
+				nam, nod->full_name);
 
 			/* all but the last in the hierarchy is a directory */
 			next = new_node(
@@ -210,18 +227,20 @@ node *name2node(node *root, const char *p, const node_type typ)
 					: typ);
 		} /* if */
 
-		DEB((PR("step[%s]: end%s.\n"),
+		DEB(FLAG_DEBUG_NODES,
+			"step[%s]: end%s.\n",
 			next->name,
 			aux
 				? "... next"
-				: ""));
+				: "");
 		nod = next;
 	} /* for */
 
 	/* free the temporary copy of the name */
 	free(name);
 
-	DEB((PR("end\n")));
+	DEB(FLAG_DEBUG_NODES,
+		"end\n");
 	return nod;
 } /* name2node */
 
@@ -248,9 +267,11 @@ char *rel_path(const node *a, const node *b)
 	char *p = buffer;
 	int res, n = 0;
 
-	DEB((PR("begin: a=[%s], b=[%s]\n"),
-		a->full_name, b->full_name));
-	DEB((PR("common_prefix() -> %d\n"), c));
+	DEB(FLAG_DEBUG_NODES,
+		"begin: a=[%s], b=[%s]\n",
+		a->full_name, b->full_name);
+	DEB(FLAG_DEBUG_NODES,
+		"common_prefix() -> %d\n", c);
 	/* first the chain up */
 	for (i = a->level-1; i > 0 && i > c; i--) {
 		res = snprintf(p, bs, "%s..",
@@ -281,10 +302,11 @@ int do_recur(const node *nod,
 	AVL_ITERATOR i;
 	int res = 0;
 
-	DEB((PR("%*sENTER: %s: %s\n"),
+	DEB(FLAG_DEBUG_NODES,
+		"%*sENTER: %s: %s\n",
 		(nod->level<<2)-1, "",
 		type2string[nod->type],
-		nod->full_name));
+		nod->full_name);
 
 	switch(nod->type) {
 	case TYPE_DIR:
@@ -316,10 +338,11 @@ int do_recur(const node *nod,
 	case TYPE_HTML: break;
 	} /* switch */
 
-	DEB((PR("%*sLEAVE: %s: %s\n"),
+	DEB(FLAG_DEBUG_NODES,
+		"%*sLEAVE: %s: %s\n",
 		(nod->level<<2)-1, "",
 		type2string[nod->type],
-		nod->full_name));
+		nod->full_name);
 	return res;
 } /* do_recur */
 
