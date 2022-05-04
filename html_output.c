@@ -45,6 +45,7 @@
 #include "node.h"
 
 /* constants */
+static const char FILE_TYPE_UNKNOWN[] = "&lt;&lt;FILE TYPE UNKNOWN&gt;&gt;";
 
 /* types */
 
@@ -107,7 +108,7 @@ FILE *html_create(node *n)
 {
 	FILE *f;
 	int i, j;
-	char *typ;
+	const char *typ;
 
 	assert(n);
 	assert(n->html_file);
@@ -121,7 +122,7 @@ FILE *html_create(node *n)
 	switch(n->type) {
 	case TYPE_DIR: typ = "Directory"; break;
 	case TYPE_FILE: typ = "File"; break;
-	default: typ = "<<file type unknown>>"; break;
+	default: typ = FILE_TYPE_UNKNOWN; break;
 	} /* switch */
 
 	fprintf(f,
@@ -168,7 +169,7 @@ void html_close(node *n)
 {
 	FILE *f;
 	node *hn;
-	char *typ;
+	const char *typ;
 
 	assert(n);
 	assert(hn = n->html_file);
@@ -177,7 +178,7 @@ void html_close(node *n)
 	switch(n->type) {
 	case TYPE_DIR: typ = "Directory"; break;
 	case TYPE_FILE: typ = "File"; break;
-	default: typ = "<<file type unknown>>"; break;
+	default: typ = FILE_TYPE_UNKNOWN; break;
 	} /* switch */
 
 	assert(f = hn->index_f);

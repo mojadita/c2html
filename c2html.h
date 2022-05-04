@@ -68,6 +68,7 @@
 #define FLAG_DEBUG_INTERN			(1 << 13)
 #define FLAG_DEBUG_CTAGS			(1 << 14)
 #define FLAG_DEBUG_NODES			(1 << 15)
+#define FLAG_DEBUG_ALWAYS			(1 << 16)
 
 /* variables */
 

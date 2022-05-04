@@ -59,7 +59,7 @@ char *rcsId = "\n$Id: c2html.c,v 0.25 2014/09/09 20:22:05 luis Exp $\n";
 
 /* variables */
 
-int flags = 0;
+int flags = FLAG_DEBUG_ALWAYS;
 const char *tag_file = DEFAULT_TAG_FILE;
 const char *output = DEFAULT_OUTPUT;
 const char *base_dir = DEFAULT_BASE_DIR;
@@ -215,6 +215,12 @@ int process_file(const node *f, void *not_used)
 	DEB(FLAG_DEBUG_PROCESS_FILE,
 			"writing an entry for %s in parent html file %s\n",
 		f->html_file->name, f->parent->html_file->name);
+
+	DEB(FLAG_DEBUG_PROCESS_DIR,
+		"Writing:\"      <li><span class=\"file\">"
+		"<a href=\"%s\">%s</a> file.</span>\"To file \"%s\"\n",
+		f->html_file->name, f->full_name,
+		f->parent->html_file->full_name);
 
 	fprintf(f->parent->html_file->index_f,
 		"      <li><span class=\"file\">"

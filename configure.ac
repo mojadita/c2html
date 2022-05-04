@@ -21,7 +21,7 @@ dnl along with this program; if not, write to the Free Software
 dnl Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 dnl
 
-AC_INIT(c2html,2.12b-20150702,http://www.lcssl.es/c2html/)
+AC_INIT(c2html,2.13b-20220504,bugs@lcssl.es, http://www.lcssl.es/c2html/)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR(./c2html.c)
 
