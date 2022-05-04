@@ -41,3 +41,4 @@ test_node
 test_ctag
 core
 valgrind.out
+.depend
