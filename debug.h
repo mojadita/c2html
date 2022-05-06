@@ -7,12 +7,12 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -39,32 +39,32 @@ extern int flags;
 
 #if INCLUDE_DEBUG_CODE
 
-#	define DEB(_flgs, _fmt, ...) DEB_TAIL(_flgs, PR(_fmt), ##__VA_ARGS__)
-#	define DEB_TAIL(_flgs, _fmt, ...) do {	\
-		if (flags & _flgs)					\
-			printf(_fmt, ##__VA_ARGS__);	\
-		fflush(stdout);						\
-	} while (0)
-#	define D(X) do {								\
-		DEB(flags & FLAG_DEBUG_DB, "%s;\n", #X);	\
-		X;											\
-	} while (0)
+#   define DEB(_flgs, _fmt, ...) DEB_TAIL(_flgs, PR(_fmt), ##__VA_ARGS__)
+#   define DEB_TAIL(_flgs, _fmt, ...) do {  \
+        if (flags & _flgs || flags & FLAG_DEBUG_ALL) \
+            printf(_fmt, ##__VA_ARGS__);    \
+        fflush(stdout);                     \
+    } while (0)
+#   define D(X) do {                                \
+        DEB(flags & FLAG_DEBUG_DB, "%s;\n", #X);    \
+        X;                                          \
+    } while (0)
 
 #else /* INCLUDE_DEBUG_CODE */
 
-#	define DEB(_fmt, ...)
-#	define DEB_TAIL(_fmt, ...)
-#	define D(X) do {				\
-		X;							\
-	} while (0)
+#   define DEB(_fmt, ...)
+#   define DEB_TAIL(_fmt, ...)
+#   define D(X) do {                \
+        X;                          \
+    } while (0)
 
 #endif /* INCLUDE_DEBUG_CODE */
 
 #define ERR(_code, _fmt, ...) ERR_TAIL(_code, PR(_fmt), ##__VA_ARGS__)
-#define ERR_TAIL(_code, _fmt, ...) do {			\
-		fprintf(stderr, _fmt, ##__VA_ARGS__);	\
-		if (_code) exit(_code);					\
-	} while (0)
+#define ERR_TAIL(_code, _fmt, ...) do {         \
+        fprintf(stderr, _fmt, ##__VA_ARGS__);   \
+        if (_code) exit(_code);                 \
+    } while (0)
 
 #ifdef __cplusplus
 } /* extern "C" */
