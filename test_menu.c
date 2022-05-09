@@ -7,12 +7,12 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -47,27 +47,27 @@ static char TEST_MENU_C_RCSId[]="\n$Id: test_menu.c,v 1.1 2014/09/09 20:23:07 lu
 /* functions */
 int print_menu(tag_menu *men)
 {
-	printf(PR("MENU %p, id=%s, flags=0x%08x, ntags=%d, nod=[%p], last_tag=[%p]\n"),
-		men, men->id, men->flags, men->ntags, men->nod, men->last_tag);
+    printf(PR("MENU %p, id=%s, flags=0x%08x, ntags=%d, nod=[%p], last_tag=[%p]\n"),
+        men, men->id, men->flags, men->ntags, men->nod, men->last_tag);
 } /* print_menu */
 
 /* main program */
 int main (int argc, char **argv)
 {
-	tag_menu *res;
-	AVL_ITERATOR i;
+    tag_menu *res;
+    AVL_ITERATOR i;
 
-	node *root = new_node("test", NULL, TYPE_DIR);
+    node *root = new_node("test", NULL, TYPE_DIR);
 
-	res = lookup_menu("TEST_MENU", root);
-	res = lookup_menu("TEST_MENU2", root);
-	res = lookup_menu("ANOTHER_TEST_MENU", root);
-	for (	i = avl_tree_first(db_menus);
-			i;
-			i = avl_iterator_next(i))
-	{
-		print_menu(avl_iterator_data(i));
-	} /* for */
+    res = lookup_menu("TEST_MENU", root);
+    res = lookup_menu("TEST_MENU2", root);
+    res = lookup_menu("ANOTHER_TEST_MENU", root);
+    for (   i = avl_tree_first(db_menus);
+            i;
+            i = avl_iterator_next(i))
+    {
+        print_menu(avl_iterator_data(i));
+    } /* for */
 } /* main */
 
 /* $Id: test_menu.c,v 1.1 2014/09/09 20:23:07 luis Exp $ */

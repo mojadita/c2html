@@ -7,12 +7,12 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -20,7 +20,7 @@
 
 #define IN_TEST_NODE_C
 
-#define DEBUG 	1
+#define DEBUG   1
 
 /* Standard include files */
 #include <sys/types.h>
@@ -38,7 +38,7 @@
 
 
 /* constants */
-#define MAX		50
+#define MAX     50
 
 /* types */
 
@@ -53,49 +53,49 @@ int nodes_n = 0;
 /* functions */
 int f(const node *n, void *v)
 {
-	printf(PR("Nodo %s, %s\n"), n->full_name, (const char *) v);
-	return 0;
+    printf(PR("Nodo %s, %s\n"), n->full_name, (const char *) v);
+    return 0;
 } /* f */
 
 /* main program */
 int main (int argc, char **argv)
 {
-	int i;
-	node *res;
+    int i;
+    node *res;
 
-	assert(nodes = calloc(MAX, sizeof (node *)));
-	for (i = 0; i < MAX; i++) {
-		char buffer[16];
-		snprintf(buffer, sizeof buffer, "#%06d", i);
-		nodes[i] = new_node(
-			buffer,
-			i	? nodes[rand() % i]
-				: NULL,
-			TYPE_DIR);
-	} /* for */
-	name2node(nodes[0], "style.css", TYPE_FILE)->flags |= NODE_FLAG_DONT_RECUR_INFILE;
-	name2node(nodes[0], "javascript.js", TYPE_FILE)->flags |= NODE_FLAG_DONT_RECUR_INFILE;
-	name2node(nodes[0], "prueba.c", TYPE_FILE);
-	name2node(nodes[0], "home/eluscoo/profile", TYPE_HTML);
-	name2node(nodes[0], "home/eluscoo/prueba.c", TYPE_FILE);
-	name2node(nodes[0], "home/eluscoo/prueba.h", TYPE_FILE);
-	name2node(nodes[0], "home/eluscoo/prueba.h", TYPE_FILE);
-	name2node(nodes[0], "home/eluscoo/a/b", TYPE_DIR);
-	name2node(nodes[0], "home/eluscoo/a/b/h", TYPE_DIR);
-	name2node(nodes[0], "home/eluscoo/profile/pepe", TYPE_FILE);
-	res = name2node(nodes[0], "home/eluscoo/pepe/../fich_1.html", TYPE_HTML);
-	do_recur(nodes[0], f, (void *)">>> preprocess", f, (void *)"*** infile", f, (void *)"<<< postprocess");
-	printf(PR("rel_path(%s, %s) -> %s\n"), res->full_name, res->full_name,
-		rel_path(res, res));
-		
-		
+    assert(nodes = calloc(MAX, sizeof (node *)));
+    for (i = 0; i < MAX; i++) {
+        char buffer[16];
+        snprintf(buffer, sizeof buffer, "#%06d", i);
+        nodes[i] = new_node(
+            buffer,
+            i   ? nodes[rand() % i]
+                : NULL,
+            TYPE_DIR);
+    } /* for */
+    name2node(nodes[0], "style.css", TYPE_FILE)->flags |= NODE_FLAG_DONT_RECUR_INFILE;
+    name2node(nodes[0], "javascript.js", TYPE_FILE)->flags |= NODE_FLAG_DONT_RECUR_INFILE;
+    name2node(nodes[0], "prueba.c", TYPE_FILE);
+    name2node(nodes[0], "home/eluscoo/profile", TYPE_HTML);
+    name2node(nodes[0], "home/eluscoo/prueba.c", TYPE_FILE);
+    name2node(nodes[0], "home/eluscoo/prueba.h", TYPE_FILE);
+    name2node(nodes[0], "home/eluscoo/prueba.h", TYPE_FILE);
+    name2node(nodes[0], "home/eluscoo/a/b", TYPE_DIR);
+    name2node(nodes[0], "home/eluscoo/a/b/h", TYPE_DIR);
+    name2node(nodes[0], "home/eluscoo/profile/pepe", TYPE_FILE);
+    res = name2node(nodes[0], "home/eluscoo/pepe/../fich_1.html", TYPE_HTML);
+    do_recur(nodes[0], f, (void *)">>> preprocess", f, (void *)"*** infile", f, (void *)"<<< postprocess");
+    printf(PR("rel_path(%s, %s) -> %s\n"), res->full_name, res->full_name,
+        rel_path(res, res));
+
+
 #if 0
-	for(i = 0; i < MAX-1; i++) {
-		char *s = rel_path(nodes[i]->html_file, nodes[i+1]->html_file);
-		printf(PR("rel_path(%s, %s) -> %s\n"),
-			nodes[i]->html_file->full_name, nodes[i+1]->html_file->full_name,
-			s);
-	} /* for */
+    for(i = 0; i < MAX-1; i++) {
+        char *s = rel_path(nodes[i]->html_file, nodes[i+1]->html_file);
+        printf(PR("rel_path(%s, %s) -> %s\n"),
+            nodes[i]->html_file->full_name, nodes[i+1]->html_file->full_name,
+            s);
+    } /* for */
 #endif
 } /* main */
 

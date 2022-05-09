@@ -28,7 +28,7 @@
 #ifndef C2HTML_H
 #define C2HTML_H
 
-#include "db.h" /* for the node types below */
+#include "node.h"
 
 /* constants */
 #ifndef VERSION

@@ -35,7 +35,6 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 #include <stdarg.h>
 #include <time.h>
 
@@ -87,10 +86,10 @@ void process1(const char *fn)
 
     tagfile = fopen (fn, "r");
     if (!tagfile) {
-		ERR(EXIT_FAILURE,
-			"Error opening %s: %s\n",
-			fn, strerror(errno));
-		/* NOTREACHED */
+        ERR(EXIT_FAILURE,
+            "Error opening %s: %s\n",
+            fn, strerror(errno));
+        /* NOTREACHED */
     } /* if */
 
     DEB(FLAG_DEBUG_PROCESS1,
@@ -110,21 +109,21 @@ void process1(const char *fn)
                 line);
 
         id = strtok (line, "\t\n"); if (!id) { /* tag name */
-			DEB(FLAG_DEBUG_ALWAYS,
+            DEB(FLAG_DEBUG_ALWAYS,
                 "%s:%ld: WARNING: bad syntax, unrecognized id.\n",
                 fn, line_num);
             continue;
         } /* if */
 
         fi = strtok (NULL, "\t\n"); if (!fi) { /* tag file */
-			DEB(FLAG_DEBUG_ALWAYS,
+            DEB(FLAG_DEBUG_ALWAYS,
                 "%s:%ld: WARNING: bad syntax, unrecognized file name.\n",
                 fn, line_num);
             continue;
         } /* if */
 
         st = strtok (NULL, "\n"); if (!st) { /* tag search string */
-			DEB(FLAG_DEBUG_ALWAYS,
+            DEB(FLAG_DEBUG_ALWAYS,
                 "%s:%ld: WARNING: bad syntax, unrecognized search string.\n",
                 fn, line_num);
             continue;
@@ -132,7 +131,7 @@ void process1(const char *fn)
 
         /* Ignore VIM ctags(1) private symbols starting in ! */
         if (id[0] == '!') {
-			DEB(FLAG_DEBUG_ALWAYS,
+            DEB(FLAG_DEBUG_ALWAYS,
                 "%s:%ld: WARNING: ignoring \"%s\" vim private identifier\n",
                 fn, line_num, id);
             continue;
@@ -146,8 +145,8 @@ void process1(const char *fn)
     } /* while ... */
 
     DEB(FLAG_DEBUG_PROCESS1,
-		"closing tagfile [%s]\n",
-		fn);
+        "closing tagfile [%s]\n",
+        fn);
     fclose(tagfile);
 
 } /* process1 */
@@ -270,7 +269,12 @@ int process_file(const node *f, void *not_used)
         {
             const ctag *tag1;
 
-            assert(tag1 = avl_iterator_data(it1));
+            tag1 = avl_iterator_data(it1);
+            if (!tag1) {
+                ERR(EXIT_FAILURE,
+                    "cannot get a tag iterator, this should not happen\n");
+                /* NOTREACHED */
+            }
 
             DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
                     "%s[%s]",
@@ -388,7 +392,6 @@ PROGNAME " " VERSION ": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n"
 "       This causes to generate <BASE> tags. (default: " DEFAULT_BASE_DIR_STRING ")\n"
 "  -d <debug_options>  Debug options can be several of:  \n"
 "         1  process1 debug.\n"
-"         2  process2 debug.\n"
 "         D  database debug.\n"
 "         l  lexical processing debug.\n"
 "         x  ex(1) commands debug.\n"
@@ -456,7 +459,13 @@ int main (int argc, char **argv)
         } /* switch */
     } /* while */
 
-    assert(db_root_node = new_node(output, NULL, TYPE_DIR));
+    db_root_node = new_node(output, NULL, TYPE_DIR);
+    if (!db_root_node) {
+        ERR(EXIT_FAILURE,
+            "Cannot get a new node: %s\n",
+            strerror(errno));
+        /* NOTREACHED */
+    }
     style_node = new_node(style_file, db_root_node, TYPE_HTML);
     js_node = new_node(js_file, db_root_node, TYPE_HTML);
 
@@ -470,8 +479,6 @@ int main (int argc, char **argv)
         process_dir_pre, NULL,
         process_file, NULL,
         process_dir_post, NULL));
-
-    //process2(db_root_node);
 
 } /* main */
 

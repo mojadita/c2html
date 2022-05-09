@@ -4,13 +4,13 @@
  * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
  */
 
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <assert.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "debug.h"
 #include "intern.h"
@@ -27,100 +27,106 @@ static int ctag_cmp(const ctag *a, const ctag *b);
 
 ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
 {
-	ctag *res;
-	node *nod;
-	tag_menu *men;
-	ctag key;
+    ctag *res;
+    node *nod;
+    tag_menu *men;
+    ctag key;
 
-	DEB(FLAG_DEBUG_CTAGS,
-			"begin <%s|%s|%p>\n", id, fi, ss);
+    DEB(FLAG_DEBUG_CTAGS,
+            "begin <%s|%s|%p>\n", id, fi, ss);
 
-	if (!db_ctag) {
-		DEB(FLAG_DEBUG_CTAGS,
-				"initializing db_ctag database\n");
-		D(db_ctag = new_avl_tree(
-			(AVL_FCOMP) ctag_cmp,
-			NULL,
-			NULL,
-			(AVL_FPRNT) print_ctag_key));
-		if (!db_ctag) {
-			ERR(1, "Cannot allocate AVL_TREE\n");
-		}
-	} /* if */
+    if (!db_ctag) {
+        DEB(FLAG_DEBUG_CTAGS,
+                "initializing db_ctag database\n");
+        D(db_ctag = new_avl_tree(
+            (AVL_FCOMP) ctag_cmp,
+            NULL,
+            NULL,
+            (AVL_FPRNT) print_ctag_key));
+        if (!db_ctag) {
+            ERR(1, "Cannot allocate AVL_TREE\n");
+        }
+    } /* if */
 
-	key.id = id = intern(id);
-	key.fi = fi = intern(fi);
-	key.ss = ss = intern(ss);
+    key.id = id = intern(id);
+    key.fi = fi = intern(fi);
+    key.ss = ss = intern(ss);
 
-	DEB(FLAG_DEBUG_CTAGS,
-			"looking for tag <%s|%s|%p>\n",
-			id, fi, ss);
-	res = avl_tree_get(db_ctag, &key);
-	if (!res) {
-		DEB(FLAG_DEBUG_CTAGS,
-				"not found, creating it\n");
-		assert(res = malloc(sizeof(ctag))); /* allocate memory */
+    DEB(FLAG_DEBUG_CTAGS,
+            "looking for tag <%s|%s|%p>\n",
+            id, fi, ss);
+    res = avl_tree_get(db_ctag, &key);
+    if (!res) {
+        DEB(FLAG_DEBUG_CTAGS,
+                "not found, creating it\n");
+        res = malloc(sizeof(ctag)); /* allocate memory */
+        if (!res) {
+            ERR(EXIT_FAILURE,
+                "malloc: %s\n",
+                strerror(errno));
+            /* NOTREACHED */
+        }
 
-		res->id = id;
-		res->fi = fi;
-		res->ss = ss;
+        res->id = id;
+        res->fi = fi;
+        res->ss = ss;
 
-		/* get the node this tag belongs to */
-		nod = res->nod = name2node(root, fi, TYPE_FILE);
+        /* get the node this tag belongs to */
+        nod = res->nod = name2node(root, fi, TYPE_FILE);
 
-		assert(nod && (nod->type == TYPE_FILE));
+        assert(nod && (nod->type == TYPE_FILE));
 
-		/* insert the ctag in list of tags in the same node.
-		 * we reuse the subnodes field of the file nod*/
-		res->next_in_file = avl_tree_get(nod->subnodes, id);
-		res->tag_no_in_file = res->next_in_file
-			? res->next_in_file->tag_no_in_file + 1
-			: 1;
-		avl_tree_put(nod->subnodes, id, res);
+        /* insert the ctag in list of tags in the same node.
+         * we reuse the subnodes field of the file nod*/
+        res->next_in_file = avl_tree_get(nod->subnodes, id);
+        res->tag_no_in_file = res->next_in_file
+            ? res->next_in_file->tag_no_in_file + 1
+            : 1;
+        avl_tree_put(nod->subnodes, id, res);
 
-		men = lookup_menu(res->id, root);
-		DEB(FLAG_DEBUG_CTAGS,
-				"lookup_menu(%s)\n", men->id);
+        men = lookup_menu(res->id, root);
+        DEB(FLAG_DEBUG_CTAGS,
+                "lookup_menu(%s)\n", men->id);
 
-		/* insert ctag in list corresponding to file. */
-		avl_tree_put(men->group_by_file, nod->full_name, res);
-		men->ntags++;
-		men->last_tag = res; /* last registered tag, for one node menus */
-	} /* if */
+        /* insert ctag in list corresponding to file. */
+        avl_tree_put(men->group_by_file, nod->full_name, res);
+        men->ntags++;
+        men->last_tag = res; /* last registered tag, for one node menus */
+    } /* if */
 
-	DEB(FLAG_DEBUG_CTAGS,
-			"end\n");
-	return res;
+    DEB(FLAG_DEBUG_CTAGS,
+            "end\n");
+    return res;
 } /* lookup_ctag */
 
 static int print_ctag_key(FILE *f, const ctag *a)
 {
-	return fprintf(f, "%s|%s|%p", a->fi, a->id, a->ss);
+    return fprintf(f, "%s|%s|%p", a->fi, a->id, a->ss);
 } /* print_ctag_key */
 
 /* this function compares the unique index of <id,fi,ss>
  * for the db_ctag database */
 static int ctag_cmp(const ctag *a, const ctag *b)
 {
-	int res;
-	res = strcmp(a->fi, b->fi); /* file is the most significative */
-	if (res == 0) {
-		res = strcmp(a->id, b->id); /* id is the next most significative */
-		if (res == 0) {
-			/* ss is the least significative, and we don't mind the values,
-			 * so we just compare the pointers. As all the strings are
-			 * interned, two equal strings implies their
-			 * addresses are also equal */
+    int res;
+    res = strcmp(a->fi, b->fi); /* file is the most significative */
+    if (res == 0) {
+        res = strcmp(a->id, b->id); /* id is the next most significative */
+        if (res == 0) {
+            /* ss is the least significative, and we don't mind the values,
+             * so we just compare the pointers. As all the strings are
+             * interned, two equal strings implies their
+             * addresses are also equal */
 #if 0
-			res = strcmp(a->ss, b->ss);
+            res = strcmp(a->ss, b->ss);
 #else
-			if (a->ss < b->ss) res = -1;
-			else if (a->ss > b->ss) res = +1;
-			else res = 0;
+            if (a->ss < b->ss) res = -1;
+            else if (a->ss > b->ss) res = +1;
+            else res = 0;
 #endif
-		} /* if */
-	} /* if */
-	return res;
+        } /* if */
+    } /* if */
+    return res;
 } /* ctag_cmp */
 
 /* $Id: ctag.c,v 1.1 2014/09/09 20:22:06 luis Exp $ */
