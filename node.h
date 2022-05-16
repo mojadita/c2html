@@ -45,15 +45,12 @@ node *name2node(node *root, const char *path, const node_type typ);
 int common_prefix(const node *a, const node *b);
 char *rel_path(const node *a, const node *b);
 
-typedef int(*node_callback)(const node *dir, void *val);
+typedef int(*node_callback)(const node *dir);
 
 int do_recur(const node *nod,
     node_callback dir_pre,
-    void *val_pre,
     node_callback file_in,
-    void *val_in,
-    node_callback dir_pos,
-    void *val_pos);
+    node_callback dir_pos);
 
 #endif /* _NODE_H */
 /* $Id: node.h,v 1.1 2014/09/09 20:23:06 luis Exp $ */
