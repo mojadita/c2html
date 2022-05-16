@@ -30,43 +30,45 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
     ctag *res;
     node *nod;
     tag_menu *men;
-    ctag key;
 
     DEB(FLAG_DEBUG_CTAGS,
-            "begin <%s|%s|%p>\n", id, fi, ss);
+            "ctags: begin <%s|%s|%p>\n", id, fi, ss);
 
     if (!db_ctag) {
         DEB(FLAG_DEBUG_CTAGS,
-                "initializing db_ctag database\n");
+                "ctags: initializing db_ctag database\n");
         D(db_ctag = new_avl_tree(
-            (AVL_FCOMP) ctag_cmp,
-            NULL,
-            NULL,
-            (AVL_FPRNT) print_ctag_key));
+				(AVL_FCOMP) ctag_cmp, NULL, NULL,
+				(AVL_FPRNT) print_ctag_key));
         if (!db_ctag) {
-            ERR(1, "Cannot allocate AVL_TREE\n");
+            ERR(EXIT_FAILURE,
+					"ctags: Cannot allocate AVL_TREE\n");
+			/* NOTREACHED */
         }
     } /* if */
+
+    ctag key;
 
     key.id = id = intern(id);
     key.fi = fi = intern(fi);
     key.ss = ss = intern(ss);
 
     DEB(FLAG_DEBUG_CTAGS,
-            "looking for tag <%s|%s|%p>\n",
-            id, fi, ss);
+            "ctags: looking for tag <%s|%s|%p>\n",
+			id, fi, ss);
     res = avl_tree_get(db_ctag, &key);
     if (!res) {
         DEB(FLAG_DEBUG_CTAGS,
-                "not found, creating it\n");
+                "ctags: key not found, creating it\n");
         res = malloc(sizeof(ctag)); /* allocate memory */
         if (!res) {
             ERR(EXIT_FAILURE,
-                "malloc: %s\n",
+                "ctags: cannot allocate mem: %s\n",
                 strerror(errno));
             /* NOTREACHED */
         }
 
+		/* init ctags node */
         res->id = id;
         res->fi = fi;
         res->ss = ss;
@@ -86,7 +88,7 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
 
         men = lookup_menu(res->id, root);
         DEB(FLAG_DEBUG_CTAGS,
-                "lookup_menu(%s)\n", men->id);
+                "ctags: lookup_menu(%s)\n", men->id);
 
         /* insert ctag in list corresponding to file. */
         avl_tree_put(men->group_by_file, nod->full_name, res);
@@ -95,7 +97,7 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
     } /* if */
 
     DEB(FLAG_DEBUG_CTAGS,
-            "end\n");
+            "ctags: end\n");
     return res;
 } /* lookup_ctag */
 
@@ -117,13 +119,7 @@ static int ctag_cmp(const ctag *a, const ctag *b)
              * so we just compare the pointers. As all the strings are
              * interned, two equal strings implies their
              * addresses are also equal */
-#if 0
-            res = strcmp(a->ss, b->ss);
-#else
-            if (a->ss < b->ss) res = -1;
-            else if (a->ss > b->ss) res = +1;
-            else res = 0;
-#endif
+			res = a->ss - b->ss;
         } /* if */
     } /* if */
     return res;

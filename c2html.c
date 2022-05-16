@@ -1,25 +1,8 @@
 /* $Id: c2html.c,v 0.25 2014/09/09 20:22:05 luis Exp $
- * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
+ * Author: Luis Colorado <Luis.Colorado.Urcola@gmail.com>
  * Date: Thu Jun  3 19:30:16 MEST 1999
- * Disclaimer:
- *
- *     C2HTML -- A program to convert C source code to cross referenced HTML.
- *     Copyright (c) 1999 Luis Colorado
- *
- *     This program is free software; you can redistribute it and/or modify
- *     it under the terms of the GNU General Public License as published by
- *     the Free Software Foundation; either version 2 of the License, or
- *     (at your option) any later version.
- *
- *     This program is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
- *
- *     You should have received a copy of the GNU General Public License
- *     along with this program; if not, write to the Free Software
- *     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
+ * Copyright: (C) 1999--2022 Luis Colorado.  All rights reserved.
+ * License: BSD
  */
 
 #define IN_C2HTML_C
@@ -51,22 +34,19 @@
 
 /* constants */
 
-
 #define MAXLINELENGTH   4096
-
-char *rcsId = "\n$Id: c2html.c,v 0.25 2014/09/09 20:22:05 luis Exp $\n";
 
 /* variables */
 
-int flags = FLAG_DEBUG_ALWAYS;
-const char *tag_file = DEFAULT_TAG_FILE;
-const char *output = DEFAULT_OUTPUT;
-const char *base_dir = DEFAULT_BASE_DIR;
+int flags              = FLAG_DEBUG_ALWAYS;
+const char *tag_file   = DEFAULT_TAG_FILE;
+const char *output     = DEFAULT_OUTPUT;
+const char *base_dir   = DEFAULT_BASE_DIR;
 const char *style_file = DEFAULT_STYLE_FILE;
-node *style_node = NULL;
-const char *js_file = DEFAULT_JS_FILE;
-node *js_node = NULL;
-node *db_root_node = NULL;
+node *style_node       = NULL;
+const char *js_file    = DEFAULT_JS_FILE;
+node *js_node          = NULL;
+node *db_root_node     = NULL;
 
 static AVL_TREE files_db = NULL;
 
@@ -80,9 +60,8 @@ void process1(const char *fn)
     unsigned long line_num = 0;
 
     files_db = new_avl_tree(
-        (AVL_FCOMP) strcmp,
-        NULL, NULL,
-        (AVL_FPRNT) fputs);
+            (AVL_FCOMP) strcmp, NULL, NULL,
+            (AVL_FPRNT) fputs);
 
     tagfile = fopen (fn, "r");
     if (!tagfile) {
@@ -93,52 +72,50 @@ void process1(const char *fn)
     } /* if */
 
     DEB(FLAG_DEBUG_PROCESS1,
-            "Processing file \"%s\":\n",
-            fn);
+            "Processing tags file \"%s\":\n", fn);
 
     /* file open, process lines */
     while (fgets(line, sizeof line, tagfile)) {
-        const char *id, *fi, *st;
+        const char *id, *fi, *ss;
         const ctag *tag;
 
         line_num++;
 
-        id = strtok (line, "\t\n"); if (!id) { /* tag name */
-            DEB(FLAG_DEBUG_ALWAYS,
-                "%s:%ld: WARNING: bad syntax, unrecognized id.\n",
+        id = strtok (line, "\t\n");
+        if (!id) { /* tag name */
+            WRN("%s:%ld:bad syntax, unrecognized id.\n",
                 fn, line_num);
             continue;
         } /* if */
 
-        fi = strtok (NULL, "\t\n"); if (!fi) { /* tag file */
-            DEB(FLAG_DEBUG_ALWAYS,
-                "%s:%ld: WARNING: bad syntax, unrecognized file name.\n",
+        fi = strtok (NULL, "\t\n");
+        if (!fi) { /* tag file */
+            WRN("%s:%ld:bad syntax, unrecognized file name.\n",
                 fn, line_num);
             continue;
         } /* if */
 
-        st = strtok (NULL, "\n"); if (!st) { /* tag search string */
-            DEB(FLAG_DEBUG_ALWAYS,
-                "%s:%ld: WARNING: bad syntax, unrecognized search string.\n",
+        ss = strtok (NULL, "\n");
+        if (!ss) { /* tag search string */
+            WRN("%s:%ld:bad syntax, unrecognized search string.\n",
                 fn, line_num);
             continue;
         } /* if */
 
         /* Ignore VIM ctags(1) private symbols starting in ! */
         if (id[0] == '!') {
-            DEB(FLAG_DEBUG_ALWAYS,
-                "%s:%ld: WARNING: ignoring \"%s\" vim private identifier\n",
+            WRN("%s:%ld:ignoring \"%s\" vim private identifier\n",
                 fn, line_num, id);
             continue;
         } /* if */
 
         DEB(FLAG_DEBUG_PROCESS1,
-                "line[%ld]:[%s][%s][%s]",
-                line_num,
-                id, fi, st);
+                "%s:%ld:id=[%s],fi=[%s],ss=[%s]\n",
+                fn, line_num,
+                id, fi, ss);
 
         /* first, find the ctag entry, this interns the three strings. */
-        D(tag = lookup_ctag(id, fi, st, db_root_node));
+        D(tag = lookup_ctag(id, fi, ss, db_root_node));
 
         avl_tree_put(files_db, tag->nod->full_name, tag->nod);
 
@@ -155,27 +132,37 @@ int send_ex(FILE *ex, const char *fmt, ...)
 {
     va_list p;
 
+	char command[4096];
     va_start(p, fmt);
-    vfprintf(ex, fmt, p);
+    vsnprintf(command, sizeof command, fmt, p);
     va_end(p);
+	
+	char *s;
+	for (s = strtok(command, "\n"); s; s = strtok(NULL, "\n")) {
+		DEB(FLAG_DEBUG_EX,
+			"sending command: [%s]\n", s);
+		fputs(s, ex); fputc('\n', ex);
+	}
 } /* send_ex */
 
-int process_dir_pre(const node *d, void *arg_not_used)
+int process_dir_pre(const node *d)
 {
     FILE *h;
 
     DEB(FLAG_DEBUG_PROCESS_DIR,
-            "Creating directory %s\n", d->full_name);
+            "Creating directory %s\n",
+			d->full_name);
+
     int res = mkdir(d->full_name, 0777);
     if (res < 0 && (errno != EEXIST)) {
-        fprintf(stderr,
-            PR("error:MKDIR:%s:%s(errno=%d)\n"),
+        ERR(EXIT_FAILURE,
+			"error:MKDIR:%s:%s(errno=%d)\n",
             d->full_name, strerror(errno), errno);
-        return -1;
     } /* if */
+
     DEB(FLAG_DEBUG_PROCESS_DIR,
             "creating html file [%s] for directory [%s]\n",
-        d->html_file->full_name, d->full_name);
+        	d->html_file->full_name, d->full_name);
     h = html_create(d);
     fprintf(h, "      <ul>\n");
     if (d->parent) {
@@ -183,8 +170,10 @@ int process_dir_pre(const node *d, void *arg_not_used)
             d->parent->html_file,
             d->html_file);
         DEB(FLAG_DEBUG_PROCESS_DIR,
-                "Writing an entry [%s] in parent html file [%s] for [%s]\n",
-            rp, d->parent->html_file->full_name, d->html_file->full_name);
+                "Writing an entry [%s] in parent "
+				"html file [%s] for dir [%s]\n",
+            rp, d->parent->html_file->full_name,
+			d->html_file->full_name);
         fprintf(d->parent->html_file->index_f,
             "      <li><span class=\"dir\">"
             "<a href=\"%s\">%s</a> directory."
@@ -195,12 +184,12 @@ int process_dir_pre(const node *d, void *arg_not_used)
     return 0;
 } /* process_dir_pre */
 
-int process_dir_post(const node *d, void *arg_not_used)
+int process_dir_post(const node *d)
 {
     FILE *h = d->html_file->index_f;
 
     DEB(FLAG_DEBUG_PROCESS_DIR,
-            "Cleaning and closing %s\n",
+            "Cleaning and closing html file [%s]\n",
             d->html_file->full_name);
     fprintf(h, "      </ul>\n");
     html_close(d);
@@ -209,8 +198,7 @@ int process_dir_post(const node *d, void *arg_not_used)
     return 0;
 } /* process_dir_post */
 
-/* ARGSUSED */
-int process_file(const node *f, void *not_used)
+int process_file(const node *f)
 {
     FILE *ex_fd;
     int ntags;
@@ -222,8 +210,8 @@ int process_file(const node *f, void *not_used)
         f->html_file->name, f->parent->html_file->name);
 
     DEB(FLAG_DEBUG_PROCESS_DIR,
-        "Writing:\"      <li><span class=\"file\">"
-        "<a href=\"%s\">%s</a> file.</span>\"To file \"%s\"\n",
+        "Writing:[      <li><span class=\"file\">"
+        "<a href=\"%s\">%s</a> file.</span>] To file [%s]\n",
         f->html_file->name, f->full_name,
         f->parent->html_file->full_name);
 
@@ -236,12 +224,12 @@ int process_file(const node *f, void *not_used)
             "launching an instance of "EX_PATH"\n");
 
     ex_fd = popen(EX_PATH, "w");
-    send_ex(ex_fd, "set notagstack\n");
+    send_ex(ex_fd, "set notagstack");
     {   const char *s;
         s = strchr(f->full_name, '/');
         if (!s) s = f->full_name;
         while (*s == '/') s++;
-        send_ex(ex_fd, "e! %s\n", s); /* edit original file */
+        send_ex(ex_fd, "e! %s", s); /* edit original file */
 
         DEB(FLAG_DEBUG_PROCESS_FILE,
             "begin editing session on file %s -> %s\n",
@@ -250,9 +238,7 @@ int process_file(const node *f, void *not_used)
 
     /* for every tag in this file */
     DEB(FLAG_DEBUG_PROCESS_FILE,
-            "for every tag in this file:\n");
-    DEB(FLAG_DEBUG_PROCESS_FILE,
-            "FILE name=[%s]\n", f->full_name);
+            "for every tag in file [%s]\n", f->full_name);
     D(ntags = avl_tree_size(f->subnodes));
     DEB(FLAG_DEBUG_PROCESS_FILE,
             "it has %d tags:\n", ntags);
@@ -272,7 +258,8 @@ int process_file(const node *f, void *not_used)
             tag1 = avl_iterator_data(it1);
             if (!tag1) {
                 ERR(EXIT_FAILURE,
-                    "cannot get a tag iterator, this should not happen\n");
+                    "cannot get a tag iterator, "
+					"this should not happen\n");
                 /* NOTREACHED */
             }
 
@@ -299,14 +286,16 @@ int process_file(const node *f, void *not_used)
                     /* tag select, see vim(1) help for details */
                     send_ex(ex_fd,
                         "ts %s\n"
-                        "%d\n",
+                        "%d",
                         tag2->id,
                         tag2->tag_no_in_file);
                     send_ex(ex_fd,
-                        "s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
+                        "s:^:(@a name=\"%s-%d\"@)(@/a@):",
                         tag2->id, tag2->tag_no_in_file); /* change */
                 } /* for */
-            } else {
+				/* LCU: Mon 16 May 2022 12:44:57 PM EEST
+				 * 00-Index entry has to be inserted */
+            } else { /* only one tag for this id. */
                 fprintf(f->parent->html_file->index_f,
                     "            <li><span class=\"tag\">"
                     "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
@@ -314,9 +303,11 @@ int process_file(const node *f, void *not_used)
                     tag1->id,
                     tag1->tag_no_in_file,
                     tag1->id);
-                send_ex(ex_fd, "ta %s\n", tag1->id); /* goto tag, only one tag in this file */
-                send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):\n",
+                send_ex(ex_fd, "ta %s", tag1->id); /* goto tag, only one tag in this file */
+                send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):",
                     tag1->id, tag1->tag_no_in_file); /* change */
+				/* LCU: Mon 16 May 2022 12:44:57 PM EEST
+				 * 00-Index entry has to be inserted */
             } /* if */
         } /* for */
         DEB_TAIL(FLAG_DEBUG_PROCESS_FILE, ".\n"); /* end list of tags */
@@ -327,8 +318,8 @@ int process_file(const node *f, void *not_used)
             "terminate "EX_PATH" editing session and write on parent [%s]\n",
             f->parent->html_file->full_name);
     fprintf(f->parent->html_file->index_f, "      </li>\n");
-    send_ex(ex_fd, "w! %s\n", f->full_name); /* write file */
-    send_ex(ex_fd, "q!\n"); /* and terminate */
+    send_ex(ex_fd, "w! %s", f->full_name); /* write file */
+    send_ex(ex_fd, "q!"); /* and terminate */
 
     if (flags & FLAG_PROGRESS) {    /* print progress */
         static int i=0;
@@ -369,46 +360,46 @@ int process_file(const node *f, void *not_used)
 void do_usage (void)
 {
     fprintf(stderr,
-"Usage: " PROGNAME " [ options ... ]\n"
-PROGNAME " " VERSION ": Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>\n"
-"This program is under GNU PUBLIC LICENSE, version 2 or later\n"
-"see the terms and conditions of use at http://www.gnu.org/\n"
-"(you might receive a copy of it with this program)\n"
-"\n"
-"This program operates on a constructed tags file (see ctags(1)), and\n"
-"constructs an HTML hierarchy of source files, parallel to their C\n"
-"counterparts, with hyperlink cross references to all the C identifiers\n"
-"located in the code.\n"
-"\n"
-"It uses the tags file to locate all the identifier definitions in the\n"
-"C code, and then, it constructs a syntax marked HTML file, with each\n"
-"definition found in the tags file marked in the code, and every reference\n"
-"to it, surrounded by a <a href> tag, so clicking with the mouse leads us\n"
-"quickly and efficiently to the definition.\n"
-"Options:\n"
-"  -h   Help.  This help screen.\n"
-"  -t <tag_file>  The tag file to be used (default: " DEFAULT_TAG_FILE ")\n"
-"  -b <base_dir>  Base directory for URL composition\n"
-"       This causes to generate <BASE> tags. (default: " DEFAULT_BASE_DIR_STRING ")\n"
-"  -d <debug_options>  Debug options can be several of:  \n"
-"         1  process1 debug.\n"
-"         D  database debug.\n"
-"         l  lexical processing debug.\n"
-"         x  ex(1) commands debug.\n"
-"         M  create_menu debug.\n"
-"         d  process dir debug.\n"
-"         f  process file debug.\n"
-"         i  process ident debug.\n"
-"         m  process menu debug.\n"
-"         s  process scanfile debug.\n"
-"         I  string intern debug.\n"
-"         c  ctags debug.\n"
-"         n  nodes debug.\n"
-"  -n   Output linenumbers.\n"
-"  -o   Output directory (default " DEFAULT_OUTPUT ")\n"
-"  -p   Progress is shown on stderr.\n"
-"  -s   Style file (default " DEFAULT_STYLE_FILE ")\n"
-"  -j   Javascript file (default " DEFAULT_JS_FILE ")\n"
+            "Usage: " PROGNAME " [ options ... ]\n"
+            PROGNAME " " VERSION ": Copyright (C) 1999-2022 <Luis.Colorado.Urcola@gmail.com>\n"
+            "This program is under GNU PUBLIC LICENSE, version 2 or later\n"
+            "see the terms and conditions of use at http://www.gnu.org/\n"
+            "(you might receive a copy of it with this program)\n"
+            "\n"
+            "This program operates on a constructed tags file (see ctags(1)), and\n"
+            "constructs an HTML hierarchy of source files, parallel to their C\n"
+            "counterparts, with hyperlink cross references to all the C identifiers\n"
+            "located in the code.\n"
+            "\n"
+            "It uses the tags file to locate all the identifier definitions in the\n"
+            "C code, and then, it constructs a syntax marked HTML file, with each\n"
+            "definition found in the tags file marked in the code, and every reference\n"
+            "to it, surrounded by a <a href> tag, so clicking with the mouse leads us\n"
+            "quickly and efficiently to the definition.\n"
+            "Options:\n"
+            "  -h   Help.  This help screen.\n"
+            "  -t <tag_file>  The tag file to be used (default: " DEFAULT_TAG_FILE ")\n"
+            "  -b <base_dir>  Base directory for URL composition\n"
+            "       This causes to generate <BASE> tags. (default: " DEFAULT_BASE_DIR_STRING ")\n"
+            "  -d <debug_options>  Debug options can be several of:  \n"
+            "         1  process1 debug.\n"
+            "         D  database debug.\n"
+            "         l  lexical processing debug.\n"
+            "         x  ex(1) commands debug.\n"
+            "         M  create_menu debug.\n"
+            "         d  process dir debug.\n"
+            "         f  process file debug.\n"
+            "         i  process ident debug.\n"
+            "         m  process menu debug.\n"
+            "         s  process scanfile debug.\n"
+            "         I  string intern debug.\n"
+            "         c  ctags debug.\n"
+            "         n  nodes debug.\n"
+            "  -n   Output linenumbers.\n"
+            "  -o   Output directory (default " DEFAULT_OUTPUT ")\n"
+            "  -p   Progress is shown on stderr.\n"
+            "  -s   Style file (default " DEFAULT_STYLE_FILE ")\n"
+            "  -j   Javascript file (default " DEFAULT_JS_FILE ")\n"
         );
 
 } /* do_usage */
@@ -471,14 +462,15 @@ int main (int argc, char **argv)
 
     /* Process files */
 
+    /* this process constructs the file node hierarchy of source file pages */
     process1(tag_file);
 
     D(fflush(stdout));
 
     D(do_recur(db_root_node,
-        process_dir_pre, NULL,
-        process_file, NULL,
-        process_dir_post, NULL));
+        process_dir_pre,
+        process_file,
+        process_dir_post));
 
 } /* main */
 
