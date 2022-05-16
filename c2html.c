@@ -168,10 +168,8 @@ int process_dir_pre(const node *d, void *arg_not_used)
             "Creating directory %s\n", d->full_name);
     int res = mkdir(d->full_name, 0777);
     if (res < 0 && (errno != EEXIST)) {
-        fprintf(stderr,
-            PR("error:MKDIR:%s:%s(errno=%d)\n"),
+        ERR(EXIT_FAILURE, "error:MKDIR:%s:%s(errno=%d)\n",
             d->full_name, strerror(errno), errno);
-        return -1;
     } /* if */
     DEB(FLAG_DEBUG_PROCESS_DIR,
             "creating html file [%s] for directory [%s]\n",
