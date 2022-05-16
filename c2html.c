@@ -103,11 +103,6 @@ void process1(const char *fn)
 
         line_num++;
 
-        DEB(FLAG_DEBUG_PROCESS1,
-                "line[%ld]: %s",
-                line_num,
-                line);
-
         id = strtok (line, "\t\n"); if (!id) { /* tag name */
             DEB(FLAG_DEBUG_ALWAYS,
                 "%s:%ld: WARNING: bad syntax, unrecognized id.\n",
@@ -136,6 +131,11 @@ void process1(const char *fn)
                 fn, line_num, id);
             continue;
         } /* if */
+
+        DEB(FLAG_DEBUG_PROCESS1,
+                "line[%ld]:[%s][%s][%s]",
+                line_num,
+                id, fi, st);
 
         /* first, find the ctag entry, this interns the three strings. */
         D(tag = lookup_ctag(id, fi, st, db_root_node));
