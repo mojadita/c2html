@@ -490,5 +490,3 @@ void scanfile (const node *fin)
     html_close(fin);
     yy_delete_buffer(bs);
 } /* scanfile */
-
-/* $Id: lexical.l,v 0.22 2014/09/09 20:23:04 luis Exp $ */

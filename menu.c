@@ -18,7 +18,7 @@
 #include "menu.h"
 
 AVL_TREE db_menus = NULL;
-char *default_menu_name = "00-menus-directory";
+char *default_menu_name = "00-Index";
 
 tag_menu *lookup_menu(const char *id, node *root)
 {
