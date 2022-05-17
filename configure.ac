@@ -52,14 +52,14 @@ AC_CHECK_HEADERS(avl.h)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h stdlib.h sys/time.h unistd.h)
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_SIZE_T
 
 dnl Checks for library functions.
-AC_CHECK_FUNCS(strdup)
+AC_CHECK_FUNCS(strdup strtok strerror)
 
 AC_SUBST(AUTHOR_NAME)
 AC_SUBST(AUTHOR_EMAIL)

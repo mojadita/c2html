@@ -15,6 +15,25 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define FLAG_LINENUMBERS            (1 <<  0)
+#define FLAG_PROGRESS               (1 <<  1)
+#define FLAG_DEBUG_PROCESS1         (1 <<  2)
+#define FLAG_DEBUG_DB               (1 <<  3)
+#define FLAG_DEBUG_LEX              (1 <<  4)
+#define FLAG_DEBUG_EX               (1 <<  5)
+#define FLAG_DEBUG_CREATE_MENU      (1 <<  6)
+#define FLAG_DEBUG_PROCESS2         (1 <<  7)
+#define FLAG_DEBUG_PROCESS_DIR      (1 <<  8)
+#define FLAG_DEBUG_PROCESS_FILE     (1 <<  9)
+#define FLAG_DEBUG_PROCESS_IDENT    (1 << 10)
+#define FLAG_DEBUG_PROCESS_MENU     (1 << 11)
+#define FLAG_DEBUG_SCANFILE         (1 << 12)
+#define FLAG_DEBUG_INTERN           (1 << 13)
+#define FLAG_DEBUG_CTAGS            (1 << 14)
+#define FLAG_DEBUG_NODES            (1 << 15)
+#define FLAG_DEBUG_ALWAYS           (1 << 16)
+#define FLAG_DEBUG_ALL              (1 << 17)
+
 extern int flags;
 
 /* constants */

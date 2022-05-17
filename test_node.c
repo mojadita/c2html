@@ -41,6 +41,7 @@
 #define MAX     50
 
 /* types */
+int flags = 0;
 
 /* prototypes */
 
@@ -51,9 +52,9 @@ node **nodes;
 int nodes_n = 0;
 
 /* functions */
-int f(const node *n, void *v)
+int f(const node *n)
 {
-    printf(PR("Nodo %s, %s\n"), n->full_name, (const char *) v);
+    printf(PR("Nodo %s\n"), n->full_name);
     return 0;
 } /* f */
 
@@ -84,7 +85,7 @@ int main (int argc, char **argv)
     name2node(nodes[0], "home/eluscoo/a/b/h", TYPE_DIR);
     name2node(nodes[0], "home/eluscoo/profile/pepe", TYPE_FILE);
     res = name2node(nodes[0], "home/eluscoo/pepe/../fich_1.html", TYPE_HTML);
-    do_recur(nodes[0], f, (void *)">>> preprocess", f, (void *)"*** infile", f, (void *)"<<< postprocess");
+    do_recur(nodes[0], f, f, f);
     printf(PR("rel_path(%s, %s) -> %s\n"), res->full_name, res->full_name,
         rel_path(res, res));
 

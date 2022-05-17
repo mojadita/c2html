@@ -41,25 +41,27 @@ static char TEST_CTAG_C_RCSId[]="\n$Id: test_ctag.c,v 1.1 2014/09/09 20:23:07 lu
 
 node *root;
 
+int flags = FLAG_DEBUG_ALWAYS;
+
 /* functions */
 int do_dir_pre(const node *dir, const char *s)
 {
-    DEB("%s: begin: dir=[%s]\n", s, dir->full_name);
-    DEB("%s: end: dir=[%s]\n", s, dir->full_name);
+    DEB(0, "%s: begin: dir=[%s]\n", s, dir->full_name);
+    DEB(0, "%s: end: dir=[%s]\n", s, dir->full_name);
     return 0;
 } /* do_file */
 
 int do_dir_post(const node *dir, const char *s)
 {
-    DEB("%s: begin: dir=[%s]\n", s, dir->full_name);
-    DEB("%s: end: dir=[%s]\n", s, dir->full_name);
+    DEB(0, "%s: begin: dir=[%s]\n", s, dir->full_name);
+    DEB(0, "%s: end: dir=[%s]\n", s, dir->full_name);
     return 0;
 } /* do_file */
 
 int do_file(const node *fil, const char *s)
 {
-    DEB("%s: begin: file=[%s]\n", s, fil->full_name);
-    DEB("%s: end: file=[%s]\n", s, fil->full_name);
+    DEB(0, "%s: begin: file=[%s]\n", s, fil->full_name);
+    DEB(0, "%s: end: file=[%s]\n", s, fil->full_name);
     return 0;
 } /* do_file */
 
@@ -74,10 +76,7 @@ int main (int argc, char **argv)
     D(lookup_ctag("pepe", "a/b/cd/pepe", "246", root));
     D(lookup_ctag("pepe", "a/b/cd/juan", "246", root));
     D(lookup_ctag("juan", "a/b/cd/juan", "246", root));
-    do_recur(root,
-        do_dir_pre, "preprocess",
-        do_file, "process",
-        do_dir_post, "postprocess");
+    do_recur(root, do_dir_pre, do_file, do_dir_post);
 } /* main */
 
 /* $Id: test_ctag.c,v 1.1 2014/09/09 20:23:07 luis Exp $ */

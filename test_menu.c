@@ -42,12 +42,12 @@
 /* prototypes */
 
 /* variables */
-static char TEST_MENU_C_RCSId[]="\n$Id: test_menu.c,v 1.1 2014/09/09 20:23:07 luis Exp $\n";
+int flags = 0;
 
 /* functions */
 int print_menu(tag_menu *men)
 {
-    printf(PR("MENU %p, id=%s, flags=0x%08x, ntags=%d, nod=[%p], last_tag=[%p]\n"),
+    printf(PR("MENU %p, id=%s, flags=%#08x, ntags=%d, nod=[%p], last_tag=[%p]\n"),
         men, men->id, men->flags, men->ntags, men->nod, men->last_tag);
 } /* print_menu */
 
