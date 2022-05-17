@@ -21,12 +21,14 @@ dnl along with this program; if not, write to the Free Software
 dnl Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 dnl
 
-AC_INIT(c2html,2.13b-20220504,bugs@lcssl.es, http://www.lcssl.es/c2html/)
+AC_INIT(c2html,2.14-20220517,luis.colorado.urcola@gmail.com,https://github.com/mojadita/c2html/)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR(./c2html.c)
 
 AUTHOR_NAME="Luis Colorado"
-AUTHOR_EMAIL="lc@luiscoloradosistemas.com"
+AUTHOR_EMAIL="luis.colorado.urcola@gmail.com"
+OPERATING_SYSTEM=$(uname -s)
+OPERATING_SYSTEM_VERSION=$(uname -r)
 
 AM_PROG_LEX
 AC_PROG_CC
@@ -35,15 +37,9 @@ AC_PROG_LIBTOOL
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_SUBST(AUTHOR_NAME)
-AC_SUBST(AUTHOR_EMAIL)
-AC_SUBST(PACKAGE_URL)
-
 dnl Checks for programs.
 AC_PATH_PROG(EX_PATH, [ex],,
 	[$PATH:/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin])
-
-AC_SUBST(EX_PATH)
 
 if test `basename ${LEX}` != 'flex'
 then
@@ -56,7 +52,7 @@ AC_CHECK_HEADERS(avl.h)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h malloc.h sys/time.h unistd.h)
+AC_CHECK_HEADERS(fcntl.h stdlib.h sys/time.h unistd.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -65,6 +61,14 @@ AC_TYPE_SIZE_T
 dnl Checks for library functions.
 AC_CHECK_FUNCS(strdup)
 
-AC_OUTPUT(Makefile c2html.man)
+AC_SUBST(AUTHOR_NAME)
+AC_SUBST(AUTHOR_EMAIL)
+AC_SUBST(AUTHOR)
+AC_SUBST(PACKAGE_URL)
+AC_SUBST(EX_PATH)
+AC_SUBST(OPERATING_SYSTEM)
+AC_SUBST(OPERATING_SYSTEM_VERSION)
+
+AC_OUTPUT(Makefile c2html.1)
 
 dnl $Id: configure.in,v 0.20 2014/09/09 20:22:05 luis Exp $

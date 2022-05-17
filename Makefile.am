@@ -26,8 +26,8 @@ AM_CPPFLAGS= -DAUTHOR=\""@AUTHOR_NAME@"\" -DPROGNAME=\""@PACKAGE@"\" \
 	-DVERSION=\""@VERSION@"\" -DEX_PATH=\""@EX_PATH@"\" \
 	-DAUTHOR_EMAIL=\""@AUTHOR_EMAIL@"\" \
 	-DAUTHOR_NAME=\""@AUTHOR_NAME@"\" \
+	-DPACKAGE_URL=\""@PACKAGE_URL@"\" \
 	-DPACKAGE_URL=\""@PACKAGE_URL@"\"
-#-DPACKAGE_URL=\""@PACKAGE_URL@"\"
 
 bin_PROGRAMS=c2html
 check_PROGRAMS=test_node test_menu test_ctag
@@ -40,6 +40,7 @@ c2html_LDFLAGS = -L/usr/local/lib
 test_node_SOURCES = test_node.c node.c intern.c
 test_menu_SOURCES = test_menu.c menu.c intern.c node.c
 test_ctag_SOURCES = test_ctag.c ctag.c menu.c node.c intern.c
+man_MANS = c2html.1
 
 #
 # $Id: Makefile.am,v 1.3 2014/09/09 20:22:03 luis Exp $

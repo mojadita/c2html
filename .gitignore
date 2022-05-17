@@ -42,3 +42,5 @@ test_ctag
 core
 valgrind.out
 .depend
+c2html.1
+.*.swp
