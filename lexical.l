@@ -478,14 +478,18 @@ void scanfile (const node *fin)
     bs = yy_create_buffer (INPUT, YY_BUF_SIZE);
     yy_switch_to_buffer (bs);
 
-    fprintf(OUTPUT, "    <pre class=\"listing\">\n");
+    fprintf(OUTPUT,
+			"    <div id=\"listing\"><div id=\"left\"></div>\n"
+			"      <pre id=\"right\">\n");
     fprintf(OUTPUT, "<!---------------------------------------------------->\n");
     pointer=0;
     PUSH(INITIAL);
     newline(TRUE);
     yylex(fin, fout);
     fprintf(OUTPUT, "<!---------------------------------------------------->\n");
-    fprintf(OUTPUT, "    </pre>\n");
+    fprintf(OUTPUT,
+			"      </pre>\n"
+			"    </div>\n");
     fclose (INPUT);
     html_close(fin);
     yy_delete_buffer(bs);

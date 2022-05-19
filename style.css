@@ -19,7 +19,22 @@
 	background: yellow;
 	color: red;
 }
-pre {
+
+#listing {
+	display: inline-flex;
+}
+
+#left {
+	width: 32px;
+	margin: 0;
+	background: url(holes.png);
+	box-shadow: 4px 4px 5px #888888;
+	border-top-left-radius: 4px;
+	border-bottom-left-radius: 4px;
+}
+
+#right {
+	margin: 0;
 	font-family: courier;
 	background: url(background.png);
 	box-shadow: 4px 4px 5px #888888;
