@@ -22,6 +22,11 @@
 
 #listing {
 	display: inline-flex;
+	background: url(bgtile.png);
+	padding-top: 1cm;
+	padding-bottom: 1cm;
+	padding-left: 3cm;
+	padding-right: 3cm;
 }
 
 #left {
