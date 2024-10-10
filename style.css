@@ -40,7 +40,7 @@
 
 #right {
 	margin: 0;
-	font-family: courier;
+	/* font-family: courier; */
 	background: url(background.png);
 	box-shadow: 4px 4px 5px #888888;
 	border-top-right-radius: 16px;

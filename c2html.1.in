@@ -12,7 +12,7 @@
 .\" 
 .Dd $Ndocdate$
 .Dt C2HTML 1 URM
-.Os @OPERATING_SYSTEM@ @OPERATING_SYSTEM_VERSION@
+.Os 
 .Sh NAME
 .Nm c2html
 .Nd A program to get HTML, cross referenced pages from a tags file \

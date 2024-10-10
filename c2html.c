@@ -23,11 +23,12 @@
 
 #include <avl.h>
 
+#include "configure.h"
 #include "debug.h"
 #include "intern.h"
 #include "node.h"
 #include "menu.h"
-#include "ctag.h"
+#include "db.h"
 #include "c2html.h"
 #include "html_output.h"
 #include "lexical.h"
@@ -105,18 +106,17 @@ void process1(const char *fn)
         /* Ignore VIM ctags(1) private symbols starting in ! */
         if (id[0] == '!') {
             DEB(FLAG_DEBUG_PROCESS1,
-                "%s:%ld:ignoring \"%s\" vim private identifier\n",
+                "%s:%ld: ignoring '%s' vim private identifier\n",
                 fn, line_num, id);
             continue;
         } /* if */
 
         DEB(FLAG_DEBUG_PROCESS1,
-                "%s:%ld:id=[%s],fi=[%s],ss=[%s]\n",
-                fn, line_num,
-                id, fi, ss);
+                "%s:%ld: id='%s', file='%s', search='%s'\n",
+                fn, line_num, id, fi, ss);
 
         /* first, find the ctag entry, this interns the three strings. */
-        D(tag = lookup_ctag(id, fi, ss, db_root_node));
+        tag = lookup_ctag(id, fi, ss, db_root_node);
 
         avl_tree_put(files_db, tag->nod->full_name, tag->nod);
 

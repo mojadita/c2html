@@ -38,6 +38,7 @@
 #include <stdarg.h>
 #include <assert.h>
 
+#include "configure.h"
 #include "debug.h"
 #include "node.h"
 #include "c2html.h"
@@ -189,8 +190,8 @@ void html_close(node *n)
     fprintf(f, "</div>\n"
 "    <p><a href=\""PACKAGE_URL "\">"
         PROGNAME" "VERSION "</a>: Copyright (C) 1999-2014 "
-        "<a href=\"mailto:"AUTHOR_EMAIL "?subject=c2html\">"
-        AUTHOR_NAME" &lt;"AUTHOR_EMAIL "&gt;</a>\n"
+        "<a href=\"mailto:" AUTHOR_EMAIL "?subject=c2html\">"
+        AUTHOR_NAME " &lt;" AUTHOR_EMAIL "&gt;</a>\n"
 "  </body>\n"
 "</html>\n"
 "<!-- %s -->\n",

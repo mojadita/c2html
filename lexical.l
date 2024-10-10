@@ -40,6 +40,7 @@
 
 #include <avl.h>
 
+#include "configure.h"
 #include "intern.h"
 #include "debug.h"
 #include "db.h"

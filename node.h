@@ -27,18 +27,21 @@ extern int n_dir;
 extern int n_file;
 extern int n_html;
 
-typedef struct node_s {
-    const char              *name; /* name of this node. */
-    const struct node_s     *parent; /* parent node of this. */
-    node_type               type; /* type of this node. */
-    int                     flags; /* flags, see above. */
-    int                     level; /* level of this node, root node is at level 1 */
-    const struct node_s     **path; /* path from the root */
-    const char              *full_name; /* full path name */
-    struct node_s           *html_file; /* html assoc. file. valid for files and directories */
-    AVL_TREE                subnodes; /* children of this node */
-    FILE                    *index_f; /* index.html file descriptor (for html files) */
-} node;
+typedef struct node_s node;
+
+struct node_s {
+    const char   *name;      /* name of this node. */
+    const node   *parent;    /* parent node of this. */
+    node_type    type;       /* type of this node. */
+    int          flags;      /* flags, see above. */
+    int          level;      /* level of this node, root node is at level 1 */
+    const node   **path;     /* path from the root */
+    const char   *full_name; /* full path name */
+    node         *html_file; /* html assoc. file. valid for files and
+                              * directories */
+    AVL_TREE     subnodes;   /* children of this node, if any */
+    FILE         *index_f;   /* index.html file descriptor (for html files) */
+};
 
 node *new_node(const char *name, const node *parent, const node_type typ);
 node *name2node(node *root, const char *path, const node_type typ);

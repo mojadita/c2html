@@ -28,14 +28,9 @@
 #include <stdio.h>
 #include <avl.h>
 
-static char INTERN_H_RCSId[] = "\n$Id: intern.h,v 1.1 2014/09/09 20:22:07 luis Exp $\n";
-
 /* prototypes */
 const char *intern(const char *s);
 int print_string(FILE *o, const char *s);
-
-/* variables */
-extern AVL_TREE intern_strings;
 
 #endif /* INTERN_H */
 /* Do not include anything AFTER the line above, as it would not be

@@ -21,10 +21,6 @@ typedef struct ctag_s {
     struct node_s       *nod; /* file node this tag points to. */
 } ctag;
 
-extern AVL_TREE db_ctag;
-extern node *db_root_node;
-extern int n_files;
-
-ctag *lookup_ctag(const char *id, const char *fi, const char *ss);
+ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root);
 
 #endif /* _DB_H */

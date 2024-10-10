@@ -28,6 +28,7 @@
 #ifndef C2HTML_H
 #define C2HTML_H
 
+#include "configure.h"
 #include "node.h"
 
 /* constants */

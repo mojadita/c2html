@@ -44,7 +44,7 @@ extern int flags;
 #define PR(_fmt) "%s:%d:%s:"_fmt,__FILE__,__LINE__,__func__
 
 #if INCLUDE_DEBUG_CODE
-#   define DEB(_flgs, _fmt, ...) DEB_TAIL(_flgs, PR("DEB: "_fmt), ##__VA_ARGS__)
+#   define DEB(_flgs, _fmt, ...) DEB_TAIL(_flgs, PR("DEB:"_fmt), ##__VA_ARGS__)
 #   define DEB_TAIL(_flgs, _fmt, ...) do {  \
         if (flags & _flgs || flags & FLAG_DEBUG_ALL) \
             printf(_fmt, ##__VA_ARGS__);    \

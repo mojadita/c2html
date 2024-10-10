@@ -40,17 +40,14 @@ node *new_node(const char *name, const node *parent, const node_type typ)
     name = intern(name); /* intern is an idempotent function */
 
     DEB(FLAG_DEBUG_NODES,
-        "begin: name=[%s], parent=(%p), type=[%s]\n",
-        name,
-        parent,
-        type2string[typ]);
+        "begin: name='%s', parent=%p, type='%s'\n",
+        name, parent, type2string[typ]);
 
     if (parent)
         assert(avl_tree_get(parent->subnodes, name) == NULL);
 
     assert(res = malloc(sizeof (node))); /* get memory */
-    DEB(FLAG_DEBUG_NODES,
-        "malloc() -> %p\n", res);
+    DEB(FLAG_DEBUG_NODES, "malloc() -> %p\n", res);
     res->name = name;
     res->parent = parent;
     res->type = typ;
@@ -60,24 +57,22 @@ node *new_node(const char *name, const node *parent, const node_type typ)
         (AVL_FCOMP) strcmp, NULL, NULL,
         (AVL_FPRNT) fputs));
     DEB(FLAG_DEBUG_NODES,
-        "res->subnodes = %p\n", res->subnodes);
+        "res->subnodes(AVL_TREE) = %p\n", res->subnodes);
     res->index_f = NULL;
 
     /* construct the path to it. use + 1
      * to alloc for a NULL pointer at end. */
     assert(res->path = calloc(res->level + 1, sizeof (node *)));
-    DEB(FLAG_DEBUG_NODES,
-        "construct res->path = %p\n", res->path);
+    DEB(FLAG_DEBUG_NODES, "construct res->path = %p\n", res->path);
     {   const node *p = res;
         int i;
 
         res->path[res->level] = NULL;
-        for (i = res->level-1; i >= 0; i--)
-        {
-            DEB(FLAG_DEBUG_NODES,
-                "Setting res->path[%d] = p(%p/%s)\n",
-                i, p, p->name);
+        for (i = res->level-1; i >= 0; i--) {
             res->path[i] = p;
+            DEB(FLAG_DEBUG_NODES,
+                "Setting res->path[%d] = %p('%s')\n",
+                i, p, p->name);
             p = p->parent;
         } /* for */
     } /* block */
@@ -86,27 +81,26 @@ node *new_node(const char *name, const node *parent, const node_type typ)
     {   char buffer[BUFFER_SIZE];
         size_t bs = sizeof buffer, n;
         char *aux = buffer;
-        int i;
+        char *sep = "";
 
-        for (i = 0; i < res->level; i++) {
+        for (int i = 0; i < res->level; i++) {
             n = snprintf(aux, bs, "%s%s",
-                (i) ? "/"
-                    : "",
+                sep,
                 res->path[i]->name);
-            aux += n; bs -= n;
+            sep = "/"; aux += n; bs -= n;
         } /* for */
 
         res->full_name = intern(buffer);
     } /* block */
     DEB(FLAG_DEBUG_NODES,
-            "res->full_name = %p[%s]\n",
-        res->full_name, res->full_name);
+            "res->full_name = '%s'(%p)\n",
+            res->full_name, res->full_name);
 
     /* add to parent directory */
     if (parent) {
         avl_tree_put(parent->subnodes, res->name, res);
         DEB(FLAG_DEBUG_NODES,
-            "added to parent [%s]\n",
+            "added to parent '%s'\n",
             res->parent->full_name);
     } /* if */
 
@@ -144,8 +138,7 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 
     } /* switch */
 
-    DEB(FLAG_DEBUG_NODES,
-        "end [res=%p]\n", res);
+    DEB(FLAG_DEBUG_NODES, "end [res=%p]\n", res);
     return res;
 } /* new_node */
 
