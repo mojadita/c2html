@@ -1,7 +1,7 @@
 /* $Id: menu.c,v 1.1 2014/09/09 20:23:05 luis Exp $
- * Author: Luis Colorado <lc@luiscoloradosistemas.com>
+ * Author: Luis Colorado <luiscoloradourcola@gmail.com>
  * Date: Fri Sep  5 15:59:37 EEST 2014
- * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
+ * Disclaimer: (C) 2014-2024 LUIS COLORADO. All rights reserved.
  */
 
 #include <sys/stat.h>

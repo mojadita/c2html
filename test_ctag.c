@@ -1,6 +1,7 @@
 /* $Id: test_ctag.c,v 1.1 2014/09/09 20:23:07 luis Exp $
- * Author: Luis Colorado <lc@luiscoloradosistemas.com>
+ * Author: Luis Colorado <luiscoloradourcola@gmail.com>
  * Date: Sat Sep  6 13:59:16 EEST 2014
+ * Copyright: (c) 1999-2024 Luis Colorado.  All rights reserved.
  *
  * Disclaimer:
  *  This program is free software; you can redistribute it and/or modify

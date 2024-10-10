@@ -1,7 +1,7 @@
 /* lexical.h -- function prototypes for functions defined in lexical.l
  * Author: Luis Colorado <luiscoloradourcola@gmail.com>
- * Date:
- * Copyright: (C) 2022 Luis Colorado.  All rights reserved.
+ * Date: Thu Oct 10 09:11:00 EEST 2024
+ * Copyright: (C) 2022-2024 Luis Colorado.  All rights reserved.
  * License: BSD.
  */
 #ifndef _LEXICAL_H

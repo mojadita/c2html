@@ -1,7 +1,7 @@
 /* $Id: menu.h,v 1.1 2014/09/09 20:23:06 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: Fri Sep  5 15:59:13 EEST 2014
- * Disclaimer: (C) 2014 LUIS COLORADO.  All rights reserved.
+ * Copyright: (C) 2014-2024 LUIS COLORADO.  All rights reserved.
  */
 #ifndef _MENU_H
 #define _MENU_H

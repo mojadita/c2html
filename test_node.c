@@ -1,6 +1,7 @@
 /* $Id: test_node.c,v 1.1 2014/09/09 20:23:07 luis Exp $
- * Author: Luis Colorado <lc@luiscoloradosistemas.com>
+ * Author: Luis Colorado <luiscoloradourcola@gmail.com>
  * Date: Thu Sep  4 20:14:34 EEST 2014
+ * Copyright: (c) 1999-2024 Luis Colorado.  All rights reserved.
  *
  * Disclaimer:
  *  This program is free software; you can redistribute it and/or modify

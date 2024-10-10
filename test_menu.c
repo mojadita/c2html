@@ -1,6 +1,7 @@
 /* $Id: test_menu.c,v 1.1 2014/09/09 20:23:07 luis Exp $
  * Author: Luis Colorado <lc@luiscoloradosistemas.com>
  * Date: Fri Sep  5 15:37:17 EEST 2014
+ * Copyright: (c) 1999-2024 Luis Colorado.  All rights reserved.
  *
  * Disclaimer:
  *  This program is free software; you can redistribute it and/or modify

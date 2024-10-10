@@ -226,7 +226,7 @@ int process_file(const node *f)
         "launching an instance of "EX_PATH"\n");
 
     ex_fd = popen(EX_PATH, "w");
-    send_ex(ex_fd, "set notagstack");
+    /* send_ex(ex_fd, "set notagstack"); */
     {   const char *s;
         s = strchr(f->full_name, '/');
         if (!s) s = f->full_name;
@@ -272,12 +272,15 @@ int process_file(const node *f)
                         : "; ",
                     tag1->id);
 
-            /* the first tag in the list contains the total number of tag in this list */
+            /* the first tag in the list contains the total number of tag in
+             * this list */
             if (tag1->tag_no_in_file > 1) { /* several tags for this id */
                 const ctag *tag2;
                 for (tag2 = tag1; tag2; tag2 = tag2->next_in_file) {
                     DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
-                            "%s%d", tag2 == tag1 ? ": " : ", ", tag2->tag_no_in_file);
+                            "%s%d",
+                            tag2 == tag1 ? ": " : ", ",
+                            tag2->tag_no_in_file);
                     fprintf(f->parent->html_file->index_f,
                         "          <li><span class=\"tag\">"
                         "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
@@ -305,7 +308,8 @@ int process_file(const node *f)
                     tag1->id,
                     tag1->tag_no_in_file,
                     tag1->id);
-                send_ex(ex_fd, "ta %s", tag1->id); /* goto tag, only one tag in this file */
+                send_ex(ex_fd, "ta %s", tag1->id); /* goto tag, only one
+                                                    * tag in this file */
                 send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):",
                     tag1->id, tag1->tag_no_in_file); /* change */
                 /* LCU: Mon 16 May 2022 12:44:57 PM EEST
@@ -340,8 +344,8 @@ int process_file(const node *f)
             percent += acum / n_files;
             acum %= n_files;
         } /* if */
-        fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s\033[K\r",
-            progress[i&3], i, n_files, percent / 1000,
+        fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s \033[K",
+            progress[i&NELEM(progress)], i, n_files, percent / 1000,
             percent % 1000, f->full_name);
         if (i >= n_files) fprintf(stderr, "\n");
     } /* block */

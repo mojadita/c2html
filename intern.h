@@ -1,6 +1,7 @@
 /* $Id: intern.h,v 1.1 2014/09/09 20:22:07 luis Exp $
- * Author: Luis Colorado <lc@luiscoloradosistemas.com>
+ * Author: Luis Colorado <luiscoloradourcola@gmail.com>
  * Date: Fri Aug  8 19:22:29 EEST 2014
+ * Copyright: (c) 1999-2024 Luis Colorado.  All rights reserved.
  *
  * Disclaimer:
  *  This program is free software; you can redistribute it and/or modify
@@ -40,5 +41,4 @@ extern AVL_TREE intern_strings;
 /* Do not include anything AFTER the line above, as it would not be
  * protected against double inclusion from other files.
  */
-
 /* $Id: intern.h,v 1.1 2014/09/09 20:22:07 luis Exp $ */

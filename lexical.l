@@ -1,7 +1,8 @@
 %{
 /* $Id: lexical.l,v 0.22 2014/09/09 20:23:04 luis Exp $
- * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
+ * Author: Luis Colorado <luiscoloradourcola@gmail.com>
  * Date: Sat Jun  5 21:01:12 MEST 1999
+ * Copyright: (c) 1999-2024 Luis Colorado.  All rights reserved.
  *
  *     C2HTML -- A program to convert C source code to cross-referenced HTML.
  *     Copyright (C) 1999  <Luis.Colorado@SLUG.HispaLinux.ES>

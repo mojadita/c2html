@@ -1,7 +1,7 @@
 /* $Id: html_output.h,v 1.1 2014/09/09 20:22:07 luis Exp $
- * Author: Luis Colorado <Luis.Colorado@SLUG.CTV.ES>
+ * Author: Luis Colorado <luiscoloradourcola@gmail.com>
  * Date: Sat Jun  5 22:45:02 MEST 1999
- * Disclaimer: (c) 1999 Luis Colorado <luis.colorado@SLUG.CTV.ES>
+ * Disclaimer: (c) 1999-2024 Luis Colorado.  All rights reserved.
  *
  *     C2HTML -- A program to conver C source code into cross referenced HTML.
  *     Copyright (C) 1999 <Luis.Colorado@SLUG.HispaLinux.ES>

@@ -1,7 +1,7 @@
 /* $Id: ctag.c,v 1.1 2014/09/09 20:22:06 luis Exp $
- * Author: Luis Colorado <lc@luiscoloradosistemas.com>
+ * Author: Luis Colorado <luiscoloradourcola@gmail.com>
  * Date: sáb ago 23 22:34:53 EEST 2014
- * Disclaimer: (C) 2014 LUIS COLORADO. All rights reserved.
+ * Disclaimer: (C) 2014-2024 LUIS COLORADO. All rights reserved.
  */
 
 #include <assert.h>

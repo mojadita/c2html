@@ -21,7 +21,7 @@ dnl along with this program; if not, write to the Free Software
 dnl Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 dnl
 
-AC_INIT(c2html,2.14-20220517,luis.colorado.urcola@gmail.com,https://github.com/mojadita/c2html/)
+AC_INIT([c2html],[2.14-20220517],[luis.colorado.urcola@gmail.com],[https://github.com/mojadita/c2html/])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR(./c2html.c)
 
@@ -30,10 +30,10 @@ AUTHOR_EMAIL="luis.colorado.urcola@gmail.com"
 OPERATING_SYSTEM=$(uname -s)
 OPERATING_SYSTEM_VERSION=$(uname -r)
 
-AM_PROG_LEX
+AM_PROG_LEX(flex, noyywrap)
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -51,7 +51,7 @@ dnl Checks for libraries.
 AC_CHECK_HEADERS(avl.h)
 
 dnl Checks for header files.
-AC_HEADER_STDC
+
 AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -69,6 +69,7 @@ AC_SUBST(EX_PATH)
 AC_SUBST(OPERATING_SYSTEM)
 AC_SUBST(OPERATING_SYSTEM_VERSION)
 
-AC_OUTPUT(Makefile c2html.1)
+AC_CONFIG_FILES([Makefile c2html.1])
+AC_OUTPUT
 
 dnl $Id: configure.in,v 0.20 2014/09/09 20:22:05 luis Exp $

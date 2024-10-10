@@ -1,7 +1,7 @@
 /* $Id: debug.h,v 1.1 2014/09/09 20:22:06 luis Exp $
- * Author: Luis Colorado <luis.colorado.urcola@gmail.com>
+ * Author: Luis Colorado <luiscoloradourcola@gmail.com>
  * Date: Fri Sep  5 15:47:29 EEST 2014
- * Copyright: (C) 1999-2022 Luis Colorado.  All rights reserved.
+ * Copyright: (C) 1999-2024 Luis Colorado.  All rights reserved.
  * License: BSD
  */
 
