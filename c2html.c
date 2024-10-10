@@ -298,8 +298,6 @@ int process_file(const node *f)
                         "s:^:(@a name=\"%s-%d\"@)(@/a@):",
                         tag2->id, tag2->tag_no_in_file); /* change */
                 } /* for */
-                /* LCU: Mon 16 May 2022 12:44:57 PM EEST
-                 * 00-Index entry has to be inserted */
             } else { /* only one tag for this id. */
                 fprintf(f->parent->html_file->index_f,
                     "            <li><span class=\"tag\">"
@@ -312,8 +310,6 @@ int process_file(const node *f)
                                                     * tag in this file */
                 send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):",
                     tag1->id, tag1->tag_no_in_file); /* change */
-                /* LCU: Mon 16 May 2022 12:44:57 PM EEST
-                 * 00-Index entry has to be inserted */
             } /* if */
         } /* for */
         DEB_TAIL(FLAG_DEBUG_PROCESS_FILE, ".\n"); /* end list of tags */
@@ -345,7 +341,7 @@ int process_file(const node *f)
             acum %= n_files;
         } /* if */
         fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s \033[K",
-            progress[i&NELEM(progress)], i, n_files, percent / 1000,
+            progress[i % NELEM(progress)], i, n_files, percent / 1000,
             percent % 1000, f->full_name);
         if (i >= n_files) fprintf(stderr, "\n");
     } /* block */
