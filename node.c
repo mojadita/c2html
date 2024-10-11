@@ -32,11 +32,15 @@ static char *type2string[] = {
     "TYPE_HTML",
 };
 
-node *new_node(const char *name, const node *parent, const node_type typ)
+node *
+new_node(
+        const char      *name,
+        node            *parent,
+        const node_type  typ)
 {
     node *res;
 
-    assert(name);
+    assert(name != NULL);
     name = intern(name); /* intern is an idempotent function */
 
     DEB(FLAG_DEBUG_NODES,
@@ -54,10 +58,12 @@ node *new_node(const char *name, const node *parent, const node_type typ)
     res->flags = 0;
     res->level = parent ? parent->level + 1 : 1;
     assert(res->subnodes = new_avl_tree(
-        (AVL_FCOMP) strcmp, NULL, NULL,
+        (AVL_FCOMP) strcmp,
+        NULL, NULL,
         (AVL_FPRNT) fputs));
     DEB(FLAG_DEBUG_NODES,
-        "res->subnodes(AVL_TREE) = %p\n", res->subnodes);
+        "res->subnodes(AVL_TREE) = %p\n",
+        res->subnodes);
     res->index_f = NULL;
 
     /* construct the path to it. use + 1
@@ -104,7 +110,6 @@ node *new_node(const char *name, const node *parent, const node_type typ)
             res->parent->full_name);
     } /* if */
 
-    /* now, add its html_file, if existent. */
     switch(res->type) {
 
     case TYPE_DIR: {
@@ -131,7 +136,8 @@ node *new_node(const char *name, const node *parent, const node_type typ)
         } break;
 
     case TYPE_HTML:
-        res->flags = NODE_FLAG_ALL; /* don't pass through this file in do_recur() */
+        res->flags = NODE_FLAG_ALL; /* don't pass through this file in
+                                     * do_recur() */
         res->html_file = res;
         n_html++;
         break;
@@ -144,14 +150,15 @@ node *new_node(const char *name, const node *parent, const node_type typ)
 
 node *name2node(node *root, const char *p, const node_type typ)
 {
-    char *aux, *name;
+    char *aux = NULL,
+         *name;
     const char *nam;
     node *nod;
 
-    assert(root); /* we need a root file to begin search from */
-    assert(p); /* we need also a path */
+    assert(root != NULL); /* we need a root file to begin search from */
+    assert(p != NULL);    /* we need also a path */
 
-    name = strdup(p); /* alloc a copy, to be returned at end */
+    name = strdup(p); /* alloc a copy, to be freed at end */
     nod = root;
 
     DEB(FLAG_DEBUG_NODES,
@@ -168,17 +175,20 @@ node *name2node(node *root, const char *p, const node_type typ)
             "step: parsing [%s][%s]\n", nod->full_name, nam);
 
         aux = strchr(nam, '/'); /* search for a '/' character */
-        if (aux) /* if found, nullify it and every one char following it */
-            while (*aux == '/')
+        if (aux) {
+            /* if found, nullify it and every one / char following it */
+            while (*aux == '/') {
                 *aux++ = '\0';
+            }
+        }
 
         /* now, aux points to the next name component or NULL */
         /* nam is the component name of this element of the path */
         /* CHECK FOR SPECIAL "." ENTRY */
         if (!strcmp(nam, ".")) {
             DEB(FLAG_DEBUG_NODES,
-                "component is \".\", ignored\n");
-            continue; /* it it's the . entry. */
+                "component '.', ignored\n");
+            continue; /* go to next path element. */
         } /* if */
 
         /* ... AND CHECK ALSO FOR ".." */
@@ -189,8 +199,8 @@ node *name2node(node *root, const char *p, const node_type typ)
                 exit(EXIT_FAILURE);
             } /* if */
             DEB(FLAG_DEBUG_NODES,
-                "component is \"..\", special\n");
-            nod = (node *) nod->parent;
+                "component '..', special\n");
+            nod = nod->parent; /* go to parent */
             continue;
         } /* if */
 
@@ -199,33 +209,33 @@ node *name2node(node *root, const char *p, const node_type typ)
 
         /* lookup it on the subnodes field */
         if (nod->type != TYPE_DIR) {
-            fprintf(stderr,
-                PR("%s is not a directory, cannot search/create node [%s] on it\n"),
+            WRN("%s is not a directory, cannot "
+                "search/create node [%s] on it\n",
                 nod->full_name, nam);
             return NULL;
         } /* if */
 
+        /* now type is TYPE_DIR */
         DEB(FLAG_DEBUG_NODES,
             "looking for [%s] in [%s]->subnodes\n",
             nam, nod->full_name);
+        /* search for it */
         next = avl_tree_get(nod->subnodes, nam);
         if (!next) {
             DEB(FLAG_DEBUG_NODES,
-                "[%s] not found, creating it in [%s]\n",
+                "'%s' not found, creating it in '%s'\n",
                 nam, nod->full_name);
 
-            /* all but the last in the hierarchy is a directory */
-            next = new_node(
-                nam, nod,
-                aux ? TYPE_DIR
-                    : typ);
+            /* all but the last in the hierarchy is a directory,
+             * it is the last if aux resulted in no / found. */
+            next = new_node(nam, nod, aux ? TYPE_DIR : typ);
         } /* if */
 
         DEB(FLAG_DEBUG_NODES,
             "step[%s]: end%s.\n",
             next->name,
             aux
-                ? "... next"
+                ? "... go for next"
                 : "");
         nod = next;
     } /* for */
@@ -233,8 +243,8 @@ node *name2node(node *root, const char *p, const node_type typ)
     /* free the temporary copy of the name */
     free(name);
 
-    DEB(FLAG_DEBUG_NODES,
-        "end\n");
+    DEB(FLAG_DEBUG_NODES, "end '%s' -> %p\n", p, nod);
+
     return nod;
 } /* name2node */
 
@@ -266,6 +276,7 @@ char *rel_path(const node *a, const node *b)
         a->full_name, b->full_name);
     DEB(FLAG_DEBUG_NODES,
         "common_prefix() -> %d\n", c);
+
     /* first the chain up */
     for (i = a->level-1; i > 0 && i > c; i--) {
         res = snprintf(p, bs, "%s..",
@@ -289,52 +300,80 @@ int do_recur(
         const node *nod,
         node_callback pre,
         node_callback fil,
-        node_callback pos)
+        node_callback pos,
+        void *clo)
 {
     AVL_ITERATOR i;
     int res = 0;
 
     DEB(FLAG_DEBUG_NODES,
-        "%*sENTER: %s: %s\n",
+        "%*sENTERING: %s: %s\n",
         (nod->level<<2)-1, "",
         type2string[nod->type],
         nod->full_name);
 
+    /* preorder */
+    if (!(nod->flags & NODE_FLAG_DONT_RECUR_PREORDER) && pre) {
+        DEB(FLAG_DEBUG_NODES,
+                "%*sCALLING pre('%s',...)\n",
+                (nod->level<<2) - 1, "",
+                nod->name);
+        if ((res = pre(nod, clo)) < 0) {
+            DEB(FLAG_DEBUG_NODES,
+                    "%*sERROR: pre('%s',...) -> %d, returning back\n",
+                    (nod->level<<2) - 1, "",
+                    nod->name, res);
+
+            return res;
+        }
+    }
     switch(nod->type) {
     case TYPE_DIR:
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_PREORDER) && pre)
-            if ((res = pre(nod)) != 0) return res;
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_INFILE)) {
+        /* inorder */
+        if (!(nod->flags & NODE_FLAG_DONT_RECUR_INFILE) && fil) {
             for (   i = avl_tree_first(nod->subnodes);
-                    i;
-                    i = avl_iterator_next(i))
+                    i; i = avl_iterator_next(i))
             {
-                if ((res = do_recur(
-                        avl_iterator_data(i),
-                        pre, fil, pos)) != 0)
+                const node *subnode = avl_iterator_data(i);
+                if ((res = do_recur(subnode, pre, fil, pos, clo)) < 0) {
                     return res;
+                }
             } /* for */
         } /* if */
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_POSTORDER) && pos)
-            if ((res = pos(nod)) != 0) return res;
         break;
     case TYPE_FILE:
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_PREORDER) && pre)
-            if ((res = pre(nod)) != 0) return res;
         if (!(nod->flags & NODE_FLAG_DONT_RECUR_INFILE) && fil)
-            if ((res = fil(nod)) != 0) return res;
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_POSTORDER) && pos)
-            if ((res = pos(nod)) != 0) return res;
+            if ((res = fil(nod, clo)) < 0) {
+                DEB(FLAG_DEBUG_NODES,
+                        "%*sERROR: fil('%s',...) -> %d, returning back\n",
+                        (nod->level<<2) - 1, "",
+                        nod->name, res);
+                return res;
+            }
         break;
-    /* on TYPE_HTML we don't do anything */
-    case TYPE_HTML: break;
+    /* otherwise, we don't do anything */
     } /* switch */
+    /* postorder */
+    if (!(nod->flags & NODE_FLAG_DONT_RECUR_POSTORDER) && pos) {
+        DEB(FLAG_DEBUG_NODES,
+                "%*sCALLING pos('%s',...)\n",
+                (nod->level<<2) - 1, "",
+                nod->name);
+        if ((res = pos(nod, clo)) != 0) {
+            DEB(FLAG_DEBUG_NODES,
+                    "%*sERROR: pos('%s',...) -> %d, returning back\n",
+                    (nod->level<<2) - 1, "",
+                    nod->name, res);
+            return res;
+        }
+    } /* if */
 
     DEB(FLAG_DEBUG_NODES,
-        "%*sLEAVE: %s: %s\n",
+        "%*sLEAVING: %s: %s\n",
         (nod->level<<2)-1, "",
         type2string[nod->type],
         nod->full_name);
+
     return res;
 } /* do_recur */
 

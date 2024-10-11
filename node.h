@@ -31,7 +31,7 @@ typedef struct node_s node;
 
 struct node_s {
     const char   *name;      /* name of this node. */
-    const node   *parent;    /* parent node of this. */
+    node         *parent;    /* parent node of this. */
     node_type    type;       /* type of this node. */
     int          flags;      /* flags, see above. */
     int          level;      /* level of this node, root node is at level 1 */
@@ -43,17 +43,18 @@ struct node_s {
     FILE         *index_f;   /* index.html file descriptor (for html files) */
 };
 
-node *new_node(const char *name, const node *parent, const node_type typ);
+node *new_node(const char *name, node *parent, const node_type typ);
 node *name2node(node *root, const char *path, const node_type typ);
 int common_prefix(const node *a, const node *b);
 char *rel_path(const node *a, const node *b);
 
-typedef int(*node_callback)(const node *dir);
+typedef int(*node_callback)(const node *dir, void *closure);
 
 int do_recur(const node *nod,
     node_callback dir_pre,
     node_callback file_in,
-    node_callback dir_pos);
+    node_callback dir_pos,
+    void *closure);
 
 #endif /* _NODE_H */
 /* $Id: node.h,v 1.1 2014/09/09 20:23:06 luis Exp $ */

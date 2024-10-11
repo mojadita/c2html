@@ -146,7 +146,7 @@ int send_ex(FILE *ex, const char *fmt, ...)
     }
 } /* send_ex */
 
-int process_dir_pre(const node *d)
+int process_dir_pre(const node *d, void *unused)
 {
     FILE *h;
 
@@ -185,7 +185,7 @@ int process_dir_pre(const node *d)
     return 0;
 } /* process_dir_pre */
 
-int process_dir_post(const node *d)
+int process_dir_post(const node *d, void *unused)
 {
     FILE *h = d->html_file->index_f;
 
@@ -199,7 +199,7 @@ int process_dir_post(const node *d)
     return 0;
 } /* process_dir_post */
 
-int process_file(const node *f)
+int process_file(const node *f, void *unused)
 {
     FILE *ex_fd;
     int ntags;
@@ -460,19 +460,17 @@ int main (int argc, char **argv)
         /* NOTREACHED */
     }
     style_node = new_node(style_file, db_root_node, TYPE_HTML);
-    js_node = new_node(js_file, db_root_node, TYPE_HTML);
 
     /* Process files */
 
     /* this process constructs the file node hierarchy of source file pages */
     process1(tag_file);
 
-    D(fflush(stdout));
-
-    D(do_recur(db_root_node,
+    do_recur(db_root_node,
         process_dir_pre,
         process_file,
-        process_dir_post));
+        process_dir_post,
+        NULL);
 
 } /* main */
 
