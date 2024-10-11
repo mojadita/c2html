@@ -22,7 +22,7 @@ const char *intern(const char *s)
 {
     char *res;
 
-    DEB(FLAG_DEBUG_INTERN, " begin for '%s'\n", s);
+    DEB(FLAG_DEBUG_INTERN, " begin for '%s'(%p)\n", s, s);
     if (!intern_strings) {
         DEB(FLAG_DEBUG_INTERN,
                 " initializing intern_strings\n");
@@ -46,7 +46,7 @@ const char *intern(const char *s)
         avl_tree_put(intern_strings, res, res);
     } /* if */
 
-    DEB(FLAG_DEBUG_INTERN, " end s='%s'\n", res);
+    DEB(FLAG_DEBUG_INTERN, " end s='%s'(%p)\n", res, res);
 
     return res;
 } /* intern */

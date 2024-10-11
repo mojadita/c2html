@@ -33,7 +33,7 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
     tag_menu *men;
 
     DEB(FLAG_DEBUG_CTAGS,
-            " start id='%s', fi='%s', ss='%p'\n",
+            " start id='%s', fi='%s', ss='%s'\n",
             id, fi, ss);
 
     if (!db_ctag) {
@@ -56,7 +56,7 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
     key.ss = ss = intern(ss);
 
     DEB(FLAG_DEBUG_CTAGS,
-            " looking for tag <id=%s(%p)|file=%s(%p)|ss=%s(%p)>\n",
+            " looking for tag <id=%s(%p)|file=%s(%p)|ss='%s'(%p)>\n",
 			id, id, fi, fi, ss, ss);
     res = avl_tree_get(db_ctag, &key);
     if (!res) {
@@ -96,7 +96,7 @@ ctag *lookup_ctag(const char *id, const char *fi, const char *ss, node *root)
         men->last_tag = res; /* last registered tag, for one node menus */
     } /* if */
 
-    DEB(FLAG_DEBUG_CTAGS, " end id='%s', fi='%s', ss=%p\n", id, fi, ss);
+    DEB(FLAG_DEBUG_CTAGS, " end id='%s', fi='%s', ss=%p('%s')\n", id, fi, ss, ss);
     return res;
 } /* lookup_ctag */
 

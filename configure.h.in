@@ -13,6 +13,8 @@
 #define AUTHOR_EMAIL "@AUTHOR_EMAIL@"
 #define VERSION      "@VERSION@"
 #define EX_PATH      "@EX_PATH@"
+#define DEFAULT_FLAGS @DEFAULT_FLAGS@
+
 #define prefix       "@prefix@"
 #define exec_prefix  "@exec_prefix@"
 #define bindir       "@bindir@"

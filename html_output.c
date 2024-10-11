@@ -82,23 +82,26 @@ int path_print(FILE *f, node *p)
 
     assert(p);
     DEB(FLAG_DEBUG_PROCESS_FILE,
-            "path_print(FILE, %s);\n",
+            "path_print(FILE, \"%s\");\n",
             p->full_name);
     if (!p->html_file) {
-        ERR(1, "f is NULL!!! (in node %s)\n",
-            p->full_name);
+        ERR(EXIT_FAILURE,
+                "f is NULL!!! (in node '%s')\n",
+                p->full_name);
     }
 
     res += fprintf(f, "<span class=\"path\">");
+    const char *sep = "";
     for (i = 0; i < p->level-1; i++) {
         res += fprintf(f,
             "%s<a href=\"%s\">%s</a>",
-            i ? "/" : "",
+            sep,
             rel_path(p->html_file, p->path[i]->html_file),
             p->path[i]->name);
+        sep = "/";
     } /* for */
     res += fprintf(f,
-        "%s%s", i ? "/" : "", p->name);
+        "%s%s", sep, p->name);
     res += fprintf(f, "</span>");
     return res;
 } /* path_print */
@@ -121,7 +124,7 @@ FILE *html_create(node *n)
     switch(n->type) {
     case TYPE_DIR: typ = "Directory"; break;
     case TYPE_FILE: typ = "File"; break;
-    default: typ = FILE_TYPE_UNKNOWN; break;
+    default: typ = "TAG"; break;
     } /* switch */
 
     fprintf(f,
@@ -150,6 +153,7 @@ FILE *html_create(node *n)
 "    <link rel=\"stylesheet\" type=\"text/css\" href=\"%s\">\n",
         typ, n->full_name,
         rel_path(n->html_file, style_node));
+
     fprintf(f,
 "    <script src=\"%s\"></script>\n"
 "  </head>\n"
@@ -177,7 +181,7 @@ void html_close(node *n)
     switch(n->type) {
     case TYPE_DIR: typ = "Directory"; break;
     case TYPE_FILE: typ = "File"; break;
-    default: typ = FILE_TYPE_UNKNOWN; break;
+    default: typ = "TAG"; break;
     } /* switch */
 
     assert(f = hn->index_f);

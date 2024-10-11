@@ -234,7 +234,8 @@ node *name2node(node *root, const char *p, const node_type typ)
     free(name);
 
     DEB(FLAG_DEBUG_NODES,
-        "end\n");
+        "end '%s' -> %p\n",
+        nod->full_name, nod);
     return nod;
 } /* name2node */
 
@@ -289,7 +290,8 @@ int do_recur(
         const node *nod,
         node_callback pre,
         node_callback fil,
-        node_callback pos)
+        node_callback pos,
+        void *clos)
 {
     AVL_ITERATOR i;
     int res = 0;
@@ -301,9 +303,20 @@ int do_recur(
         nod->full_name);
 
     switch(nod->type) {
+    case TYPE_DIR: case TYPE_FILE:
+        if (!(nod->flags & NODE_FLAG_DONT_RECUR_PREORDER) && pre) {
+            DEB(FLAG_DEBUG_NODES,
+                    "%*sBEFORE: %s: %s\n",
+                    (nod->level<<2)-1, "",
+                    type2string[nod->type],
+                    nod->full_name);
+            if ((res = pre(nod, clos)) != 0)
+                return res;
+        }
+    /* else nothing */
+    } /* switch */
+    switch(nod->type) {
     case TYPE_DIR:
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_PREORDER) && pre)
-            if ((res = pre(nod)) != 0) return res;
         if (!(nod->flags & NODE_FLAG_DONT_RECUR_INFILE)) {
             for (   i = avl_tree_first(nod->subnodes);
                     i;
@@ -311,23 +324,34 @@ int do_recur(
             {
                 if ((res = do_recur(
                         avl_iterator_data(i),
-                        pre, fil, pos)) != 0)
+                        pre, fil, pos, clos)) != 0)
                     return res;
             } /* for */
         } /* if */
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_POSTORDER) && pos)
-            if ((res = pos(nod)) != 0) return res;
         break;
     case TYPE_FILE:
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_PREORDER) && pre)
-            if ((res = pre(nod)) != 0) return res;
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_INFILE) && fil)
-            if ((res = fil(nod)) != 0) return res;
-        if (!(nod->flags & NODE_FLAG_DONT_RECUR_POSTORDER) && pos)
-            if ((res = pos(nod)) != 0) return res;
+        if (!(nod->flags & NODE_FLAG_DONT_RECUR_INFILE) && fil) {
+            DEB(FLAG_DEBUG_NODES,
+                    "%*sINFILE: %s: %s\n",
+                    (nod->level<<2)-1, "",
+                    type2string[nod->type],
+                    nod->full_name);
+            if ((res = fil(nod, clos)) != 0) return res;
+        }
+    /* else nothing */
+    } /* switch */
+    switch(nod->type) {
+    case TYPE_DIR: case TYPE_FILE:
+        if (!(nod->flags & NODE_FLAG_DONT_RECUR_POSTORDER) && pos) {
+            DEB(FLAG_DEBUG_NODES,
+                    "%*sAFTER: %s: %s\n",
+                    (nod->level<<2)-1, "",
+                    type2string[nod->type],
+                    nod->full_name);
+            if ((res = pos(nod, clos)) != 0) return res;
+        }
         break;
-    /* on TYPE_HTML we don't do anything */
-    case TYPE_HTML: break;
+    /* else nothing */
     } /* switch */
 
     DEB(FLAG_DEBUG_NODES,

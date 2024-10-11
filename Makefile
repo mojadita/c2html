@@ -14,6 +14,7 @@ PACKAGE_URL  ?= https://github.com/mojadita/c2html.git
 PROGNAME     ?= c2html
 AUTHOR_NAME  ?= Luis Colorado
 AUTHOR_EMAIL ?= luiscoloradourcola@gmail.com
+DEFAULT_FLAGS ?= (FLAG_DEBUG_ALWAYS | FLAG_PROGRESS)
 
 VERSION      ?= 2.14-2022.05.27
 RM           ?= rm -f
@@ -70,19 +71,21 @@ c2html: $(c2html_deps) $(c2html_objs)
 
 %:%.in
 	$(DO_SED)
-configure.h:configure.h.in
+configure.h:configure.h.in Makefile
 	$(DO_SED)
 
 define DO_SED
 	sed \
-		-e 's:@prefix@:$(prefix):g' \
-		-e 's:@exec_prefix@:$(exec_prefix):g' \
 		-e 's:@bindir@:$(bindir):g' \
-		-e 's:@libdir@:$(libdir):g' \
-		-e 's:@includedir@:$(includedir):g' \
+		-e 's:@confdir@:$(confdir):g' \
 		-e 's:@datadir@:$(datadir):g' \
 		-e 's:@datarootdir@:$(datarootdir):g' \
-		-e 's:@mandir@:$(mandir):g' \
+		-e 's:@DEFAULT_FLAGS@:$(DEFAULT_FLAGS):g' \
+		-e 's:@docdir@:$(docdir):g' \
+		-e 's:@exec_prefix@:$(exec_prefix):g' \
+		-e 's:@includedir@:$(includedir):g' \
+		-e 's:@infodir@:$(infodir):g' \
+		-e 's:@libdir@:$(libdir):g' \
 		-e 's:@man1dir@:$(man1dir):g' \
 		-e 's:@man2dir@:$(man2dir):g' \
 		-e 's:@man3dir@:$(man3dir):g' \
@@ -92,11 +95,19 @@ define DO_SED
 		-e 's:@man7dir@:$(man7dir):g' \
 		-e 's:@man8dir@:$(man8dir):g' \
 		-e 's:@man9dir@:$(man9dir):g' \
-		-e 's:@infodir@:$(infodir):g' \
-		-e 's:@docdir@:$(docdir):g' \
-		-e 's:@confdir@:$(confdir):g' \
+		-e 's:@mandir@:$(mandir):g' \
+		-e 's:@prefix@:$(prefix):g' \
+		-e 's:@PACKAGE@:$(PACKAGE):g' \
+		-e 's@PACKAGE_URL@$(PACKAGE_URL)g' \
+		-e 's:@PROGNAME@:$(PROGNAME):g' \
+		-e 's:@AUTHOR_NAME@:$(AUTHOR_NAME):g' \
+		-e 's:@AUTHOR_EMAIL@:$(AUTHOR_EMAIL):g' \
+		-e 's:@VERSION@:$(VERSION):g' \
+		-e 's:@EX_PATH@:$(EX_PATH):g' \
 		$< > $@
 endef
+
+include .depend
 
 c2html.1.gz: c2html.1
 	gzip $(GZFLAGS) < $? > $@

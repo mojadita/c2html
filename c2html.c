@@ -39,7 +39,7 @@
 
 /* variables */
 
-int flags              = FLAG_DEBUG_ALWAYS;
+int flags              = DEFAULT_FLAGS;
 const char *tag_file   = DEFAULT_TAG_FILE;
 const char *output     = DEFAULT_OUTPUT;
 const char *base_dir   = DEFAULT_BASE_DIR;
@@ -50,8 +50,6 @@ node *js_node          = NULL;
 node *db_root_node     = NULL;
 
 static AVL_TREE files_db = NULL;
-
-/* functions */
 
 /* process file of name fn */
 void process1(const char *fn)
@@ -73,7 +71,7 @@ void process1(const char *fn)
     } /* if */
 
     DEB(FLAG_DEBUG_PROCESS1,
-            "Processing tags file \"%s\":\n", fn);
+            "Processing tags file '%s'\n", fn);
 
     /* file open, process lines */
     while (fgets(line, sizeof line, tagfile)) {
@@ -146,7 +144,7 @@ int send_ex(FILE *ex, const char *fmt, ...)
     }
 } /* send_ex */
 
-int process_dir_pre(const node *d)
+int process_dir_pre(const node *d, void *clsr)
 {
     FILE *h;
 
@@ -185,7 +183,7 @@ int process_dir_pre(const node *d)
     return 0;
 } /* process_dir_pre */
 
-int process_dir_post(const node *d)
+int process_dir_post(const node *d, void *clsr)
 {
     FILE *h = d->html_file->index_f;
 
@@ -199,7 +197,7 @@ int process_dir_post(const node *d)
     return 0;
 } /* process_dir_post */
 
-int process_file(const node *f)
+int process_file(const node *f, void *clsr)
 {
     FILE *ex_fd;
     int ntags;
@@ -362,46 +360,52 @@ int process_file(const node *f)
 void do_usage (void)
 {
     fprintf(stderr,
-            "Usage: " PROGNAME " [ options ... ]\n"
-            PROGNAME " " VERSION ": Copyright (C) 1999-2022 <Luis.Colorado.Urcola@gmail.com>\n"
-            "This program is under GNU PUBLIC LICENSE, version 2 or later\n"
-            "see the terms and conditions of use at http://www.gnu.org/\n"
-            "(you might receive a copy of it with this program)\n"
-            "\n"
-            "This program operates on a constructed tags file (see ctags(1)), and\n"
-            "constructs an HTML hierarchy of source files, parallel to their C\n"
-            "counterparts, with hyperlink cross references to all the C identifiers\n"
-            "located in the code.\n"
-            "\n"
-            "It uses the tags file to locate all the identifier definitions in the\n"
-            "C code, and then, it constructs a syntax marked HTML file, with each\n"
-            "definition found in the tags file marked in the code, and every reference\n"
-            "to it, surrounded by a <a href> tag, so clicking with the mouse leads us\n"
-            "quickly and efficiently to the definition.\n"
-            "Options:\n"
-            "  -h   Help.  This help screen.\n"
-            "  -t <tag_file>  The tag file to be used (default: " DEFAULT_TAG_FILE ")\n"
-            "  -b <base_dir>  Base directory for URL composition\n"
-            "       This causes to generate <BASE> tags. (default: " DEFAULT_BASE_DIR_STRING ")\n"
-            "  -d <debug_options>  Debug options can be several of:  \n"
-            "         1  process1 debug.\n"
-            "         D  database debug.\n"
-            "         l  lexical processing debug.\n"
-            "         x  ex(1) commands debug.\n"
-            "         M  create_menu debug.\n"
-            "         d  process dir debug.\n"
-            "         f  process file debug.\n"
-            "         i  process ident debug.\n"
-            "         m  process menu debug.\n"
-            "         s  process scanfile debug.\n"
-            "         I  string intern debug.\n"
-            "         c  ctags debug.\n"
-            "         n  nodes debug.\n"
-            "  -n   Output linenumbers.\n"
-            "  -o   Output directory (default " DEFAULT_OUTPUT ")\n"
-            "  -p   Progress is shown on stderr.\n"
-            "  -s   Style file (default " DEFAULT_STYLE_FILE ")\n"
-            "  -j   Javascript file (default " DEFAULT_JS_FILE ")\n"
+"Usage: " PROGNAME " [ options ... ]\n"
+"\n"
+"                     " PROGNAME " " VERSION "\n"
+"     Copyright (C) 1999-2024 " "<luiscoloradourcola@gmail.com>\n"
+"\n"
+"This program is under GNU PUBLIC  LICENSE, version 2 or later see\n"
+"the terms and conditions of use at http://www.gnu.org/ (you might\n"
+"receive a copy of it with this program)\n"
+"\n"
+"This program operates on a  constructed tags file (see ctags(1)),\n"
+"and constructs  an HTML  hierarchy of  source files,  parallel to\n"
+"their C counterparts, with hyperlink  cross references to all the\n"
+"C identifiers located in the code.\n"
+"\n"
+"It uses the tags file to locate all the identifier definitions in\n"
+"the C  code, and then, it  constructs a syntax marked  HTML file,\n"
+"with each definition  found in the tags file marked  in the code,\n"
+"and  every reference  to it,  surrounded by  a <a  href> tag,  so\n"
+"clicking with the  mouse leads us quickly and  efficiently to the\n"
+"definition.\n"
+"\n"
+"Options:\n"
+"  -b <base_dir>  Base directory for URL composition\n"
+"       This causes to generate <BASE> tags. (default: "
+"       " DEFAULT_BASE_DIR_STRING ")\n"
+"  -d <debug_options>  Debug options can be several of:\n"
+"         1  process1 debug.\n"
+"         c  ctags debug.\n"
+"         D  database debug.\n"
+"         d  process dir debug.\n"
+"         f  process file debug.\n"
+"         i  process ident debug.\n"
+"         I  string intern debug.\n"
+"         l  lexical processing debug.\n"
+"         M  create_menu debug.\n"
+"         m  process menu debug.\n"
+"         n  nodes debug.\n"
+"         s  process scanfile debug.\n"
+"         x  ex(1) commands debug.\n"
+"  -h   Help.  This help screen.\n"
+"  -j   Javascript file (default " DEFAULT_JS_FILE ")\n"
+"  -n   Output linenumbers.\n"
+"  -o   Output directory (default " DEFAULT_OUTPUT ")\n"
+"  -p   Progress is shown on stderr.\n"
+"  -s   Style file (default " DEFAULT_STYLE_FILE ")\n"
+"  -t <tag_file>  The tag file to be used (default: '" DEFAULT_TAG_FILE "')\n"
         );
 
 } /* do_usage */
@@ -421,20 +425,20 @@ int main (int argc, char **argv)
                 for (p = optarg; *p; p++) {
                     switch(*p) {
                     case '1': flags |= FLAG_DEBUG_PROCESS1; break;
-                    case 'D': flags |= FLAG_DEBUG_DB; break;
-                    case 'l': flags |= FLAG_DEBUG_LEX; break;
-                    case 'x': flags |= FLAG_DEBUG_EX; break;
-                    case 'M': flags |= FLAG_DEBUG_CREATE_MENU; break;
                     case '2': flags |= FLAG_DEBUG_PROCESS2; break;
+                    case 'a': flags |= FLAG_DEBUG_ALL; break;
+                    case 'c': flags |= FLAG_DEBUG_CTAGS; break;
+                    case 'D': flags |= FLAG_DEBUG_DB; break;
                     case 'd': flags |= FLAG_DEBUG_PROCESS_DIR; break;
                     case 'f': flags |= FLAG_DEBUG_PROCESS_FILE; break;
-                    case 'i': flags |= FLAG_DEBUG_PROCESS_IDENT; break;
-                    case 'm': flags |= FLAG_DEBUG_PROCESS_MENU; break;
-                    case 's': flags |= FLAG_DEBUG_SCANFILE; break;
                     case 'I': flags |= FLAG_DEBUG_INTERN; break;
-                    case 'c': flags |= FLAG_DEBUG_CTAGS; break;
+                    case 'i': flags |= FLAG_DEBUG_PROCESS_IDENT; break;
+                    case 'l': flags |= FLAG_DEBUG_LEX; break;
+                    case 'M': flags |= FLAG_DEBUG_CREATE_MENU; break;
+                    case 'm': flags |= FLAG_DEBUG_PROCESS_MENU; break;
                     case 'n': flags |= FLAG_DEBUG_NODES; break;
-                    case 'a': flags |= FLAG_DEBUG_ALL; break;
+                    case 's': flags |= FLAG_DEBUG_SCANFILE; break;
+                    case 'x': flags |= FLAG_DEBUG_EX; break;
                     } /* switch */
                 } /* for */
             } /* block */
@@ -472,7 +476,8 @@ int main (int argc, char **argv)
     D(do_recur(db_root_node,
         process_dir_pre,
         process_file,
-        process_dir_post));
+        process_dir_post,
+        NULL));
 
 } /* main */
 
