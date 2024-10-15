@@ -20,18 +20,21 @@
 AVL_TREE db_menus = NULL;
 char *default_menu_name = "00-Index";
 
-tag_menu *lookup_menu(const char *id, node *root)
+tag_menu *
+lookup_menu(
+        const char *id,
+        node       *root)
 {
     tag_menu *res;
     static node *menus_dir;
 
     DEB(FLAG_DEBUG_PROCESS_MENU,
-            "begin: id='%s'\n", id);
+        "begin: id='%s'\n", id);
 
     if (!db_menus) {
         DEB(FLAG_DEBUG_PROCESS_MENU,
-                "'%s': initializing db_menus\n",
-                id);
+            "'%s': initializing db_menus\n",
+            id);
         db_menus = new_avl_tree(
             (AVL_FCOMP) strcmp,
             NULL,
@@ -39,32 +42,28 @@ tag_menu *lookup_menu(const char *id, node *root)
             (AVL_FPRNT) fputs);
         if (!db_menus) {
             ERR(EXIT_FAILURE,
-                    "'%s': Error: cannot allocate mem: %s\n",
-                    id, strerror(errno));
+                "'%s': Error: cannot allocate mem: %s\n",
+                id, strerror(errno));
             /* NOTREACHED */
         }
     } /* if */
 
-    id = intern(id);
-
     DEB(FLAG_DEBUG_PROCESS_MENU,
-            "searching for key='%s' in db_menus\n",
-            id);
+        "searching for key='%s' in db_menus\n",
+        id);
     res = avl_tree_get(db_menus, id);
     if (!res) {
         char buffer[4096];
         DEB(FLAG_DEBUG_PROCESS_MENU,
-                "'%s': not found, creating it\n",
-                id);
+            "'%s': not found, creating it\n",
+            id);
         res = malloc(sizeof (tag_menu));
         if (!res) {
             ERR(EXIT_FAILURE,
                 "'%s': Error: cannot allocate mem: %s\n",
-                id,
-                strerror(errno));
-            /* NOTREACHED */
+                id, strerror(errno));
         }
-        res->id = id;
+        res->id    = id;
         res->flags = 0;
         res->ntags = 0;
         res->group_by_file = new_avl_tree(
@@ -81,22 +80,30 @@ tag_menu *lookup_menu(const char *id, node *root)
                 "%s/%c/%s.html",
                 default_menu_name,
                 res->id[0], res->id);
-        res->nod = name2node(root, buffer, TYPE_HTML);
+        res->nod = name2node(root, buffer, TYPE_MENU);
         DEB(FLAG_DEBUG_PROCESS_MENU,
-                "'%s': res->nod=%p res->nod->full_name='%s', "
-                "res->nod->html_file->full_name='%s'\n",
-                id,
-                res->nod,
-                res->nod->full_name,
-                res->nod->html_file->full_name);
+            "'%s': res->nod=%p res->nod->full_name='%s', ",
+            id, res->nod, res->nod->full_name);
         res->last_tag = NULL;
         avl_tree_put(db_menus, id, res);
     } /* if */
     DEB(FLAG_DEBUG_PROCESS_MENU,
-            "end '%s' -> '%s'(%p)\n",
-            id, res->id, res);
+        "end '%s' -> '%s'(%p)\n",
+        id, res->id, res);
 
     return res;
 } /* lookup_menu */
+
+void fprint_menu(FILE *f, const tag_menu *m)
+{
+#define P(fld, fmt) fprintf(stderr, "%20s" fmt "\n", #fld, m->fld)
+    P(id, "%s");
+    P(flags, "%02x");
+    P(ntags, "%d");
+    P(group_by_file, "%p");
+    P(nod->full_name, "%s");
+    P(first_tag, "%p");
+    P(last_tag, "%p");
+} /* fprint_menu */
 
 /* $Id: menu.c,v 1.1 2014/09/09 20:23:05 luis Exp $ */

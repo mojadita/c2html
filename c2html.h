@@ -79,7 +79,5 @@ extern node         *js_node;
 
 #endif /* C2HTML_H */
 /* Do not include anything AFTER the line above, as it would not be
- * protected against double inclusion from other files.
- */
-
+ * protected against double inclusion from other files.  */
 /* $Id: c2html.h,v 0.18 2014/09/09 20:22:05 luis Exp $ */

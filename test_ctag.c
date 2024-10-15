@@ -35,7 +35,7 @@
 #include "debug.h"
 #include "node.h"
 #include "menu.h"
-#include "db.h"
+#include "ctag.h"
 
 /* variables */
 static char TEST_CTAG_C_RCSId[]="\n$Id: test_ctag.c,v 1.1 2014/09/09 20:23:07 luis Exp $\n";

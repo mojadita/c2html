@@ -22,10 +22,13 @@ const char *intern(const char *s)
 {
     char *res;
 
-    DEB(FLAG_DEBUG_INTERN, " begin for '%s'(%p)\n", s, s);
+    DEB(FLAG_DEBUG_INTERN,
+        " begin for '%s'(%p)\n",
+        s, s);
+
     if (!intern_strings) {
         DEB(FLAG_DEBUG_INTERN,
-                " initializing intern_strings\n");
+            " initializing intern_strings\n");
         intern_strings = new_avl_tree(
             (AVL_FCOMP) strcmp,
             NULL,
@@ -41,12 +44,13 @@ const char *intern(const char *s)
     res = avl_tree_get(intern_strings, s);
     if (!res) {
         DEB(FLAG_DEBUG_INTERN,
-                "adding nonexistent '%s' to database\n", s);
+            "adding nonexistent '%s' to database\n", s);
         res = strdup(s);
         avl_tree_put(intern_strings, res, res);
     } /* if */
 
-    DEB(FLAG_DEBUG_INTERN, " end s='%s'(%p)\n", res, res);
+    DEB(FLAG_DEBUG_INTERN,
+        " end s='%s'(%p)\n", res, res);
 
     return res;
 } /* intern */

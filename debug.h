@@ -44,7 +44,8 @@ extern int flags;
 #define PR(_fmt) "%s:%d:%s:"_fmt,__FILE__,__LINE__,__func__
 
 #if INCLUDE_DEBUG_CODE
-#   define DEB(_flgs, _fmt, ...) DEB_TAIL(_flgs, PR("DEB:"_fmt), ##__VA_ARGS__)
+#   define DEB(_flgs, _fmt, ...) \
+        DEB_TAIL(_flgs, PR("DEB:"_fmt), ##__VA_ARGS__)
 #   define DEB_TAIL(_flgs, _fmt, ...) do {  \
         if (flags & _flgs || flags & FLAG_DEBUG_ALL) \
             printf(_fmt, ##__VA_ARGS__);    \
@@ -64,13 +65,20 @@ extern int flags;
 #define ERR_TAIL(_code, _fmt, ...) do {         \
         fprintf(stderr, _fmt, ##__VA_ARGS__);   \
         if (_code) exit(_code);                 \
+        fflush(stderr);                         \
     } while (0)
 
 #define WRN(_fmt, ...) WRN_TAIL(_code, PR("WRN:"_fmt), ##__VA_ARGS__)
-#define WRN_TAIL(_code, _fmt, ...) fprintf(stderr, _fmt, ##__VA_ARGS__)
+#define WRN_TAIL(_code, _fmt, ...) do {         \
+        fprintf(stderr, _fmt, ##__VA_ARGS__);   \
+        fflush(stderr);                         \
+    } while (0)
 
 #define INF(_fmt, ...) INF_TAIL(_code, PR("INF:"_fmt), ##__VA_ARGS__)
-#define INF_TAIL(_fmt, ...) printf(_fmt, ##__VA_ARGS)
+#define INF_TAIL(_fmt, ...) do {         \
+        fprintf(stderr, _fmt, ##__VA_ARGS__);   \
+        fflush(stderr);                         \
+    } while (0)
 
 #ifdef __cplusplus
 } /* extern "C" */

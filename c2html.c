@@ -28,7 +28,7 @@
 #include "intern.h"
 #include "node.h"
 #include "menu.h"
-#include "db.h"
+#include "ctag.h"
 #include "c2html.h"
 #include "html_output.h"
 #include "lexical.h"
@@ -51,79 +51,91 @@ node *db_root_node     = NULL;
 
 static AVL_TREE files_db = NULL;
 
-/* process file of name fn */
-void process1(const char *fn)
+/* process file of name tags_filename (tags file) */
+void
+process1(const char *tags_filename)
 {
-    FILE *tagfile;
-    char line [MAXLINELENGTH];
+    FILE *tagsfile;
+    char line[MAXLINELENGTH];
     unsigned long line_num = 0;
 
     files_db = new_avl_tree(
-            (AVL_FCOMP) strcmp, NULL, NULL,
+            (AVL_FCOMP) strcmp,
+            NULL, NULL,
             (AVL_FPRNT) fputs);
 
-    tagfile = fopen (fn, "r");
-    if (!tagfile) {
+    tagsfile = fopen (tags_filename, "r");
+    if (!tagsfile) {
         ERR(EXIT_FAILURE,
             "Error opening %s: %s\n",
-            fn, strerror(errno));
+            tags_filename, strerror(errno));
         /* NOTREACHED */
     } /* if */
 
     DEB(FLAG_DEBUG_PROCESS1,
-            "Processing tags file '%s'\n", fn);
+        "Processing tags file '%s'\n",
+        tags_filename);
 
     /* file open, process lines */
-    while (fgets(line, sizeof line, tagfile)) {
-        const char *id, *fi, *ss;
+    while (fgets(line, sizeof line, tagsfile)) {
+        const char *tag_id, *filename, *ss;
         const ctag *tag;
 
         line_num++;
 
-        id = strtok (line, "\t\n");
-        if (!id) { /* tag name */
-            WRN("%s:%ld:bad syntax, unrecognized id.\n",
-                fn, line_num);
+        tag_id = strtok (line, "\t\n");
+        if (!tag_id) { /* tag name */
+            WRN("%s:%ld:bad syntax, unrecognized tag_id.\n",
+                tags_filename, line_num);
             continue;
         } /* if */
 
-        fi = strtok (NULL, "\t\n");
-        if (!fi) { /* tag file */
+        filename = strtok (NULL, "\t\n");
+        if (!filename) { /* tag file */
             WRN("%s:%ld:bad syntax, unrecognized file name.\n",
-                fn, line_num);
+                tags_filename, line_num);
             continue;
         } /* if */
 
         ss = strtok (NULL, "\n");
         if (!ss) { /* tag search string */
             WRN("%s:%ld:bad syntax, unrecognized search string.\n",
-                fn, line_num);
+                tags_filename, line_num);
             continue;
         } /* if */
 
         /* Ignore VIM ctags(1) private symbols starting in ! */
-        if (id[0] == '!') {
+        if (tag_id[0] == '!') {
             DEB(FLAG_DEBUG_PROCESS1,
                 "%s:%ld: ignoring '%s' vim private identifier\n",
-                fn, line_num, id);
+                tags_filename, line_num, tag_id);
             continue;
         } /* if */
 
-        DEB(FLAG_DEBUG_PROCESS1,
-                "%s:%ld: id='%s', file='%s', search='%s'\n",
-                fn, line_num, id, fi, ss);
+        /* if we got here, we do have a correct tag entry */
 
-        /* first, find the ctag entry, this interns the three strings. */
-        tag = lookup_ctag(id, fi, ss, db_root_node);
+        DEB(FLAG_DEBUG_PROCESS1,
+            "%s:%ld: tag_id='%s', file='%s', search='%s'\n",
+            tags_filename, line_num,
+            tag_id, filename, ss);
+
+        /* first, find the ctag entry. */
+        tag = lookup_ctag(
+                tag_id   = intern(tag_id),
+                filename = intern(filename),
+                ss       = intern(ss),
+                db_root_node);
+
+        tag->nod->orig_name = filename;
 
         avl_tree_put(files_db, tag->nod->full_name, tag->nod);
 
     } /* while ... */
 
     DEB(FLAG_DEBUG_PROCESS1,
-        "closing tagfile [%s]\n",
-        fn);
-    fclose(tagfile);
+        "closing tagsfile '%s'\n",
+        tags_filename);
+    fclose(tagsfile);
 
 } /* process1 */
 
@@ -144,182 +156,206 @@ int send_ex(FILE *ex, const char *fmt, ...)
     }
 } /* send_ex */
 
-int process_dir_pre(const node *d, void *clsr)
+static void
+write_entry_on_parent(node *entry,
+        const char *label)
 {
-    FILE *h;
-
-    DEB(FLAG_DEBUG_PROCESS_DIR,
-            "Creating directory %s\n",
-            d->full_name);
-
-    int res = mkdir(d->full_name, 0777);
-    if (res < 0 && (errno != EEXIST)) {
-        ERR(EXIT_FAILURE,
-            "error:MKDIR:%s:%s(errno=%d)\n",
-            d->full_name, strerror(errno), errno);
-    } /* if */
-
-    DEB(FLAG_DEBUG_PROCESS_DIR,
-            "creating html file [%s] for directory [%s]\n",
-            d->html_file->full_name, d->full_name);
-    h = html_create(d);
-    fprintf(h, "      <ul>\n");
-    if (d->parent) {
+    if (entry->parent) {
         char *rp = rel_path(
-            d->parent->html_file,
-            d->html_file);
+            entry->parent->html_file,
+            entry->html_file);
         DEB(FLAG_DEBUG_PROCESS_DIR,
-                "Writing an entry [%s] in parent "
-                "html file [%s] for dir [%s]\n",
-            rp, d->parent->html_file->full_name,
-            d->html_file->full_name);
-        fprintf(d->parent->html_file->index_f,
+            "Writing an entry '%s' in parent "
+            "html file '%s' for %s '%s'\n",
+            rp, entry->parent->html_file->full_name,
+            label, entry->name);
+        fprintf(entry->parent->index_f,
             "      <li><span class=\"dir\">"
-            "<a href=\"%s\">%s</a> directory."
+            "<a href=\"%s\">%s</a> %s."
             "</span></li>\n",
-            rp, d->name);
+            rp, entry->name, label);
     } /* if */
-    DEB(FLAG_DEBUG_PROCESS_DIR, "end\n");
+} /* write_entry_on_parent */
+
+static int
+process_dir_pre(
+        node *dir,
+        void *clsr)
+{
+
+    DEB(FLAG_DEBUG_PROCESS_DIR,
+        "Creating directory %s\n",
+        dir->full_name);
+
+    int res = mkdir(dir->full_name, 0777);
+    if (res < 0 && (errno != EEXIST)) {
+        ERR(EXIT_FAILURE, "error: MKDIR: %s: %s(errno=%d)\n",
+            dir->full_name, strerror(errno), errno);
+    } /* if */
+
+    write_entry_on_parent(dir, "directory");
+
+    DEB(FLAG_DEBUG_PROCESS_DIR,
+        "creating html file [%s] "
+        "for directory [%s]\n",
+        dir->html_file->full_name,
+        dir->full_name);
+
+    FILE *h = html_create(dir);
+
+    fprintf(h, "      <ul>\n");
+
     return 0;
 } /* process_dir_pre */
 
-int process_dir_post(const node *d, void *clsr)
+static int
+process_dir_post(
+        node *dir,
+        void *clsr)
 {
-    FILE *h = d->html_file->index_f;
+    FILE *h = dir->index_f;;
 
     DEB(FLAG_DEBUG_PROCESS_DIR,
-            "Cleaning and closing html file [%s]\n",
-            d->html_file->full_name);
+        "Cleaning and closing html file '%s'\n",
+        dir->html_file->full_name);
+
     fprintf(h, "      </ul>\n");
-    html_close(d);
-    DEB(FLAG_DEBUG_PROCESS_DIR, "end\n");
+
+    html_close(dir);
 
     return 0;
 } /* process_dir_post */
 
-int process_file(const node *f, void *clsr)
+static int
+process_file(
+        node *f,
+        void *clsr)
 {
-    FILE *ex_fd;
     int ntags;
 
     DEB(FLAG_DEBUG_PROCESS_FILE,
-            "START: file=[%s]\n", f->html_file->full_name);
+        "START: file=%s\n",
+        f->full_name);
 
-    DEB(FLAG_DEBUG_PROCESS_FILE,
-            "writing an entry for %s in parent html file %s\n",
-        f->html_file->name, f->parent->html_file->name);
+    switch(f->type) {
+    case TYPE_SOURCE:
+        DEB(FLAG_DEBUG_PROCESS_FILE,
+            "launching an instance of "EX_PATH"\n");
 
-    DEB(FLAG_DEBUG_PROCESS_DIR,
-        "Writing:[<li><span class=\"file\">"
-        "<a href=\"%s\">%s</a> file.</span>] To file [%s]\n",
-        f->html_file->name, f->full_name,
-        f->parent->html_file->full_name);
+        write_entry_on_parent(f, "file");
 
-    fprintf(f->parent->html_file->index_f,
-        "      <li><span class=\"file\">"
-        "<a href=\"%s\">%s</a> file.</span>\n",
-        f->html_file->name, f->name);
-
-    DEB(FLAG_DEBUG_PROCESS_FILE,
-        "launching an instance of "EX_PATH"\n");
-
-    ex_fd = popen(EX_PATH, "w");
-    /* send_ex(ex_fd, "set notagstack"); */
-    {   const char *s;
-        s = strchr(f->full_name, '/');
-        if (!s) s = f->full_name;
-        while (*s == '/') s++;
-        send_ex(ex_fd, "e! %s", s); /* edit original file */
+        FILE *ex_fd = popen(EX_PATH, "w");
+        /* send_ex(ex_fd, "set notagstack"); */
+        send_ex(ex_fd, "e! %s", f->full_name); /* edit original file */
 
         DEB(FLAG_DEBUG_PROCESS_FILE,
-            "begin editing session on file %s -> %s\n",
-            s, f->full_name);
-    } /* block */
+            "begin "EX_PATH" editing session on file %s\n",
+            f->full_name);
 
-    /* for every tag in this file */
-    DEB(FLAG_DEBUG_PROCESS_FILE,
-            "for every tag in file [%s]\n", f->full_name);
-    D(ntags = avl_tree_size(f->subnodes));
-    DEB(FLAG_DEBUG_PROCESS_FILE,
+        /* for every tag in this file */
+        DEB(FLAG_DEBUG_PROCESS_FILE,
+            "for every tag in file [%s]\n",
+            f->full_name);
+        D(ntags = avl_tree_size(f->subnodes));
+        DEB(FLAG_DEBUG_PROCESS_FILE,
             "it has %d tags:\n", ntags);
-    if (ntags) {
-        AVL_ITERATOR it1, it2;
 
-        DEB(FLAG_DEBUG_PROCESS_FILE, "begin list of tags: ");
+        if (ntags) {
+            AVL_ITERATOR it;
 
-        fprintf(f->parent->html_file->index_f,
-            "        <ul>\n");
-        for (   it2 = it1 = avl_tree_first(f->subnodes);
-                it1;
-                it1 = avl_iterator_next(it1))
-        {
-            const ctag *tag1;
+            DEB(FLAG_DEBUG_PROCESS_FILE,
+                "begin list of tags: ");
 
-            tag1 = avl_iterator_data(it1);
-            if (!tag1) {
-                ERR(EXIT_FAILURE,
-                    "cannot get a tag iterator, "
-                    "this should not happen\n");
-                /* NOTREACHED */
-            }
+            fprintf(f->parent->index_f,
+                    "        <ul>\n");
 
-            DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
-                    "%s[%s]",
-                    it1 == it2
-                        ? ""
-                        : "; ",
-                    tag1->id);
+            const char *sep = "";
+            for (   it = avl_tree_first(f->subnodes);
+                    it;
+                    it = avl_iterator_next(it))
+            {
+                const ctag *tag1;
 
-            /* the first tag in the list contains the total number of tag in
-             * this list */
-            if (tag1->tag_no_in_file > 1) { /* several tags for this id */
-                const ctag *tag2;
-                for (tag2 = tag1; tag2; tag2 = tag2->next_in_file) {
-                    DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
+                tag1 = avl_iterator_data(it);
+                if (!tag1) {
+                    ERR(EXIT_FAILURE,
+                        "cannot get a tag iterator data, "
+                        "this shouldn't happen\n");
+                    /* NOTREACHED */
+                }
+
+                DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
+                    "%s[%s]", sep, tag1->id);
+                sep = ", ";
+
+                /* LCU: Mon Oct 14 15:12:43 EEST 2024
+                 * TODO menus have to be generated even if list has only
+                 * one tag. (for now this will be ok) */
+                /* the first tag in the list contains the total number
+                 * of tag in this list */
+                if (tag1->tag_no_in_file > 1) { /* several tags for
+                                                   this id */
+                    const ctag *tag2;
+                    const char *sep2 = ": ";
+                    for (tag2 = tag1; tag2; tag2 = tag2->next_in_file) {
+                        DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
                             "%s%d",
-                            tag2 == tag1 ? ": " : ", ",
+                            sep2,
                             tag2->tag_no_in_file);
-                    fprintf(f->parent->html_file->index_f,
-                        "          <li><span class=\"tag\">"
+                        sep2 = ", ";
+                        fprintf(f->parent->index_f,
+                            "          <li><span class=\"tag\">"
+                            "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
+                            f->html_file->name,
+                            tag2->id,
+                            tag2->tag_no_in_file,
+                            tag2->id);
+                        /* tag select, see vim(1) help for details */
+                        send_ex(ex_fd,
+                            "ts %s\n"
+                            "%d",
+                            tag2->id,
+                            tag2->tag_no_in_file);
+                        send_ex(ex_fd,
+                            "s:^:(@a name=\"%s-%d\"@)(@/a@):",
+                            tag2->id, tag2->tag_no_in_file); /* change */
+                    } /* for */
+                } else { /* only one tag for this id. */
+                    fprintf(f->parent->index_f,
+                        "            <li><span class=\"tag\">"
                         "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
                         f->html_file->name,
-                        tag2->id,
-                        tag2->tag_no_in_file,
-                        tag2->id);
-                    /* tag select, see vim(1) help for details */
-                    send_ex(ex_fd,
-                        "ts %s\n"
-                        "%d",
-                        tag2->id,
-                        tag2->tag_no_in_file);
-                    send_ex(ex_fd,
-                        "s:^:(@a name=\"%s-%d\"@)(@/a@):",
-                        tag2->id, tag2->tag_no_in_file); /* change */
-                } /* for */
-            } else { /* only one tag for this id. */
-                fprintf(f->parent->html_file->index_f,
-                    "            <li><span class=\"tag\">"
-                    "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
-                    f->html_file->name,
-                    tag1->id,
-                    tag1->tag_no_in_file,
-                    tag1->id);
-                send_ex(ex_fd, "ta %s", tag1->id); /* goto tag, only one
-                                                    * tag in this file */
-                send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):",
-                    tag1->id, tag1->tag_no_in_file); /* change */
-            } /* if */
-        } /* for */
-        DEB_TAIL(FLAG_DEBUG_PROCESS_FILE, ".\n"); /* end list of tags */
-        fprintf(f->parent->html_file->index_f,
-                "        </ul>\n");
-    } /* if */
-    DEB(FLAG_DEBUG_PROCESS_FILE,
-            "terminate "EX_PATH" editing session and write on parent [%s]\n",
+                        tag1->id,
+                        tag1->tag_no_in_file,
+                        tag1->id);
+                    send_ex(ex_fd, "ta %s", tag1->id); /* goto tag, only one
+                                                        * tag in this file */
+                    send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):",
+                        tag1->id, tag1->tag_no_in_file); /* change */
+                } /* if */
+            } /* for */
+            DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
+                    ".\n"); /* end list of tags */
+            fprintf(f->parent->index_f,
+                    "        </ul>\n");
+        } /* if */
+        DEB(FLAG_DEBUG_PROCESS_FILE,
+            "terminate "EX_PATH" editing session and "
+            "write on parent [%s]\n",
             f->parent->html_file->full_name);
-    fprintf(f->parent->html_file->index_f, "      </li>\n");
-    send_ex(ex_fd, "w! %s", f->full_name); /* write file */
-    send_ex(ex_fd, "q!"); /* and terminate */
+        fprintf(f->parent->index_f, "      </li>\n");
+        send_ex(ex_fd, "w! %s", f->full_name); /* write file */
+        send_ex(ex_fd, "q!"); /* and terminate */
+        pclose(ex_fd);
+        break;
+
+    case TYPE_MENU:
+        FILE *f_menu = html_create(f);
+        /* LCU: Mon Oct 14 14:05:31 EEST 2024
+         * TODO Continue here. */
+        html_close(f);
+        break;
+    } /* switch (f->type) */
 
     if (flags & FLAG_PROGRESS) {    /* print progress */
         static int i=0;
@@ -344,14 +380,13 @@ int process_file(const node *f, void *clsr)
         if (i >= n_files) fprintf(stderr, "\n");
     } /* block */
 
-    pclose(ex_fd);
     DEB(FLAG_DEBUG_PROCESS_FILE,
-            "scanning file %s -> %s\n",
-            f->full_name, f->html_file->full_name);
-    scanfile(f);
+        "scanning file %s -> %s\n",
+        f->full_name, f->html_file->full_name);
+    //scanfile(f);
     DEB(FLAG_DEBUG_PROCESS_FILE,
-            "end [%s]\n",
-            f->full_name);
+        "end [%s]\n",
+        f->full_name);
 
     return 0;
 } /* process_file */
@@ -466,12 +501,9 @@ int main (int argc, char **argv)
     style_node = new_node(style_file, db_root_node, TYPE_HTML);
     js_node = new_node(js_file, db_root_node, TYPE_HTML);
 
-    /* Process files */
 
     /* this process constructs the file node hierarchy of source file pages */
     process1(tag_file);
-
-    D(fflush(stdout));
 
     D(do_recur(db_root_node,
         process_dir_pre,

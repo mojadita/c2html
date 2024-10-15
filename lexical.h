@@ -7,6 +7,8 @@
 #ifndef _LEXICAL_H
 #define _LEXICAL_H
 
+#include "menu.h"
+
 void scanfile(const node *);
 void create_menu(tag_menu *m);
 void newline(int do_reset);

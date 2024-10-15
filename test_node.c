@@ -75,16 +75,17 @@ int main (int argc, char **argv)
                 : NULL,
             TYPE_DIR);
     } /* for */
-    name2node(nodes[0], "style.css", TYPE_FILE)->flags |= NODE_FLAG_DONT_RECUR_INFILE;
-    name2node(nodes[0], "javascript.js", TYPE_FILE)->flags |= NODE_FLAG_DONT_RECUR_INFILE;
-    name2node(nodes[0], "prueba.c", TYPE_FILE);
+
+    name2node(nodes[0], "style.css", TYPE_SOURCE)->flags |= NODE_FLAG_DONT_RECUR_INFILE;
+    name2node(nodes[0], "javascript.js", TYPE_SOURCE)->flags |= NODE_FLAG_DONT_RECUR_INFILE;
+    name2node(nodes[0], "prueba.c", TYPE_SOURCE);
     name2node(nodes[0], "home/eluscoo/profile", TYPE_HTML);
-    name2node(nodes[0], "home/eluscoo/prueba.c", TYPE_FILE);
-    name2node(nodes[0], "home/eluscoo/prueba.h", TYPE_FILE);
-    name2node(nodes[0], "home/eluscoo/prueba.h", TYPE_FILE);
+    name2node(nodes[0], "home/eluscoo/prueba.c", TYPE_SOURCE);
+    name2node(nodes[0], "home/eluscoo/prueba.h", TYPE_SOURCE);
+    name2node(nodes[0], "home/eluscoo/prueba.h", TYPE_SOURCE);
     name2node(nodes[0], "home/eluscoo/a/b", TYPE_DIR);
     name2node(nodes[0], "home/eluscoo/a/b/h", TYPE_DIR);
-    name2node(nodes[0], "home/eluscoo/profile/pepe", TYPE_FILE);
+    name2node(nodes[0], "home/eluscoo/profile/pepe", TYPE_SOURCE);
     res = name2node(nodes[0], "home/eluscoo/pepe/../fich_1.html", TYPE_HTML);
     do_recur(nodes[0], f, f, f);
     printf(PR("rel_path(%s, %s) -> %s\n"), res->full_name, res->full_name,

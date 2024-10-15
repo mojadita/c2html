@@ -28,8 +28,9 @@
 #ifndef _HTML_OUTPUT_H
 #define _HTML_OUTPUT_H
 
-#include "db.h"
-#include "c2html.h"
+#include <stdio.h>
+
+#include "node.h"
 
 /* prototypes */
 FILE *html_create(const node *n);
