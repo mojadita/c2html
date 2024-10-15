@@ -25,8 +25,8 @@
 /* Do not include anything BEFORE the line below, as it would not be
  * protected against double inclusion from other files
  */
-#ifndef C2HTML_H
-#define C2HTML_H
+#ifndef _C2HTML_H
+#define _C2HTML_H
 
 #include "configure.h"
 #include "node.h"
@@ -77,7 +77,7 @@ extern node         *js_node;
 
 /* functions */
 
-#endif /* C2HTML_H */
+#endif /* _C2HTML_H */
 /* Do not include anything AFTER the line above, as it would not be
  * protected against double inclusion from other files.  */
 /* $Id: c2html.h,v 0.18 2014/09/09 20:22:05 luis Exp $ */

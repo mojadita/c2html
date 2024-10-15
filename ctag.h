@@ -6,9 +6,10 @@
 #ifndef _CTAG_H
 #define _CTAG_H
 
+typedef struct ctag_s ctag;
+
 #include "node.h"
 
-typedef struct ctag_s ctag;
 
 struct ctag_s {
     const char     *id;             /* tag identifier */

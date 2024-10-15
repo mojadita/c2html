@@ -8,9 +8,8 @@
 /* Do not include anything BEFORE the line below, as it would not be
  * protected against double inclusion from other files
  */
-#ifndef DEBUG_H
-#define DEBUG_H
-
+#ifndef _DEBUG_H
+#define _DEBUG_H
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -83,4 +82,4 @@ extern int flags;
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
-#endif /* DEBUG_H */
+#endif /* _DEBUG_H */

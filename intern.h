@@ -22,17 +22,16 @@
 /* Do not include anything BEFORE the line below, as it would not be
  * protected against double inclusion from other files
  */
-#ifndef INTERN_H
-#define INTERN_H
+#ifndef _INTERN_H
+#define _INTERN_H
 
 #include <stdio.h>
-#include <avl.h>
 
 /* prototypes */
 const char *intern(const char *s);
 int print_string(FILE *o, const char *s);
 
-#endif /* INTERN_H */
+#endif /* _INTERN_H */
 /* Do not include anything AFTER the line above, as it would not be
  * protected against double inclusion from other files.
  */

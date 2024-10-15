@@ -43,6 +43,8 @@
 #include "node.h"
 #include "c2html.h"
 
+#include "html_output.h"
+
 /* constants */
 static const char FILE_TYPE_UNKNOWN[] = "&lt;&lt;FILE TYPE UNKNOWN&gt;&gt;";
 
@@ -75,7 +77,7 @@ void fprintf_html(FILE *f, const char *fmt, ...)
 } /* fprintf_html */
 
 
-int path_print(FILE *f, node *p)
+int path_print(FILE *f, const node *p)
 {
     int i;
     int res = 0;
@@ -106,6 +108,133 @@ int path_print(FILE *f, node *p)
     return res;
 } /* path_print */
 
+int
+html_generate_ref(
+        FILE *o,            /* where to write the reference in */
+        const char *ident,  /* the reference name to write. */
+        const node *fin)    /* file in which the reference is found */
+{
+    int res = 0;
+
+    tag_menu *men = avl_tree_get(db_menus, ident);
+    if (men) { /* there is an entry in menus database */
+        DEB(FLAG_DEBUG_PROCESS_IDENT,
+            "\"%s\" found!!! check if ntags > 1\n",
+            men->id);
+        if (men->ntags > 1) { /* multiple entry in database */
+
+            char *rp;
+            rp = rel_path(fin->html_file, men->nod->html_file);
+
+            DEB(FLAG_DEBUG_PROCESS_IDENT,
+                "<a href=\"%s\">%s</a>\n",
+                rp, men->id);
+
+            fprintf(o,
+                "<a href=\"%s\">%s</a>",
+                rp, men->id);
+
+        } else { /* single entry */
+
+            char *rp;
+            ctag *tag = men->last_tag;
+
+            DEB(FLAG_DEBUG_PROCESS_IDENT,
+                "menu %s:single menu entry "
+                "ctag=<%s,%s,%s>\n",
+                men->id, tag->id,
+                tag->fi, tag->ss);
+
+            assert(tag); /* ctag * */
+            assert(tag->nod); /* node * */
+            assert(tag->nod->html_file); /* node * */
+
+            rp = rel_path(fin->html_file, tag->nod->html_file);
+            DEB(FLAG_DEBUG_PROCESS_IDENT,
+                "menu %s: writing <a href=\"%s#%s-%d\">%s</a>\n",
+                tag->id,
+                rp, tag->id, tag->tag_no_in_file, tag->id);
+            fprintf(o, "<a href=\"%s#%s-%d\">%s</a>",
+                rp, tag->id, tag->tag_no_in_file, tag->id);
+        } /* if */
+    } else { /* no entry found, print it plain */
+        DEB(FLAG_DEBUG_PROCESS_IDENT,
+            "%s not found, print plain.\n", ident);
+        fprintf(o, "%s", ident);
+    } /* if */
+    return res;
+} /* html_generate_ref */
+
+void create_menu(tag_menu *m)
+{
+    assert(m != NULL && m->nod != NULL);
+
+    DEB(FLAG_DEBUG_CREATE_MENU,
+        "begin: menu=\"%s\"\n", m->id);
+
+    FILE *outf = html_create(m->nod);
+    fprintf(outf, "      <ul>\n");
+
+    DEB(FLAG_DEBUG_CREATE_MENU,
+        "MEN: name=\"%s\", ntags=%d\n",
+        m->id, m->ntags);
+
+    /* follow the list of files for this id */
+    for (AVL_ITERATOR i = avl_tree_first(m->group_by_file);
+            i;
+            i = avl_iterator_next(i))
+    {
+        ctag *t1 = avl_iterator_data(i);
+
+        assert(t1 != NULL && t1->nod != NULL && t1->nod->full_name != NULL);
+
+        DEB(FLAG_DEBUG_CREATE_MENU,
+            "MENU: %s\n", (const char *)avl_iterator_key(i));
+
+        DEB(FLAG_DEBUG_CREATE_MENU,
+            "step: file = %s\n",
+            t1->nod->full_name);
+
+        fprintf(outf,
+            "        <li class=\"menu file\">File "
+            "<span class=\"file\">%s</span>.\n"
+            "          <ul>\n",
+            t1->nod->full_name);
+
+        for(ctag *t2 = t1; t2; t2 = t2->next_in_file) {
+            char *rp = rel_path(m->nod->html_file, t2->nod->html_file);
+
+            DEB(FLAG_DEBUG_CREATE_MENU,
+                "substep: ctag[%p] = <%s,%s,%p>, next=[%p]\n",
+                t2, t2->id, t2->nod->full_name, t2->ss, t2->next_in_file);
+
+            DEB(FLAG_DEBUG_CREATE_MENU,
+                "substep: <a href=\"%s#%s-%d\">%s(%d)</a>\n",
+                rp,
+                t2->id, t2->tag_no_in_file,
+                t2->id, t2->tag_no_in_file);
+
+            fprintf(outf,
+                "            <li class=\"menu tag\">"
+                "<a href=\"%s#%s-%d\">%s(%d)</a></li>\n",
+                rp,
+                t2->id, t2->tag_no_in_file,
+                t2->id, t2->tag_no_in_file);
+        } /* for */
+
+        fprintf(outf,
+            "          </ul></li><!-- File %s -->\n",
+            t1->nod->full_name);
+
+        DEB(FLAG_DEBUG_CREATE_MENU,
+            "step: end\n");
+    } /* for */
+
+    fprintf(outf, "      </ul>\n");
+
+    html_close(m->nod);
+} /* create_menu */
+
 FILE *
 html_create(node *n)
 {
@@ -122,9 +251,11 @@ html_create(node *n)
     const char *typ;
 
     switch(n->type) {
-    case TYPE_DIR:    typ = "Directory"; break;
-    case TYPE_SOURCE: typ = "File";      break;
-    case TYPE_HTML:   typ = "MENU";      break;
+    case TYPE_DIR:    typ = "Directory";       break;
+    case TYPE_SOURCE: typ = "File";            break;
+    case TYPE_MENU:   typ = "MENU";            break;
+    case TYPE_HTML:   typ = "HTML";            break;
+    default:          typ = FILE_TYPE_UNKNOWN; break;
     } /* switch */
 
     fprintf(f,
@@ -181,9 +312,11 @@ void html_close(node *n)
     FILE *f = n->index_f;
 
     switch(n->type) {
-    case TYPE_DIR:  typ = "Directory"; break;
-    case TYPE_SOURCE: typ = "File";      break;
-    case TYPE_HTML: typ = "TAG";       break;
+    case TYPE_DIR:    typ = "Directory";       break;
+    case TYPE_SOURCE: typ = "File";            break;
+    case TYPE_MENU:   typ = "TAG";             break;
+    case TYPE_HTML:   typ = "HTML";            break;
+    default:          typ = FILE_TYPE_UNKNOWN; break;
     } /* switch */
 
 

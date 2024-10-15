@@ -21,7 +21,6 @@
  *     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-
 /* Do not include anything BEFORE the line below, as it would not be
  * protected against double inclusion from other files
  */
@@ -33,10 +32,20 @@
 #include "node.h"
 
 /* prototypes */
-FILE *html_create(const node *n);
-void html_close(const node *n);
+FILE *html_create(node *n);
+void html_close(node *n);
 
 void fprintf_html(FILE *f, const char *fmt, ...);
+void create_menu(tag_menu *m);
+
+/* this function generates a reference from an identifier to its source,
+ * depending on the number of tags that the identifier has.  In case of
+ * only one reference, a direct reference to the definition is made.
+ * In case of several, a reference to a menu file is made. */
+int html_generate_ref(
+        FILE *o,            /* where to write the reference in */
+        const char *ident,  /* the reference name to write. */
+        const node *fin);         /* file in which the reference is found */
 
 #endif /* _HTML_OUTPUT_H */
 /* Do not include anything AFTER the line above, as it would not be

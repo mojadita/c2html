@@ -30,6 +30,7 @@ static char *type2string[] = {
     "TYPE_DIR",
     "TYPE_SOURCE",
     "TYPE_HTML",
+    "TYPE_MENU",
 };
 
 node *
@@ -67,6 +68,8 @@ new_node(
         : 1;
     res->subnodes = NULL;
     res->index_f  = NULL;
+    res->menu     = NULL;
+
     DEB(FLAG_DEBUG_NODES,
         "[%s][%s]: malloc() -> %p\n",
         parent
@@ -116,31 +119,46 @@ new_node(
     /* if directory, create the subnodes avltree */
     switch (res->type) {
     case TYPE_DIR:
+        DEB(FLAG_DEBUG_NODES,
+            "'%s': create subnodes map\n",
+            res->full_name);
         res->subnodes = new_avl_tree(
                 (AVL_FCOMP) strcmp,
                 NULL, NULL,
                 (AVL_FPRNT) fputs);
-        /* a directory will have an index.html file inside */
-        assert(res->html_file = new_node("index.html", res, TYPE_HTML));
-        /* don't add it to the subnodes of the parent */
+        /* a directory will have an index.html file inside.
+         * This file is not linked to the parent, so it will not be
+         * added to the directory tree. */
+        res->html_file = new_node(
+                "index.html",
+                res,
+                TYPE_HTML);
         break;
-    case TYPE_SOURCE:
+
+    case TYPE_SOURCE: case TYPE_MENU:
+        /* add an '.html' file for process_file to work properly */
         char buffer[BUFFER_SIZE];
-        snprintf(buffer, sizeof buffer, "%s.html", res->full_name);
-        assert(res->html_file = new_node(buffer, res, TYPE_HTML));
-        /* FALLTHROUGH */
-    default: 
-        /* add to parent directory */
-        if (parent && parent->subnodes) {
-            avl_tree_put(parent->subnodes, res->name, res);
-            DEB(FLAG_DEBUG_NODES,
-                "added to parent '%s'\n",
-                res->parent->full_name);
-        } /* if */
-    }
-    DEB(FLAG_DEBUG_NODES,
-        "res->full_name = '%s'(%p)\n",
-        res->full_name, res->full_name);
+        snprintf(buffer, sizeof buffer,
+                "%s.html", res->name);
+        /* a source will have an source.html file in html_file fiel.
+         * This file is not linked to the parent, so it will not be
+         * added to the directory tree either. */
+        res->html_file = new_node(
+                intern(buffer),
+                res->parent,
+                TYPE_HTML);
+        break;
+    } /* switch */
+
+    /* add to parent directory if feasible */
+    if (parent && parent->type == TYPE_DIR) {
+        assert(parent->subnodes != NULL);
+        avl_tree_put(parent->subnodes, res->name, res);
+
+        DEB(FLAG_DEBUG_NODES,
+            "'%s: added to parent '%s'\n",
+            res->full_name, res->parent->full_name);
+    } /* if */
 
     DEB(FLAG_DEBUG_NODES,
         "'%s'(%p): end\n",
@@ -347,7 +365,7 @@ do_recur(
             } /* for */
         } /* if */
         break;
-    case TYPE_SOURCE: case TYPE_HTML:
+    case TYPE_SOURCE: case TYPE_MENU:
         if (!(nod->flags & NODE_FLAG_DONT_RECUR_INFILE)
                 && fil)
         {
@@ -398,6 +416,7 @@ void fprint_node(FILE *f, const node *n)
     P(html_file, "%p");
     P(subnodes, "%p");
     P(index_f, "%p");
+    P(menu, "%p");
 #undef P
 }
 

@@ -24,14 +24,15 @@
 #include <avl.h>
 
 #include "configure.h"
+#include "node.h"
+#include "ctag.h"
+#include "menu.h"
 #include "debug.h"
 #include "intern.h"
-#include "node.h"
-#include "menu.h"
-#include "ctag.h"
-#include "c2html.h"
 #include "html_output.h"
 #include "lexical.h"
+
+#include "c2html.h"
 
 /* constants */
 
@@ -160,16 +161,17 @@ static void
 write_entry_on_parent(node *entry,
         const char *label)
 {
-    if (entry->parent) {
+    node *parent = entry->parent;
+    if (parent) {
         char *rp = rel_path(
-            entry->parent->html_file,
+            parent->html_file,
             entry->html_file);
         DEB(FLAG_DEBUG_PROCESS_DIR,
             "Writing an entry '%s' in parent "
             "html file '%s' for %s '%s'\n",
-            rp, entry->parent->html_file->full_name,
+            rp, parent->html_file->full_name,
             label, entry->name);
-        fprintf(entry->parent->index_f,
+        fprintf(parent->index_f,
             "      <li><span class=\"dir\">"
             "<a href=\"%s\">%s</a> %s."
             "</span></li>\n",
@@ -177,6 +179,7 @@ write_entry_on_parent(node *entry,
     } /* if */
 } /* write_entry_on_parent */
 
+/* process a TYPE_DIR node (before processing files) */
 static int
 process_dir_pre(
         node *dir,
@@ -188,6 +191,7 @@ process_dir_pre(
         dir->full_name);
 
     int res = mkdir(dir->full_name, 0777);
+
     if (res < 0 && (errno != EEXIST)) {
         ERR(EXIT_FAILURE, "error: MKDIR: %s: %s(errno=%d)\n",
             dir->full_name, strerror(errno), errno);
@@ -208,12 +212,13 @@ process_dir_pre(
     return 0;
 } /* process_dir_pre */
 
+/* process a TYPE_DIR node (after processing files) */
 static int
 process_dir_post(
         node *dir,
         void *clsr)
 {
-    FILE *h = dir->index_f;;
+    FILE *h = dir->index_f;
 
     DEB(FLAG_DEBUG_PROCESS_DIR,
         "Cleaning and closing html file '%s'\n",
@@ -226,164 +231,190 @@ process_dir_post(
     return 0;
 } /* process_dir_post */
 
+/* process a TYPE_SOURCE file.
+ * this does:
+ * 1) running ex on source file to generate <a> tags in (@a@) form.
+ * 2) scan the file generated to generate the HTML files to be produced.
+ */
+void process_source(node *f, void *clsr)
+{
+    DEB(FLAG_DEBUG_PROCESS_FILE,
+        "launching an instance of "EX_PATH"\n");
+
+    write_entry_on_parent(f, "file");
+
+    FILE *ex_fd = popen(EX_PATH, "w");
+    /* send_ex(ex_fd, "set notagstack"); */
+    send_ex(ex_fd, "e! %s", f->full_name); /* edit original file */
+
+    DEB(FLAG_DEBUG_PROCESS_FILE,
+        "begin "EX_PATH" editing session on file %s\n",
+        f->full_name);
+
+    /* for every tag in this file */
+    DEB(FLAG_DEBUG_PROCESS_FILE,
+        "for every tag in file [%s]\n",
+        f->full_name);
+    int ntags = avl_tree_size(f->subnodes);
+    DEB(FLAG_DEBUG_PROCESS_FILE,
+        "it has %d tags:\n", ntags);
+
+    if (ntags) {
+        AVL_ITERATOR it;
+
+        DEB(FLAG_DEBUG_PROCESS_FILE,
+            "begin list of tags: ");
+
+        fprintf(f->parent->index_f,
+                "        <ul>\n");
+
+        const char *sep = "";
+        for (   it = avl_tree_first(f->subnodes);
+                it;
+                it = avl_iterator_next(it))
+        {
+            const ctag *tag1;
+
+            tag1 = avl_iterator_data(it);
+            if (!tag1) {
+                ERR(EXIT_FAILURE,
+                    "cannot get a tag iterator data, "
+                    "this shouldn't happen\n");
+                /* NOTREACHED */
+            }
+
+            DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
+                "%s[%s]", sep, tag1->id);
+            sep = ", ";
+
+            /* LCU: Mon Oct 14 15:12:43 EEST 2024
+             * TODO menus have to be generated even if list has only
+             * one tag. (for now this will be ok) */
+            /* the first tag in the list contains the total number
+             * of tag in this list */
+            if (tag1->tag_no_in_file > 1) { /* several tags for
+                                               this id */
+                const ctag *tag2;
+                const char *sep2 = ": ";
+                for (tag2 = tag1; tag2; tag2 = tag2->next_in_file) {
+                    DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
+                        "%s%d",
+                        sep2,
+                        tag2->tag_no_in_file);
+                    sep2 = ", ";
+                    fprintf(f->parent->index_f,
+                        "          <li><span class=\"tag\">"
+                        "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
+                        f->html_file->name,
+                        tag2->id,
+                        tag2->tag_no_in_file,
+                        tag2->id);
+                    /* tag select, see vim(1) help for details */
+                    send_ex(ex_fd,
+                        "ts %s\n"
+                        "%d",
+                        tag2->id,
+                        tag2->tag_no_in_file);
+                    send_ex(ex_fd,
+                        "s:^:(@a name=\"%s-%d\"@)(@/a@):",
+                        tag2->id, tag2->tag_no_in_file); /* change */
+                } /* for */
+            } else { /* only one tag for this id. */
+                fprintf(f->parent->index_f,
+                    "            <li><span class=\"tag\">"
+                    "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
+                    f->html_file->name,
+                    tag1->id,
+                    tag1->tag_no_in_file,
+                    tag1->id);
+                send_ex(ex_fd, "ta %s", tag1->id); /* goto tag, only one
+                                                    * tag in this file */
+                send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):",
+                    tag1->id, tag1->tag_no_in_file); /* change */
+            } /* if */
+        } /* for */
+        DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
+                ".\n"); /* end list of tags */
+        fprintf(f->parent->index_f,
+                "        </ul>\n");
+    } /* if */
+    DEB(FLAG_DEBUG_PROCESS_FILE,
+        "terminate "EX_PATH" editing session and "
+        "write on parent [%s]\n",
+        f->parent->html_file->full_name);
+    fprintf(f->parent->index_f, "      </li>\n");
+    send_ex(ex_fd, "w! %s", f->full_name); /* write file */
+    send_ex(ex_fd, "q!"); /* and terminate */
+    pclose(ex_fd);
+
+    DEB(FLAG_DEBUG_PROCESS_FILE,
+        "scanning file %s -> %s\n",
+        f->full_name, f->html_file->full_name);
+    scanfile(f);
+
+} /* process_source */
+
+/* process a FILE_MENU node, this should generate all the tag lists
+ * to allow browsing of tags. */
+void
+process_menu(node *f, void *clsr)
+{
+    write_entry_on_parent(f, "symbol");
+    create_menu(f->menu);
+} /* process_menu */
+
+/* outputs progress to stderr. */
+void output_progress(node *f, void *clsr)
+{
+    static int i=0;
+    static char *progress[] = { "\\", "|", "/", "-" };
+    static long acum;
+    static int percent = 0;
+    static int n_files = 0;
+
+    if (!n_files) {
+        n_files = avl_tree_size(files_db) +
+            avl_tree_size(db_menus);
+    }
+
+    if (!i++) acum = n_files >> 1;
+
+    acum += 100000;
+    if (acum >= n_files) {
+        percent += acum / n_files;
+        acum %= n_files;
+    } /* if */
+
+    fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s \033[K",
+        progress[i % NELEM(progress)], i, n_files, percent / 1000,
+        percent % 1000, f->full_name);
+    if (i >= n_files)
+        fprintf(stderr, "\n");
+} /* output_progress */
+
+/* file processing routine.  Just calls the proper routine, outputs progress
+ * and logs */
 static int
 process_file(
         node *f,
         void *clsr)
 {
-    int ntags;
 
     DEB(FLAG_DEBUG_PROCESS_FILE,
         "START: file=%s\n",
         f->full_name);
 
     switch(f->type) {
-    case TYPE_SOURCE:
-        DEB(FLAG_DEBUG_PROCESS_FILE,
-            "launching an instance of "EX_PATH"\n");
-
-        write_entry_on_parent(f, "file");
-
-        FILE *ex_fd = popen(EX_PATH, "w");
-        /* send_ex(ex_fd, "set notagstack"); */
-        send_ex(ex_fd, "e! %s", f->full_name); /* edit original file */
-
-        DEB(FLAG_DEBUG_PROCESS_FILE,
-            "begin "EX_PATH" editing session on file %s\n",
-            f->full_name);
-
-        /* for every tag in this file */
-        DEB(FLAG_DEBUG_PROCESS_FILE,
-            "for every tag in file [%s]\n",
-            f->full_name);
-        D(ntags = avl_tree_size(f->subnodes));
-        DEB(FLAG_DEBUG_PROCESS_FILE,
-            "it has %d tags:\n", ntags);
-
-        if (ntags) {
-            AVL_ITERATOR it;
-
-            DEB(FLAG_DEBUG_PROCESS_FILE,
-                "begin list of tags: ");
-
-            fprintf(f->parent->index_f,
-                    "        <ul>\n");
-
-            const char *sep = "";
-            for (   it = avl_tree_first(f->subnodes);
-                    it;
-                    it = avl_iterator_next(it))
-            {
-                const ctag *tag1;
-
-                tag1 = avl_iterator_data(it);
-                if (!tag1) {
-                    ERR(EXIT_FAILURE,
-                        "cannot get a tag iterator data, "
-                        "this shouldn't happen\n");
-                    /* NOTREACHED */
-                }
-
-                DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
-                    "%s[%s]", sep, tag1->id);
-                sep = ", ";
-
-                /* LCU: Mon Oct 14 15:12:43 EEST 2024
-                 * TODO menus have to be generated even if list has only
-                 * one tag. (for now this will be ok) */
-                /* the first tag in the list contains the total number
-                 * of tag in this list */
-                if (tag1->tag_no_in_file > 1) { /* several tags for
-                                                   this id */
-                    const ctag *tag2;
-                    const char *sep2 = ": ";
-                    for (tag2 = tag1; tag2; tag2 = tag2->next_in_file) {
-                        DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
-                            "%s%d",
-                            sep2,
-                            tag2->tag_no_in_file);
-                        sep2 = ", ";
-                        fprintf(f->parent->index_f,
-                            "          <li><span class=\"tag\">"
-                            "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
-                            f->html_file->name,
-                            tag2->id,
-                            tag2->tag_no_in_file,
-                            tag2->id);
-                        /* tag select, see vim(1) help for details */
-                        send_ex(ex_fd,
-                            "ts %s\n"
-                            "%d",
-                            tag2->id,
-                            tag2->tag_no_in_file);
-                        send_ex(ex_fd,
-                            "s:^:(@a name=\"%s-%d\"@)(@/a@):",
-                            tag2->id, tag2->tag_no_in_file); /* change */
-                    } /* for */
-                } else { /* only one tag for this id. */
-                    fprintf(f->parent->index_f,
-                        "            <li><span class=\"tag\">"
-                        "<a href=\"%s#%s-%d\">%s</a></span></li>\n",
-                        f->html_file->name,
-                        tag1->id,
-                        tag1->tag_no_in_file,
-                        tag1->id);
-                    send_ex(ex_fd, "ta %s", tag1->id); /* goto tag, only one
-                                                        * tag in this file */
-                    send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):",
-                        tag1->id, tag1->tag_no_in_file); /* change */
-                } /* if */
-            } /* for */
-            DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
-                    ".\n"); /* end list of tags */
-            fprintf(f->parent->index_f,
-                    "        </ul>\n");
-        } /* if */
-        DEB(FLAG_DEBUG_PROCESS_FILE,
-            "terminate "EX_PATH" editing session and "
-            "write on parent [%s]\n",
-            f->parent->html_file->full_name);
-        fprintf(f->parent->index_f, "      </li>\n");
-        send_ex(ex_fd, "w! %s", f->full_name); /* write file */
-        send_ex(ex_fd, "q!"); /* and terminate */
-        pclose(ex_fd);
-        break;
-
-    case TYPE_MENU:
-        FILE *f_menu = html_create(f);
-        /* LCU: Mon Oct 14 14:05:31 EEST 2024
-         * TODO Continue here. */
-        html_close(f);
-        break;
+    case TYPE_SOURCE: process_source(f, clsr); break;
+    case TYPE_MENU:   process_menu(f, clsr);   break;
+    /* default: nothing to do in TYPE_HTML files, and we are not
+     * called for TYPE_DIR nodes */
     } /* switch (f->type) */
 
-    if (flags & FLAG_PROGRESS) {    /* print progress */
-        static int i=0;
-        static char *progress[] = { "\\", "|", "/", "-" };
-        static long acum;
-        static int percent = 0;
-        static int n_files = 0;
+    if (flags & FLAG_PROGRESS) { /* print progress */
+        output_progress(f, clsr);
+    }
 
-        if (!n_files)
-            n_files = avl_tree_size(files_db);
-
-        if (!i++) acum = n_files >> 1;
-
-        acum += 100000;
-        if (acum >= n_files) {
-            percent += acum / n_files;
-            acum %= n_files;
-        } /* if */
-        fprintf(stderr, "\r%s (%d/%d -- %3d.%03d%%) %s \033[K",
-            progress[i % NELEM(progress)], i, n_files, percent / 1000,
-            percent % 1000, f->full_name);
-        if (i >= n_files) fprintf(stderr, "\n");
-    } /* block */
-
-    DEB(FLAG_DEBUG_PROCESS_FILE,
-        "scanning file %s -> %s\n",
-        f->full_name, f->html_file->full_name);
-    //scanfile(f);
     DEB(FLAG_DEBUG_PROCESS_FILE,
         "end [%s]\n",
         f->full_name);
@@ -498,12 +529,14 @@ int main (int argc, char **argv)
             strerror(errno));
         /* NOTREACHED */
     }
-    style_node = new_node(style_file, db_root_node, TYPE_HTML);
-    js_node = new_node(js_file, db_root_node, TYPE_HTML);
+    style_node = new_node(style_file, NULL, TYPE_HTML);
+    js_node = new_node(js_file, NULL, TYPE_HTML);
 
 
     /* this process constructs the file node hierarchy of source file pages */
     process1(tag_file);
+
+    //print_menus();
 
     D(do_recur(db_root_node,
         process_dir_pre,

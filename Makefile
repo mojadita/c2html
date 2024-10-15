@@ -3,63 +3,64 @@
 # Date: Thu Oct 10 13:00:54 EEST 2024
 # Copyright: (c) 2024 Luis Colorado.  All rights reserved.
 
-targets       = c2html
-manpages      = c2html.1.gz
-toclean       = $(targets) $(manpages)
+targets            = c2html
+manpages           = c2html.1.gz
+toclean            = $(targets) $(manpages)
 
-GZFLAGS      ?= -v
+GZFLAGS           ?= -v
 
-PACKAGE       = c2html
-PACKAGE_URL  ?= https://github.com/mojadita/c2html.git
-PROGNAME     ?= c2html
-AUTHOR_NAME  ?= Luis Colorado
-AUTHOR_EMAIL ?= luiscoloradourcola@gmail.com
-DEFAULT_FLAGS ?= (FLAG_DEBUG_ALWAYS | FLAG_PROGRESS)
+PACKAGE            = c2html
+PACKAGE_URL       ?= https://github.com/mojadita/c2html.git
+PROGNAME          ?= c2html
+AUTHOR_NAME       ?= Luis Colorado
+AUTHOR_EMAIL      ?= luiscoloradourcola@gmail.com
+DEFAULT_FLAGS     ?= (FLAG_DEBUG_ALWAYS | FLAG_PROGRESS)
+DEFAULT_MENU_BASE ?= 00-Index
 
-VERSION      ?= 2.14-2022.05.27
-RM           ?= rm -f
-EX_PATH      ?= /usr/bin/ex
+VERSION           ?= 2.14-2022.05.27
+RM                ?= rm -f
+EX_PATH           ?= /usr/bin/ex
 
-prefix       ?= /usr/local
-exec_prefix  ?= $(prefix)
-bindir       ?= $(exec_prefix)/bin
-libdir       ?= $(exec_prefix)/lib
-includedir   ?= $(prefix)/include
-datadir      ?= $(libdir)/$(PACKAGE)
-datarootdir  ?= $(prefix)/share
-mandir       ?= $(datarootdir)/man
-man1dir      ?= $(mandir)/man1
-man2dir      ?= $(mandir)/man2
-man3dir      ?= $(mandir)/man3
-man4dir      ?= $(mandir)/man4
-man5dir      ?= $(mandir)/man5
-man6dir      ?= $(mandir)/man6
-man7dir      ?= $(mandir)/man7
-man8dir      ?= $(mandir)/man8
-man9dir      ?= $(mandir)/man9
-infodir      ?= $(datarootdir)/info
-docdir       ?= $(datarootdir)/doc/$(PACKAGE)
-confdir      ?= $(exec_prefix)/etc
+prefix            ?= /usr/local
+exec_prefix       ?= $(prefix)
+bindir            ?= $(exec_prefix)/bin
+libdir            ?= $(exec_prefix)/lib
+includedir        ?= $(prefix)/include
+datadir           ?= $(libdir)/$(PACKAGE)
+datarootdir       ?= $(prefix)/share
+mandir            ?= $(datarootdir)/man
+man1dir           ?= $(mandir)/man1
+man2dir           ?= $(mandir)/man2
+man3dir           ?= $(mandir)/man3
+man4dir           ?= $(mandir)/man4
+man5dir           ?= $(mandir)/man5
+man6dir           ?= $(mandir)/man6
+man7dir           ?= $(mandir)/man7
+man8dir           ?= $(mandir)/man8
+man9dir           ?= $(mandir)/man9
+infodir           ?= $(datarootdir)/info
+docdir            ?= $(datarootdir)/doc/$(PACKAGE)
+confdir           ?= $(exec_prefix)/etc
 
 .SUFFIXES: .h.in .c.in
 
-OWN          ?= root
-GRP          ?= wheel
-XMOD         ?= 0111
-FMOD         ?= 0444
+OWN               ?= root
+GRP               ?= wheel
+XMOD              ?= 0111
+FMOD              ?= 0444
 
 
-c2html_deps   =
-c2html_objs   = c2html.o \
-			    ctag.o \
-			    html_output.o \
-			    intern.o \
-			    lexical.o \
-			    menu.o \
-			    node.o
-c2html_ldfl   = 
-c2html_libs   = -lavl
-toclean      += $(c2html_objs) lexical.c
+c2html_deps        =
+c2html_objs        = c2html.o \
+     			     ctag.o \
+     			     html_output.o \
+     			     intern.o \
+     			     lexical.o \
+     			     menu.o \
+     			     node.o
+c2html_ldfl        = 
+c2html_libs        = -lavl
+toclean           += $(c2html_objs) lexical.c
 
 all: $(targets) $(manpages)
 clean:
@@ -104,6 +105,7 @@ define DO_SED
 		-e 's:@AUTHOR_EMAIL@:$(AUTHOR_EMAIL):g' \
 		-e 's:@VERSION@:$(VERSION):g' \
 		-e 's:@EX_PATH@:$(EX_PATH):g' \
+		-e 's:@DEFAULT_MENU_BASE@:$(DEFAULT_MENU_BASE):g' \
 		$< > $@
 endef
 

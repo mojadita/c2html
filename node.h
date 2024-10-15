@@ -9,14 +9,9 @@
 #include <stdio.h> /* for FILE */
 #include <avl.h>
 
-/* if modify something to this type, do it also in
- * node.c, definition of type2string string table. */
-typedef enum node_type_e {
-    TYPE_DIR,       /* used for directories */
-    TYPE_SOURCE,    /* used for normal files */
-    TYPE_HTML,      /* used for the HTML files associated */
-    TYPE_MENU,      /* used for menu files */
-} node_type;
+typedef struct node_s node;
+
+#include "menu.h"
 
 #define NODE_FLAG_NONE                  0x00000000
 #define NODE_FLAG_DONT_RECUR_PREORDER   0x00000001
@@ -24,11 +19,17 @@ typedef enum node_type_e {
 #define NODE_FLAG_DONT_RECUR_INFILE     0x00000004
 #define NODE_FLAG_ALL                   0x00000007
 
-extern int n_dir;
-extern int n_file;
-extern int n_html;
+/* if modify something to this type, do it also in
+ * node.c, definition of type2string string table. */
+typedef enum node_type_e node_type;
 
-typedef struct node_s node;
+enum node_type_e {
+    TYPE_DIR,       /* used for directories */
+    TYPE_SOURCE,    /* used for normal files */
+    TYPE_HTML,      /* used for the HTML files associated */
+    TYPE_MENU,      /* used for menu files */
+};
+
 
 struct node_s {
     node_type    type;       /* type of this node. */
@@ -36,7 +37,7 @@ struct node_s {
     node        *parent;     /* parent node of this. */
     int          flags;      /* flags, see above. */
     int          level;      /* level of this node, root node is at level 1 */
-    node       **path;       /* path from the root */
+    node       **path;       /* path from the root (array of parent pointers) */
     const char  *full_name;  /* full path name */
     const char  *orig_name;  /* original filename */
     node        *html_file;  /* html assoc. file. valid for files and
@@ -45,7 +46,13 @@ struct node_s {
                               * will depend on the type of this node. */
     FILE        *index_f;    /* FILE descriptor for associated file (e.g.
                               * for completing th associated html file) */
+    tag_menu    *menu;       /* if this node is the node of a menu, point
+                              * to it */
 };
+
+extern int n_dir;
+extern int n_file;
+extern int n_html;
 
 node *
 new_node(
