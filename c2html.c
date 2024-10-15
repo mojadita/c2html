@@ -44,8 +44,10 @@ int flags              = DEFAULT_FLAGS;
 const char *tag_file   = DEFAULT_TAG_FILE;
 const char *output     = DEFAULT_OUTPUT;
 const char *base_dir   = DEFAULT_BASE_DIR;
+
 const char *style_file = DEFAULT_STYLE_FILE;
 node *style_node       = NULL;
+
 const char *js_file    = DEFAULT_JS_FILE;
 node *js_node          = NULL;
 node *db_root_node     = NULL;
@@ -529,9 +531,8 @@ int main (int argc, char **argv)
             strerror(errno));
         /* NOTREACHED */
     }
-    style_node = new_node(style_file, NULL, TYPE_HTML);
-    js_node = new_node(js_file, NULL, TYPE_HTML);
-
+    style_node = new_node(style_css, db_root_node, TYPE_HTML);
+    js_node    = new_node(js_file,   db_root_node, TYPE_HTML);
 
     /* this process constructs the file node hierarchy of source file pages */
     process1(tag_file);

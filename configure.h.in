@@ -36,4 +36,13 @@
 #define docdir            "@docdir@"
 #define confdir           "@confdir@"
 
+#define style_css         "@style_css@"
+#define holes_png         "@holes_png@"
+#define bgtile_png        "@bgtile_png@"
+#define background_png    "@background_png@"
+
+
+
+
+
 #endif /* _CONFIGURE_H */

@@ -19,6 +19,7 @@ DEFAULT_MENU_BASE ?= 00-Index
 
 VERSION           ?= 2.14-2022.05.27
 RM                ?= rm -f
+INSTALL           ?= install
 EX_PATH           ?= /usr/bin/ex
 
 prefix            ?= /usr/local
@@ -27,6 +28,12 @@ bindir            ?= $(exec_prefix)/bin
 libdir            ?= $(exec_prefix)/lib
 includedir        ?= $(prefix)/include
 datadir           ?= $(libdir)/$(PACKAGE)
+
+style_css         ?= style.css
+holes_png         ?= holes.png
+bgtile_png        ?= bgtile.png
+background_png    ?= background.png
+
 datarootdir       ?= $(prefix)/share
 mandir            ?= $(datarootdir)/man
 man1dir           ?= $(mandir)/man1
@@ -45,9 +52,10 @@ confdir           ?= $(exec_prefix)/etc
 .SUFFIXES: .h.in .c.in
 
 OWN               ?= root
-GRP               ?= wheel
-XMOD              ?= 0111
-FMOD              ?= 0444
+GRP               ?= bin
+XMOD              ?= 0711
+FMOD              ?= 0644
+DMOD              ?= 0755
 
 
 c2html_deps        =
@@ -66,6 +74,11 @@ all: $(targets) $(manpages)
 clean:
 	$(RM) $(toclean)
 install: $(all)
+	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(DMOD) -d $(bindir)
+	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(DMOD) -d $(datadir)
+	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) \
+		style.css holes.png bgtile.png background.png $(datadir)
+	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(XMOD) c2html $(bindir)
 
 c2html: $(c2html_deps) $(c2html_objs)
 	$(CC) $(LDFLAGS) $($@_ldfl) $($@_objs) $($@_libs) -o $@
@@ -106,6 +119,10 @@ define DO_SED
 		-e 's:@VERSION@:$(VERSION):g' \
 		-e 's:@EX_PATH@:$(EX_PATH):g' \
 		-e 's:@DEFAULT_MENU_BASE@:$(DEFAULT_MENU_BASE):g' \
+		-e 's:@style_css@:$(style_css):g' \
+		-e 's:@holes_png@:$(holes_png):g' \
+		-e 's:@bgtile_png@:$(bgtile_png):g' \
+		-e 's:@background_png@:$(background_png):g' \
 		$< > $@
 endef
 
