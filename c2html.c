@@ -142,7 +142,8 @@ process1(const char *tags_filename)
 
 } /* process1 */
 
-int send_ex(FILE *ex, const char *fmt, ...)
+static void
+send_ex(FILE *ex, const char *fmt, ...)
 {
     va_list p;
 
@@ -411,6 +412,7 @@ process_file(
     switch(f->type) {
     case TYPE_SOURCE: process_source(f, clsr); break;
     case TYPE_MENU:   process_menu(f, clsr);   break;
+    default:                                   break;
     /* default: nothing to do in TYPE_HTML files, and we are not
      * called for TYPE_DIR nodes */
     } /* switch (f->type) */

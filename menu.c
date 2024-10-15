@@ -21,7 +21,6 @@
 
 AVL_TREE db_menus = NULL;
 char *default_menu_name = DEFAULT_MENU_BASE;
-static node *menus_dir = NULL;
 
 tag_menu *
 lookup_menu(

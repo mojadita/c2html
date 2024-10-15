@@ -293,9 +293,7 @@ while                   {   fprintf(OUTPUT, "<span class=\"resvword\">%s</span>"
 /* functions */
 
 static void process_identifier(const char *s, const node *fin, FILE *o)
-{   /* identifier */
-    tag_menu *men;
-
+{
     DEB(FLAG_DEBUG_PROCESS_IDENT,
         "identifier processing(%s): begin\n", s);
 
@@ -326,10 +324,9 @@ void scanfile (node *fin)
 {
     FILE *INPUT;
     YY_BUFFER_STATE bs;
-    char buffer[64];
     const node *fout;
 
-    assert(fout = fin->html_file);
+    fout = fin->html_file;
 
     DEB(FLAG_DEBUG_SCANFILE,
         "Generating [%s-->%s]\n",

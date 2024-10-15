@@ -58,7 +58,13 @@ new_node(
     }
 
     /* not found, create it */
-    assert(res = malloc(sizeof (node))); /* get memory */
+    res = malloc(sizeof (node)); /* get memory */
+    if (!res) {
+        ERR(EXIT_FAILURE,
+            "malloc: %s\n",
+            strerror(errno));
+    }
+
     res->name     = name;
     res->parent   = parent;
     res->type     = typ;
@@ -83,9 +89,9 @@ new_node(
     {   node *p = res;
         int i;
 
-        assert(res->path = calloc(
-                    res->level + 1,
-                    sizeof (node *)));
+        res->path = calloc(
+            res->level + 1,
+            sizeof *res->path);
         DEB(FLAG_DEBUG_NODES,
             "construct res->path = %p\n",
             res->path);
@@ -148,6 +154,7 @@ new_node(
                 res->parent,
                 TYPE_HTML);
         break;
+    default: break; /* nothing to do */
     } /* switch */
 
     /* add to parent directory if feasible */
@@ -349,7 +356,7 @@ do_recur(
             if ((res = pre(nod, clos)) != 0)
                 return res;
         }
-    /* else nothing */
+    default: break; /* nothing to do */
     } /* switch */
     switch(nod->type) {
     case TYPE_DIR:
@@ -378,7 +385,7 @@ do_recur(
                 return res;
             }
         }
-    /* else nothing */
+    default: break; /* nothing to do */
     } /* switch */
     switch(nod->type) {
     case TYPE_DIR:
@@ -391,7 +398,7 @@ do_recur(
             if ((res = pos(nod, clos)) != 0) return res;
         }
         break;
-    /* else nothing */
+    default: break; /* nothing to do */
     } /* switch */
 
     DEB(FLAG_DEBUG_NODES,
