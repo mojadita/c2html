@@ -174,7 +174,7 @@ create_menu(tag_menu *m)
         "begin: menu=\"%s\"\n", m->id);
 
     FILE *outf = html_create(m->nod);
-    fprintf(outf, "      <ul>\n");
+    fprintf(outf, "      <ul class=\"file-list\">\n");
 
     DEB(FLAG_DEBUG_CREATE_MENU,
         "MEN: name=\"%s\", ntags=%d\n",
@@ -199,7 +199,7 @@ create_menu(tag_menu *m)
         fprintf(outf,
             "        <li class=\"file\">File "
             "<span class=\"file\">%s</span>.\n"
-            "          <ul>\n",
+            "          <ul class=\"sym-list\">\n",
             t1->nod->full_name);
 
         for(ctag *t2 = t1; t2; t2 = t2->next_in_file) {

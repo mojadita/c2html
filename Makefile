@@ -79,6 +79,7 @@ install: $(all)
 	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) \
 		style.css holes.png bgtile.png background.png $(datadir)
 	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(XMOD) c2html $(bindir)
+	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) c2html.1.gz $(man1dir)
 
 c2html: $(c2html_deps) $(c2html_objs)
 	$(CC) $(LDFLAGS) $($@_ldfl) $($@_objs) $($@_libs) -o $@

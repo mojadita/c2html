@@ -20,7 +20,7 @@ and C source code.
 .Sh SYNOPSIS
 .\" The general command line
 .Nm
-.Op Fl hnp
+.Op Fl hnpT
 .Op Fl b Ar basedir
 .Op Fl d Op Ar 12acDdfIilMmnsx
 .Op Fl j Ar javascript_file_name
@@ -138,6 +138,17 @@ Allows to specify a
 .Ar style_file_name .
 By default it uses
 .Cm style.css .
+.It Fl T
+Avoids erasing the
+.Cm .c
+files that are generated as temporary files.
+These files have tags encoded as
+.Ds -literal
+(@a name="tag-name" @)(@/a@)
+.De
+.Pp
+in front of lines that define a symbol.  
+These files are not needed, once the source file has been scanned.
 .It Fl t
 Allows to specify a
 .Ar tags_file_name ,
