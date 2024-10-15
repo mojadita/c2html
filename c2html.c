@@ -161,7 +161,8 @@ int send_ex(FILE *ex, const char *fmt, ...)
 
 static void
 write_entry_on_parent(node *entry,
-        const char *label)
+        const char *label,
+        const char *cl)
 {
     node *parent = entry->parent;
     if (parent) {
@@ -174,9 +175,10 @@ write_entry_on_parent(node *entry,
             rp, parent->html_file->full_name,
             label, entry->name);
         fprintf(parent->index_f,
-            "      <li><span class=\"dir\">"
+            "      <li><span class=\"%s\">"
             "<a href=\"%s\">%s</a> %s."
             "</span></li>\n",
+            cl,
             rp, entry->name, label);
     } /* if */
 } /* write_entry_on_parent */
@@ -199,7 +201,7 @@ process_dir_pre(
             dir->full_name, strerror(errno), errno);
     } /* if */
 
-    write_entry_on_parent(dir, "directory");
+    write_entry_on_parent(dir, "directory", "dir");
 
     DEB(FLAG_DEBUG_PROCESS_DIR,
         "creating html file [%s] "
@@ -243,7 +245,7 @@ void process_source(node *f, void *clsr)
     DEB(FLAG_DEBUG_PROCESS_FILE,
         "launching an instance of "EX_PATH"\n");
 
-    write_entry_on_parent(f, "file");
+    write_entry_on_parent(f, "file", "file");
 
     FILE *ex_fd = popen(EX_PATH, "w");
     /* send_ex(ex_fd, "set notagstack"); */
@@ -361,7 +363,7 @@ void process_source(node *f, void *clsr)
 void
 process_menu(node *f, void *clsr)
 {
-    write_entry_on_parent(f, "symbol");
+    write_entry_on_parent(f, "symbol", "sym");
     create_menu(f->menu);
 } /* process_menu */
 

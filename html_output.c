@@ -165,7 +165,8 @@ html_generate_ref(
     return res;
 } /* html_generate_ref */
 
-void create_menu(tag_menu *m)
+void
+create_menu(tag_menu *m)
 {
     assert(m != NULL && m->nod != NULL);
 
@@ -196,7 +197,7 @@ void create_menu(tag_menu *m)
             t1->nod->full_name);
 
         fprintf(outf,
-            "        <li class=\"menu file\">File "
+            "        <li class=\"file\">File "
             "<span class=\"file\">%s</span>.\n"
             "          <ul>\n",
             t1->nod->full_name);
@@ -215,7 +216,7 @@ void create_menu(tag_menu *m)
                 t2->id, t2->tag_no_in_file);
 
             fprintf(outf,
-                "            <li class=\"menu tag\">"
+                "            <li class=\"tag\">"
                 "<a href=\"%s#%s-%d\">%s(%d)</a></li>\n",
                 rp,
                 t2->id, t2->tag_no_in_file,
