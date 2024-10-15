@@ -425,7 +425,7 @@ process_file(
 } /* process_file */
 
 /* print help message */
-void do_usage (void)
+void do_usage (int code)
 {
     fprintf(stderr,
 "Usage: " PROGNAME " [ options ... ]\n"
@@ -475,7 +475,7 @@ void do_usage (void)
 "  -s   Style file (default " DEFAULT_STYLE_FILE ")\n"
 "  -t <tag_file>  The tag file to be used (default: '" DEFAULT_TAG_FILE "')\n"
         );
-
+    exit(code);
 } /* do_usage */
 
 /* main program */
@@ -486,41 +486,41 @@ int main (int argc, char **argv)
     extern char *optarg;
     int opt;
 
-    while ((opt = getopt(argc, argv, "b:d:hj:m:no:prs:t:")) != EOF) {
+    while ((opt = getopt(argc, argv, "b:d:hj:m:no:prs:Tt:")) != EOF) {
         switch(opt) {
-        case 'b': base_dir = optarg; break;
+        case 'b': base_dir = optarg;                     break;
         case 'd': { char *p; /* debug */
                 for (p = optarg; *p; p++) {
                     switch(*p) {
-                    case '1': flags |= FLAG_DEBUG_PROCESS1; break;
-                    case '2': flags |= FLAG_DEBUG_PROCESS2; break;
-                    case 'a': flags |= FLAG_DEBUG_ALL; break;
-                    case 'c': flags |= FLAG_DEBUG_CTAGS; break;
-                    case 'D': flags |= FLAG_DEBUG_DB; break;
-                    case 'd': flags |= FLAG_DEBUG_PROCESS_DIR; break;
-                    case 'f': flags |= FLAG_DEBUG_PROCESS_FILE; break;
-                    case 'I': flags |= FLAG_DEBUG_INTERN; break;
+                    case '1': flags |= FLAG_DEBUG_PROCESS1;      break;
+                    case '2': flags |= FLAG_DEBUG_PROCESS2;      break;
+                    case 'a': flags |= FLAG_DEBUG_ALL;           break;
+                    case 'c': flags |= FLAG_DEBUG_CTAGS;         break;
+                    case 'D': flags |= FLAG_DEBUG_DB;            break;
+                    case 'd': flags |= FLAG_DEBUG_PROCESS_DIR;   break;
+                    case 'f': flags |= FLAG_DEBUG_PROCESS_FILE;  break;
+                    case 'I': flags |= FLAG_DEBUG_INTERN;        break;
                     case 'i': flags |= FLAG_DEBUG_PROCESS_IDENT; break;
-                    case 'l': flags |= FLAG_DEBUG_LEX; break;
-                    case 'M': flags |= FLAG_DEBUG_CREATE_MENU; break;
-                    case 'm': flags |= FLAG_DEBUG_PROCESS_MENU; break;
-                    case 'n': flags |= FLAG_DEBUG_NODES; break;
-                    case 's': flags |= FLAG_DEBUG_SCANFILE; break;
-                    case 'x': flags |= FLAG_DEBUG_EX; break;
+                    case 'l': flags |= FLAG_DEBUG_LEX;           break;
+                    case 'M': flags |= FLAG_DEBUG_CREATE_MENU;   break;
+                    case 'm': flags |= FLAG_DEBUG_PROCESS_MENU;  break;
+                    case 'n': flags |= FLAG_DEBUG_NODES;         break;
+                    case 's': flags |= FLAG_DEBUG_SCANFILE;      break;
+                    case 'x': flags |= FLAG_DEBUG_EX;            break;
                     } /* switch */
                 } /* for */
             } /* block */
             break;
-        case 'h': do_usage(); exit(EXIT_SUCCESS);
-        case 'j': js_file = optarg; break;
-        case 'm': default_menu_name = optarg; break;
-        case 'n': flags |= FLAG_LINENUMBERS; break;
-        case 'o': output = optarg; break;
-        case 'p': flags |= FLAG_PROGRESS; break;
-        case 's': style_file = optarg; break;
-        case 't': tag_file = optarg; break;
-        default:
-            do_usage(); exit(EXIT_FAILURE);
+        case 'h': do_usage(EXIT_SUCCESS);                break;
+        case 'j': js_file = optarg;                      break;
+        case 'm': default_menu_name = optarg;            break;
+        case 'n': flags |= FLAG_LINENUMBERS;             break;
+        case 'o': output = optarg;                       break;
+        case 'p': flags |= FLAG_PROGRESS;                break;
+        case 's': style_file = optarg;                   break;
+        case 't': tag_file = optarg;                     break;
+        case 'T': flags |= FLAG_DONT_DELETE_TEMPORARIES; break;
+        default: do_usage(EXIT_FAILURE);                 break;
         } /* switch */
     } /* while */
 

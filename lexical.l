@@ -366,4 +366,7 @@ void scanfile (node *fin)
     fclose (INPUT);
     html_close(fin);
     yy_delete_buffer(bs);
+    if (!(flags & FLAG_DONT_DELETE_TEMPORARIES)) {
+        unlink(fin->full_name);
+    }
 } /* scanfile */
