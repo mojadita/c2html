@@ -17,7 +17,7 @@ AUTHOR_EMAIL      ?= luiscoloradourcola@gmail.com
 DEFAULT_FLAGS     ?= (FLAG_DEBUG_ALWAYS | FLAG_PROGRESS)
 DEFAULT_MENU_BASE ?= 00-Index
 
-VERSION           ?= 2.14-2022.05.27
+VERSION           ?= 3.0-2024.10.16
 RM                ?= rm -f
 INSTALL           ?= install
 EX_PATH           ?= /usr/bin/ex

@@ -291,14 +291,17 @@ html_create(node *n)
 "    <script src=\"%s\"></script>\n"
 "  </head>\n"
 "  <body>\n"
-"    <div class=\"title\">%s ",
+"    <div class=\"main\">\n"
+"      <div class=\"header\"><div class=\"title\">%s ",
         rel_path(n->html_file, js_node),
         typ);
 
     path_print(f, n);
 
-    fprintf(f, "</div>\n"
-"    <hr/>\n"
+    fprintf(f,"</div> <!-- title -->\n"
+"        <hr/>\n"
+"      </div> <!-- header -->\n"
+"      <div class=\"middle\">\n"
         );
     return f;
 } /* create_html */
@@ -322,17 +325,21 @@ void html_close(node *n)
 
 
     fprintf(f,
-"    <hr/>\n"
-"    <div class=\"title\">%s ",
+"      </div> <!-- middle -->\n"
+"      <div class=\"footer\">\n"
+"        <hr/>\n"
+"        <div class=\"title\">%s ",
         typ);
 
     path_print(f, n);
 
-    fprintf(f, "</div>\n"
-"    <p><a href=\""PACKAGE_URL "\">"
-        PROGNAME" "VERSION "</a>: Copyright (C) 1999-2014 "
-        "<a href=\"mailto:" AUTHOR_EMAIL "?subject=c2html\">"
-        AUTHOR_NAME " &lt;" AUTHOR_EMAIL "&gt;</a>\n"
+    fprintf(f, "</div> <!-- title -->\n"
+"        <div class=\"credits\"><a href=\"" PACKAGE_URL
+"\">" PROGNAME " " VERSION "</a>: Copyright (C) 1999-2024"
+" <a href=\"mailto:" AUTHOR_EMAIL "?subject=" PACKAGE
+"\">" AUTHOR_NAME " &lt;" AUTHOR_EMAIL "&gt;</div>\n"
+"      </div> <!-- footer -->\n"
+"   </div> <!-- main -->\n"
 "  </body>\n"
 "</html>\n"
 "<!-- %s -->\n",
