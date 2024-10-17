@@ -369,13 +369,14 @@ process_menu(node *f, void *clsr)
 } /* process_menu */
 
 /* outputs progress to stderr. */
-void output_progress(node *f, void *clsr)
+void
+output_progress(node *f, void *clsr)
 {
-    static int i=0;
+    static int   i          = 0;
     static char *progress[] = { "\\", "|", "/", "-" };
-    static long acum;
-    static int percent = 0;
-    static int n_files = 0;
+    static int   percent    = 0;
+    static int   n_files    = 0;
+    static long  acum;
 
     if (!n_files) {
         n_files = avl_tree_size(files_db) +
@@ -412,9 +413,8 @@ process_file(
     switch(f->type) {
     case TYPE_SOURCE: process_source(f, clsr); break;
     case TYPE_MENU:   process_menu(f, clsr);   break;
-    default:                                   break;
-    /* default: nothing to do in TYPE_HTML files, and we are not
-     * called for TYPE_DIR nodes */
+    case TYPE_DIR:    /* nothing */            break;
+    case TYPE_HTML:   /* nothihg */            break;
     } /* switch (f->type) */
 
     if (flags & FLAG_PROGRESS) { /* print progress */

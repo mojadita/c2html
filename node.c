@@ -141,7 +141,7 @@ new_node(
                 TYPE_HTML);
         break;
 
-    case TYPE_SOURCE: case TYPE_MENU:
+    case TYPE_SOURCE: case TYPE_MENU: {
         /* add an '.html' file for process_file to work properly */
         char buffer[BUFFER_SIZE];
         snprintf(buffer, sizeof buffer,
@@ -153,8 +153,9 @@ new_node(
                 intern(buffer),
                 res->parent,
                 TYPE_HTML);
+        } /* block */
         break;
-    default: break; /* nothing to do */
+    case TYPE_HTML: break;
     } /* switch */
 
     /* add to parent directory if feasible */
@@ -342,7 +343,6 @@ do_recur(
         INDENT, "",
         type2string[nod->type],
         nod->full_name);
-
     switch(nod->type) {
     case TYPE_DIR:
         if (!(nod->flags & NODE_FLAG_DONT_RECUR_PREORDER)

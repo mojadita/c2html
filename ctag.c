@@ -44,9 +44,9 @@ lookup_ctag(
         DEB(FLAG_DEBUG_CTAGS,
             " initializing db_ctag database\n");
         db_ctag = new_avl_tree(
-				(AVL_FCOMP) ctag_cmp,
+                (AVL_FCOMP) ctag_cmp,
                 NULL, NULL,
-				(AVL_FPRNT) print_ctag_key);
+                (AVL_FPRNT) print_ctag_key);
         if (!db_ctag) {
             ERR(EXIT_FAILURE,
                 " db_ctag: %s\n", strerror(errno));
@@ -73,7 +73,7 @@ lookup_ctag(
             /* NOTREACHED */
         }
 
-		/* init ctags node */
+        /* init ctags node */
         *res = key;
 
         /* get the node this tag belongs to */

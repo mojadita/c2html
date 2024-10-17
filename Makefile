@@ -20,7 +20,7 @@ DEFAULT_MENU_BASE ?= 00-Index
 VERSION           ?= 3.0-2024.10.16
 RM                ?= rm -f
 INSTALL           ?= install
-EX_PATH           ?= /usr/bin/ex
+EX_PATH           ?= /usr/local/bin/vim -e
 
 prefix            ?= /usr/local
 exec_prefix       ?= $(prefix)
@@ -49,7 +49,7 @@ infodir           ?= $(datarootdir)/info
 docdir            ?= $(datarootdir)/doc/$(PACKAGE)
 confdir           ?= $(exec_prefix)/etc
 
-.SUFFIXES: .h.in .c.in
+.SUFFIXES: .1.in .1 .h.in .h
 
 OWN               ?= root
 GRP               ?= bin
@@ -67,12 +67,14 @@ c2html_objs        = c2html.o \
      			     menu.o \
      			     node.o
 c2html_ldfl        = 
-c2html_libs        = -lavl
+c2html_libs        = -lavl_c
 toclean           += $(c2html_objs) lexical.c
 
 all: $(targets) $(manpages)
 clean:
 	$(RM) $(toclean)
+distclean: clean
+	$(RM) configure.h
 install: $(all)
 	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(DMOD) -d $(bindir)
 	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(DMOD) -d $(datadir)
@@ -84,13 +86,10 @@ install: $(all)
 c2html: $(c2html_deps) $(c2html_objs)
 	$(CC) $(LDFLAGS) $($@_ldfl) $($@_objs) $($@_libs) -o $@
 
-%:%.in
-	$(DO_SED)
-configure.h:configure.h.in Makefile
-	$(DO_SED)
+c2html.1: c2html.1.in Makefile
+configure.h: configure.h.in Makefile
 
-define DO_SED
-	sed \
+DO_SED=sed \
 		-e 's:@bindir@:$(bindir):g' \
 		-e 's:@confdir@:$(confdir):g' \
 		-e 's:@datadir@:$(datadir):g' \
@@ -125,9 +124,11 @@ define DO_SED
 		-e 's:@bgtile_png@:$(bgtile_png):g' \
 		-e 's:@background_png@:$(background_png):g' \
 		$< > $@
-endef
 
-include .depend
+.h.in.h:
+	$(DO_SED)
+.1.in.1:
+	$(DO_SED)
 
 c2html.1.gz: c2html.1
 	gzip $(GZFLAGS) < $? > $@
