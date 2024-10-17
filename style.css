@@ -85,8 +85,8 @@ body {
 }
 
 div#right>ul {
-	-moz-column-count: 3;
-	-webkit-column-count: 3;
+	/* -moz-column-count: 3;
+	-webkit-column-count: 3; */
     padding: 1cm;
 	column-count: 3;
 }

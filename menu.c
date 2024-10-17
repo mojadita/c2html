@@ -111,6 +111,7 @@ void fprint_menu(FILE *f, const tag_menu *m)
     P(nod->full_name, "%s");
     P(first_tag, "%p");
     P(last_tag, "%p");
+#undef P
 } /* fprint_menu */
 
 void print_menus(void)
