@@ -84,7 +84,7 @@ lookup_menu(
         res->nod = name2node(root, intern(buffer), TYPE_MENU); /* nod */
         res->nod->menu = res; /* reference to each other */
         DEB(FLAG_DEBUG_PROCESS_MENU,
-            "'%s': nod = '%s'(%p)",
+            "'%s': nod = '%s'(%p)\n",
             id, res->nod->full_name, res->nod);
         res->last_tag = NULL;
         avl_tree_put(db_menus, id, res);

@@ -98,7 +98,7 @@ lookup_ctag(
         res->next_in_file = avl_tree_get(nod->subnodes, id);
         res->tag_no_in_file = res->next_in_file
             ? res->next_in_file->tag_no_in_file + 1
-            : 0;
+            : 1;
         avl_tree_put(nod->subnodes, id, res);
 
         men = lookup_menu(res->id, root);

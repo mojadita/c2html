@@ -20,7 +20,7 @@ DEFAULT_MENU_BASE ?= 00-Index
 VERSION           ?= 3.1-2024.10.16
 RM                ?= rm -f
 INSTALL           ?= install
-EX_PATH           ?= /usr/local/bin/vim -e
+EX_PATH           ?= /usr/vim -e
 
 prefix            ?= /usr/local
 exec_prefix       ?= $(prefix)
@@ -67,7 +67,7 @@ c2html_objs        = c2html.o \
      			     menu.o \
      			     node.o
 c2html_ldfl        = 
-c2html_libs        = -lavl_c
+c2html_libs        = -lavl
 toclean           += $(c2html_objs) lexical.c
 
 all: $(targets) $(manpages)

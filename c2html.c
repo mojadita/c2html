@@ -243,7 +243,7 @@ process_dir_post(
 void process_source(node *f, void *clsr)
 {
     DEB(FLAG_DEBUG_PROCESS_FILE,
-        "launching an instance of "EX_PATH"\n");
+        "launching an instance of " EX_PATH "\n");
 
     write_entry_on_parent(f, "file", "file");
 
@@ -260,6 +260,7 @@ void process_source(node *f, void *clsr)
         "for every tag in file [%s]\n",
         f->full_name);
     int ntags = avl_tree_size(f->subnodes);
+
     DEB(FLAG_DEBUG_PROCESS_FILE,
         "it has %d tags:\n", ntags);
 
@@ -296,7 +297,7 @@ void process_source(node *f, void *clsr)
              * one tag. (for now this will be ok) */
             /* the first tag in the list contains the total number
              * of tag in this list */
-            if (tag1->tag_no_in_file > 1) { /* several tags for
+            if (tag1->tag_no_in_file > 0) { /* several tags for
                                                this id */
                 const ctag *tag2;
                 const char *sep2 = ": ";
@@ -315,14 +316,14 @@ void process_source(node *f, void *clsr)
                         tag2->id);
                     /* tag select, see vim(1) help for details */
                     send_ex(ex_fd,
-                        "ts %s\n"
-                        "%d",
-                        tag2->id,
-                        tag2->tag_no_in_file);
+                        "%d ta %s\n",
+                        tag2->tag_no_in_file,
+                        tag2->id);
                     send_ex(ex_fd,
                         "s:^:(@a name=\"%s-%d\"@)(@/a@):",
                         tag2->id, tag2->tag_no_in_file); /* change */
                 } /* for */
+#if 0
             } else { /* only one tag for this id. */
                 fprintf(f->parent->index_f,
                     "            <li><span class=\"tag\">"
@@ -335,6 +336,7 @@ void process_source(node *f, void *clsr)
                                                     * tag in this file */
                 send_ex(ex_fd, "s:^:(@a name=\"%s-%d\"@)(@/a@):",
                     tag1->id, tag1->tag_no_in_file); /* change */
+#endif
             } /* if */
         } /* for */
         DEB_TAIL(FLAG_DEBUG_PROCESS_FILE,
