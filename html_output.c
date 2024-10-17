@@ -302,6 +302,7 @@ html_create(node *n)
 "        <hr/>\n"
 "      </div> <!-- header -->\n"
 "      <div class=\"middle\">\n"
+"        <div id=\"left\"></div><div id=\"right\">\n"
         );
     return f;
 } /* create_html */
@@ -325,6 +326,7 @@ void html_close(node *n)
 
 
     fprintf(f,
+"        </div> <!-- right -->\n"
 "      </div> <!-- middle -->\n"
 "      <div class=\"footer\">\n"
 "        <hr/>\n"

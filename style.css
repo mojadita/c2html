@@ -15,18 +15,21 @@
 .number {
 	color: red;
 }
+
 .todo,.fixme,.argsused,.xxx {
 	background: yellow;
 	color: red;
 }
 
-#listing {
+.middle {
 	display: inline-flex;
 	background: url(bgtile.png);
 	padding-top: 1cm;
 	padding-bottom: 1cm;
 	padding-left: 3cm;
 	padding-right: 3cm;
+    width: -webkit-fill-available; /* A4 */
+    
 }
 
 #left {
@@ -38,7 +41,7 @@
 	border-bottom-left-radius: 4px;
 }
 
-#right {
+#right,div#right>ul {
 	margin: 0;
 	/* font-family: courier; */
 	background: url(background.png);
@@ -59,7 +62,7 @@ body {
 	font-family: helvetica;
 }
 .title {
-	font-size: 140%;
+	font-size: 141%;
 }
 
 .linenum {
@@ -68,19 +71,23 @@ body {
 	padding-left: 1ex;
 	padding-right: 1ex;
 }
+
 .directive {
 	color: purple;
 }
+
 .standardinclude {
 	color: #080;
 }
+
 .nonstandardinclude {
 	color: #840;
 }
 
-#file-list,#sym-list {
+div#right>ul {
 	-moz-column-count: 3;
 	-webkit-column-count: 3;
+    padding: 1cm;
 	column-count: 3;
 }
 

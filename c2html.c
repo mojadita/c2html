@@ -116,6 +116,9 @@ process1(const char *tags_filename)
         } /* if */
 
         /* if we got here, we do have a correct tag entry */
+        tag_id = intern(tag_id);
+        filename = intern(filename);
+        ss       = intern(ss);
 
         DEB(FLAG_DEBUG_PROCESS1,
             "%s:%ld: tag_id='%s', file='%s', search='%s'\n",
@@ -123,11 +126,7 @@ process1(const char *tags_filename)
             tag_id, filename, ss);
 
         /* first, find the ctag entry. */
-        tag = lookup_ctag(
-                tag_id   = intern(tag_id),
-                filename = intern(filename),
-                ss       = intern(ss),
-                db_root_node);
+        tag = lookup_ctag(tag_id, filename, ss, db_root_node);
 
         tag->nod->orig_name = filename;
 
@@ -135,9 +134,7 @@ process1(const char *tags_filename)
 
     } /* while ... */
 
-    DEB(FLAG_DEBUG_PROCESS1,
-        "closing tagsfile '%s'\n",
-        tags_filename);
+    DEB(FLAG_DEBUG_PROCESS1, "closing tagsfile '%s'\n", tags_filename);
     fclose(tagsfile);
 
 } /* process1 */
@@ -153,10 +150,12 @@ send_ex(FILE *ex, const char *fmt, ...)
     va_end(p);
 
     char *s;
-    for (s = strtok(command, "\n"); s; s = strtok(NULL, "\n")) {
+    for (   s = strtok(command, "\n");
+            s; s = strtok(NULL, "\n"))
+    {
         DEB(FLAG_DEBUG_EX,
-            "sending command: [%s]\n", s);
-        fputs(s, ex); fputc('\n', ex);
+            "sending command: %s\n", s);
+        fprintf(ex, "%s\n", s);
     }
 } /* send_ex */
 
@@ -492,38 +491,38 @@ int main (int argc, char **argv)
 
     while ((opt = getopt(argc, argv, "b:d:hj:m:no:prs:Tt:")) != EOF) {
         switch(opt) {
-        case 'b': base_dir = optarg;                     break;
+        case 'b': base_dir = intern(optarg);                     break;
         case 'd': { char *p; /* debug */
                 for (p = optarg; *p; p++) {
                     switch(*p) {
-                    case '1': flags |= FLAG_DEBUG_PROCESS1;      break;
-                    case '2': flags |= FLAG_DEBUG_PROCESS2;      break;
-                    case 'a': flags |= FLAG_DEBUG_ALL;           break;
-                    case 'c': flags |= FLAG_DEBUG_CTAGS;         break;
-                    case 'D': flags |= FLAG_DEBUG_DB;            break;
-                    case 'd': flags |= FLAG_DEBUG_PROCESS_DIR;   break;
-                    case 'f': flags |= FLAG_DEBUG_PROCESS_FILE;  break;
-                    case 'I': flags |= FLAG_DEBUG_INTERN;        break;
-                    case 'i': flags |= FLAG_DEBUG_PROCESS_IDENT; break;
-                    case 'l': flags |= FLAG_DEBUG_LEX;           break;
-                    case 'M': flags |= FLAG_DEBUG_CREATE_MENU;   break;
-                    case 'm': flags |= FLAG_DEBUG_PROCESS_MENU;  break;
-                    case 'n': flags |= FLAG_DEBUG_NODES;         break;
-                    case 's': flags |= FLAG_DEBUG_SCANFILE;      break;
-                    case 'x': flags |= FLAG_DEBUG_EX;            break;
+                    case '1': flags ^= FLAG_DEBUG_PROCESS1;      break;
+                    case '2': flags ^= FLAG_DEBUG_PROCESS2;      break;
+                    case 'a': flags ^= FLAG_DEBUG_ALL;           break;
+                    case 'c': flags ^= FLAG_DEBUG_CTAGS;         break;
+                    case 'D': flags ^= FLAG_DEBUG_DB;            break;
+                    case 'd': flags ^= FLAG_DEBUG_PROCESS_DIR;   break;
+                    case 'f': flags ^= FLAG_DEBUG_PROCESS_FILE;  break;
+                    case 'I': flags ^= FLAG_DEBUG_INTERN;        break;
+                    case 'i': flags ^= FLAG_DEBUG_PROCESS_IDENT; break;
+                    case 'l': flags ^= FLAG_DEBUG_LEX;           break;
+                    case 'M': flags ^= FLAG_DEBUG_CREATE_MENU;   break;
+                    case 'm': flags ^= FLAG_DEBUG_PROCESS_MENU;  break;
+                    case 'n': flags ^= FLAG_DEBUG_NODES;         break;
+                    case 's': flags ^= FLAG_DEBUG_SCANFILE;      break;
+                    case 'x': flags ^= FLAG_DEBUG_EX;            break;
                     } /* switch */
                 } /* for */
             } /* block */
             break;
         case 'h': do_usage(EXIT_SUCCESS);                break;
-        case 'j': js_file = optarg;                      break;
+        case 'j': js_file = intern(optarg);              break;
         case 'm': default_menu_name = optarg;            break;
-        case 'n': flags |= FLAG_LINENUMBERS;             break;
-        case 'o': output = optarg;                       break;
-        case 'p': flags |= FLAG_PROGRESS;                break;
-        case 's': style_file = optarg;                   break;
-        case 't': tag_file = optarg;                     break;
-        case 'T': flags |= FLAG_DONT_DELETE_TEMPORARIES; break;
+        case 'n': flags ^= FLAG_LINENUMBERS;             break;
+        case 'o': output = intern(optarg);               break;
+        case 'p': flags ^= FLAG_PROGRESS;                break;
+        case 's': style_file = intern(optarg);           break;
+        case 't': tag_file = intern(optarg);             break;
+        case 'T': flags ^= FLAG_DONT_DELETE_TEMPORARIES; break;
         default: do_usage(EXIT_FAILURE);                 break;
         } /* switch */
     } /* while */
