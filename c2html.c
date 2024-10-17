@@ -249,7 +249,7 @@ void process_source(node *f, void *clsr)
 
     FILE *ex_fd = popen(EX_PATH, "w");
     /* send_ex(ex_fd, "set notagstack"); */
-    send_ex(ex_fd, "e! %s", f->full_name); /* edit original file */
+    send_ex(ex_fd, "e! %s", f->orig_name); /* edit original file */
 
     DEB(FLAG_DEBUG_PROCESS_FILE,
         "begin "EX_PATH" editing session on file %s\n",
