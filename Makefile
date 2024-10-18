@@ -17,17 +17,17 @@ AUTHOR_EMAIL      ?= luiscoloradourcola@gmail.com
 DEFAULT_FLAGS     ?= (FLAG_DEBUG_ALWAYS | FLAG_PROGRESS)
 DEFAULT_MENU_BASE ?= 00-Index
 
-VERSION           ?= 3.2-2024.10.16
+VERSION           ?= 3.2.16-2024.10.18
 RM                ?= rm -f
 INSTALL           ?= install
-EX_PATH           ?= /usr/vim -e
+EX_PATH           ?= /usr/bin/vim -e
 
 prefix            ?= /usr/local
 exec_prefix       ?= $(prefix)
 bindir            ?= $(exec_prefix)/bin
 libdir            ?= $(exec_prefix)/lib
 includedir        ?= $(prefix)/include
-datadir           ?= $(libdir)/$(PACKAGE)
+datadir           ?= $(datarootdir)/$(PACKAGE)
 
 style_css         ?= style.css
 holes_png         ?= holes.png

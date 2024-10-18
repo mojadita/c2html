@@ -96,29 +96,3 @@ li li {
 	margin-left: 2em;
 	/*text-indent: -2em; */
 }
-/*body>ul>li{
-	margin: 2em 0 2em 0;
-}*/
-
-/* li li:before {
-	content: ", ";
-}
-
-li li:first-child:before {
-	content: none;
-}
-
-li li::after {
-	content: none;
-} */
-
-/* span.dir {
-	background-color: #fa4;
-}
-span.file {
-	background-color: #dfd;
-}
-span.tag {
-	background-color: #fdd;
-} */
-
