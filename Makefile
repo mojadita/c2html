@@ -17,7 +17,7 @@ AUTHOR_EMAIL      ?= luiscoloradourcola@gmail.com
 DEFAULT_FLAGS     ?= (FLAG_DEBUG_ALWAYS | FLAG_PROGRESS)
 DEFAULT_MENU_BASE ?= 00-Index
 
-VERSION           ?= 3.2.16-2024.10.18
+VERSION           ?= 3.2.17-2024.10.18 # PREV: 3.2.16-2024.10.18
 RM                ?= rm -f
 INSTALL           ?= install
 EX_PATH           ?= /usr/bin/vim -e
@@ -70,6 +70,8 @@ c2html_ldfl        =
 c2html_libs        = -lavl
 toclean           += $(c2html_objs) lexical.c
 
+.PHONY: all clean distclean install version
+
 all: $(targets) $(manpages)
 clean:
 	$(RM) $(toclean)
@@ -82,6 +84,8 @@ install: $(all)
 		style.css holes.png bgtile.png background.png $(datadir)
 	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(XMOD) c2html $(bindir)
 	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) c2html.1.gz $(man1dir)
+version:
+	@echo $(VERSION)
 
 c2html: $(c2html_deps) $(c2html_objs)
 	$(CC) $(LDFLAGS) $($@_ldfl) $($@_objs) $($@_libs) -o $@
