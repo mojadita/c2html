@@ -1,18 +1,22 @@
 .comment {
 	color: green;
 }
+
 .resvword {
 	/*font-family: courier; */
 	font-weight: bold;
 	color: black;
 }
+
 .string {
 	color: red;
 }
-.escapechar {
+
+.escape {
 	color: purple;
 }
-.number {
+
+.octal,.decimal,.hexadecimal,.double,.binary {
 	color: red;
 }
 
@@ -21,33 +25,61 @@
 	color: red;
 }
 
-.middle {
+body {
 	display: inline-flex;
 	background: url(bgtile.png);
 	padding-top: 1cm;
 	padding-bottom: 1cm;
-	padding-left: 3cm;
-	padding-right: 3cm;
-    width: -webkit-fill-available; /* A4 */
-    
+	padding-left: 1in;
+	padding-right: 1in;
+    width: -webkit-fill-available;
 }
 
-#left {
+.header, .footer {
+    padding: 0.5cm;
+}
+.header {
+    padding-bottom: 0;
+}
+.footer {
+    padding-top: 0;
+}
+
+.main {
+    background-color: white;
+    width: -webkit-fill-available;
+}
+
+.middle {
+    padding-left: 0.5cm;
+    padding-right: 0.5cm;
+    display:flex;
+}
+
+span#left {
 	width: 32px;
-	margin: 0;
+    height: auto;
 	background: url(holes.png);
 	box-shadow: 4px 4px 5px #888888;
-	border-top-left-radius: 4px;
-	border-bottom-left-radius: 4px;
+	border-top-left-radius: 0.25cm;
+	border-bottom-left-radius: 0.25cm;
 }
 
-#right,div#right>ul {
-	margin: 0;
-	/* font-family: courier; */
-	background: url(background.png);
+span#right {
+    width: -webkit-fill-available;
+    background: url(background.png);
 	box-shadow: 4px 4px 5px #888888;
-	border-top-right-radius: 16px;
-	border-bottom-right-radius: 16px;
+    border-top-right-radius: 0.5cm;
+    border-bottom-right-radius: 0.5cm;
+    padding-right: 0.5cm;
+}
+span#right>ul>ul {
+    column-fill: balance;
+    columns: 3;
+}
+
+.dir,.file,.tag {
+    font-family: monospace;
 }
 
 span.file,span.dir {
@@ -66,7 +98,7 @@ body {
 }
 
 .linenum {
-	background-color: #888;
+	background-color: #666;
 	color: #ccf;
 	padding-left: 1ex;
 	padding-right: 1ex;
@@ -82,17 +114,4 @@ body {
 
 .nonstandardinclude {
 	color: #840;
-}
-
-#right>ul>ul {
-	/* -moz-column-count: 3;
-	-webkit-column-count: 3; */
-    padding: 1cm;
-	column-count: 3;
-}
-
-li li {
-	word-wrap: break-word;
-	margin-left: 2em;
-	/*text-indent: -2em; */
 }
