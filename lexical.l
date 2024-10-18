@@ -121,7 +121,6 @@ ident       ({alpha}{alnum}*)
 <incomment>ARGSUSED     {   fputs("<span class=\"argsused\">ARGSUSED</span>", OUTPUT); COL(); }
 <incomment>NOTREACHED   {   fputs("<span class=\"notreached\">NOTREACHED</span>", OUTPUT); COL(); }
 <incomment>"*/"         {   fputs("*/</span>", OUTPUT); POP(); COL(); }
-<incomment>.            {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
 
 "//"                    {   PUSH(incomment2); fprintf(OUTPUT, "<span class=\"comment\">//"); COL(); }
 <incomment2>TODO        {   fputs("<span class=\"todo\">TODO</span>", OUTPUT); COL(); }
@@ -130,7 +129,6 @@ ident       ({alpha}{alnum}*)
 <incomment2>ARGSUSED        {   fputs("<span class=\"argsused\">ARGSUSED</span>", OUTPUT); COL(); }
 <incomment2>NOTREACHED  {   fputs("<span class=\"notreached\">NOTREACHED</span>", OUTPUT); COL(); }
 <incomment2>\n          {   fputs("</span>\n", OUTPUT); POP(); newline(FALSE); }
-<incomment2>.           {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
 
 "#"                     {   PUSH(indirective);
                             fputs("<span class=\"directive\">"
@@ -150,7 +148,7 @@ ident       ({alpha}{alnum}*)
                             COL();
                         }
 <indirective>####*      {   fputs(yytext, OUTPUT); COL(); }
-<indirective>\\\n       {   fputs("\\\n", OUTPUT); newline(FALSE); }
+<indirective>\\\n       {   fputs("\\\n", OUTPUT); newline(FALSE); COL(); }
 <indirective>define     |
 <indirective>undef      |
 <indirective>ifdef      |
@@ -172,8 +170,7 @@ ident       ({alpha}{alnum}*)
 <indirective>\"[^\"\n\ \t]*\"   { fputs("<span class=\"nonstandardinclude\">", OUTPUT);
                                     fprintf_html(OUTPUT, "%s", yytext);
                                     fputs("</span>", OUTPUT); COL(); }
-<indirective>\n         {   fputs("</span>\n", OUTPUT); newline(FALSE); POP(); }
-<indirective>.          {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
+<indirective>\n         {   fputs("</span>\n", OUTPUT); newline(FALSE); POP(); COL(); }
 
 auto                    |
 break                   |
@@ -206,32 +203,29 @@ union                   |
 unsigned                |
 void                    |
 volatile                |
-while                   {   fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); }
+while                   {   fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); COL(); }
 
-0{odig}*{lu}            {   fprintf(OUTPUT, "<span class=\"number octal\">%s</span>", yytext); }
-[1-9]{dig}*{lu}         {   fprintf(OUTPUT, "<span class=\"number decimal\">%s</span>", yytext); }
-0[xX]{xdig}*{lu}        {   fprintf(OUTPUT, "<span class=\"number hexadecimal\">%s</span>", yytext); }
-{mant}({exp})?{fl}      {   fprintf(OUTPUT, "<span class=\"number double\">%s</span>", yytext); }
-{mant2}{exp}{fl}        {   fprintf(OUTPUT, "<span class=\"number double\">%s</span>", yytext); }
+0{odig}*{lu}            {   fprintf(OUTPUT, "<span class=\"number octal\">%s</span>", yytext); COL(); }
+[1-9]{dig}*{lu}         {   fprintf(OUTPUT, "<span class=\"number decimal\">%s</span>", yytext); COL(); }
+0[xX]{xdig}*{lu}        {   fprintf(OUTPUT, "<span class=\"number hexadecimal\">%s</span>", yytext); COL(); }
+{mant}({exp})?{fl}      {   fprintf(OUTPUT, "<span class=\"number double\">%s</span>", yytext); COL(); }
+{mant2}{exp}{fl}        {   fprintf(OUTPUT, "<span class=\"number double\">%s</span>", yytext); COL(); }
 
-\"                      {   PUSH(instring); fprintf(OUTPUT, "<span class=\"string\">\""); }
+\"                      {   PUSH(instring); fprintf(OUTPUT, "<span class=\"string\">\""); COL(); }
 <instring>\"            {   fprintf(OUTPUT, "\"</span>"); POP(); }
-<instring>{esc}         {   fprintf(OUTPUT, "<span class=\"escape char\">%s</span>", yytext); }
+<instring>{esc}         {   fprintf(OUTPUT, "<span class=\"escape char\">%s</span>", yytext); COL(); }
 <instring>\n            {   fputs("\n", OUTPUT); newline(FALSE); }
-<instring>.             {   fprintf_html(OUTPUT, "%s", yytext); }
 
-\'                      {   PUSH(inchar); fprintf(OUTPUT, "<span class=\"charliteral\">\'"); }
+\'                      {   PUSH(inchar); fprintf(OUTPUT, "<span class=\"charliteral\">\'"); COL(); }
 <inchar>\'              {   fprintf(OUTPUT, "\'</span>"); POP(); }
-<inchar>{esc}           {   fprintf(OUTPUT, "<span class=\"escapechar\">%s</span>", yytext); }
-<inchar>\n              {   fprintf_html(OUTPUT, "%s", yytext); newline(FALSE); }
-<inchar>.               {   fprintf_html(OUTPUT, "%s", yytext); }
+<inchar>{esc}           {   fprintf(OUTPUT, "<span class=\"escapechar\">%s</span>", yytext); COL(); }
+<inchar>\n              {   fprintf_html(OUTPUT, "%s", yytext); newline(FALSE); COL(); }
 
-<INITIAL,incomment,instring,inchar>^"(@"    {   fputs("<", OUTPUT); PUSH(inATAG); }
+<INITIAL,incomment,instring,inchar>^"(@"    {   fputs("<", OUTPUT); PUSH(inATAG); COL(); }
 <inATAG>"@)(@"          {   fputs("><", OUTPUT); }
 <inATAG>"@)"            {   fputs(">", OUTPUT); POP(); }
-<inATAG>.               {   fputs(yytext, OUTPUT); }
 
-{alpha}{alnum}*         {   process_identifier(yytext, fin, OUTPUT); COL(); }
+{alpha}{alnum}*         {   process_identifier(yytext, fin, OUTPUT); COL(); COL(); }
 "..."                   |
 "&&"                    |
 "-="                    |
@@ -273,6 +267,7 @@ while                   {   fprintf(OUTPUT, "<span class=\"resvword\">%s</span>"
 ":"                     {   fputs("<span class=\"operator\">", OUTPUT);
                             fprintf_html(OUTPUT, "%s", yytext);
                             fputs("</span>", OUTPUT);
+                            COL();
                         }
 
 "["                     |
@@ -283,10 +278,17 @@ while                   {   fprintf(OUTPUT, "<span class=\"resvword\">%s</span>"
 ")"                     {   fputs("<span class=\"bracket\">", OUTPUT);
                             fputs(yytext, OUTPUT);
                             fputs("</span>", OUTPUT);
+                            COL();
                         }
 
-\n                      {   fputs(yytext, OUTPUT); newline(FALSE); }
-.                       {   fprintf_html(OUTPUT, "%s", yytext); }
+\n                      {   fputs(yytext, OUTPUT); newline(FALSE); COL(); }
+<incomment>.            {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
+<incomment2>.           {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
+<indirective>.          {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
+<instring>.             {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
+<inchar>.               {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
+<inATAG>.               {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
+.                       {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
 
 %%
 
