@@ -45,7 +45,7 @@ void create_menu(tag_menu *m);
 int html_generate_ref(
         FILE *o,            /* where to write the reference in */
         const char *ident,  /* the reference name to write. */
-        const node *fin);         /* file in which the reference is found */
+        const node *fin);   /* file in which the reference is found */
 
 #endif /* _HTML_OUTPUT_H */
 /* Do not include anything AFTER the line above, as it would not be
