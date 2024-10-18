@@ -16,6 +16,7 @@ struct ctag_s {
     const char     *fi;             /* file this tag points to. */
     const char     *ss;             /* scan string for ex(1) */
     int             tag_no_in_file; /* tag number in file. */
+    int             ln; /* line number in tags file */
     ctag           *next_in_file;   /* next tag with the same id in
                                      * this tag file */
     node           *nod;            /* file node this tag points to. */
@@ -23,10 +24,11 @@ struct ctag_s {
 
 ctag *
 lookup_ctag(
-        const char *id,
-        const char *fi,
-        const char *ss,
-        node       *root);
+        const char *id,     /* tag identifier */
+        const char *fi,     /* file this tag points to */
+        int         ln,     /* line number in tags file */
+        const char *ss,     /* scan string for ex(1) */
+        node       *root);  /* root node for file insertion */
 
 void fprint_ctag(FILE *f, const ctag *t);
 

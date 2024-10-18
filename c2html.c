@@ -126,7 +126,7 @@ process1(const char *tags_filename)
             tag_id, filename, ss);
 
         /* first, find the ctag entry. */
-        tag = lookup_ctag(tag_id, filename, ss, db_root_node);
+        tag = lookup_ctag(tag_id, filename, line_num, ss, db_root_node);
 
         tag->nod->orig_name = filename;
 

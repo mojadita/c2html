@@ -30,8 +30,9 @@ ctag *
 lookup_ctag(
         const char *id, /* tag id */
         const char *fi, /* original filename */
-        const char *ss,
-        node *root)
+        int         ln, /* line number in tags file */
+        const char *ss, /* search string */
+        node *root)     /* root node for insertion */
 {
     ctag *res;
     tag_menu *men;
@@ -53,7 +54,12 @@ lookup_ctag(
         }
     } /* if */
 
-    ctag key = { .id = id, .fi = fi, .ss = ss };
+    ctag key = {
+        .id = id,
+        .fi = fi,
+        .ln = ln,
+        .ss = ss
+    };
 
     DEB(FLAG_DEBUG_CTAGS,
         " looking for tag <id=%s|file=%s|ss='%s'>\n",
@@ -95,13 +101,13 @@ lookup_ctag(
                  (AVL_FPRNT) fputs);
         }
         /* it's a linked list of tags. */
-        res->next_in_file = avl_tree_get(nod->subnodes, id);
+        men = lookup_menu(res->id, root);
+        res->next_in_file   = avl_tree_get(nod->subnodes, id);
         res->tag_no_in_file = res->next_in_file
             ? res->next_in_file->tag_no_in_file + 1
             : 1;
         avl_tree_put(nod->subnodes, id, res);
 
-        men = lookup_menu(res->id, root);
 
         /* insert ctag in list corresponding to file. */
         avl_tree_put(men->group_by_file, nod->full_name, res);
