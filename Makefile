@@ -17,7 +17,7 @@ AUTHOR_EMAIL      ?= luiscoloradourcola@gmail.com
 DEFAULT_FLAGS     ?= (FLAG_DEBUG_ALWAYS | FLAG_PROGRESS)
 DEFAULT_MENU_BASE ?= 00-Index
 
-VERSION           ?= 3.2.20-2024.10.19 # PREV: 3.2.19-2024.10.19
+VERSION           ?= 3.2.21-2024.10.19 # PREV: 3.2.20-2024.10.19
 RM                ?= rm -f
 INSTALL           ?= install
 EX_PATH           ?= /usr/bin/vim -e
@@ -78,12 +78,13 @@ clean:
 distclean: clean
 	$(RM) configure.h
 install: $(all)
-	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(DMOD) -d $(bindir)
-	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(DMOD) -d $(datadir)
-	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) \
+	$(INSTALL) -o $(OWN) -g $(GRP) -m $(DMOD) -d $(bindir)
+	$(INSTALL) -o $(OWN) -g $(GRP) -m $(DMOD) -d $(datadir)
+	$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) \
 		style.css holes.png bgtile.png background.png $(datadir)
-	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(XMOD) c2html $(bindir)
-	-$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) c2html.1.gz $(man1dir)
+	$(INSTALL) -o $(OWN) -g $(GRP) -m $(XMOD) c2html $(bindir)
+	$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) c2html.1.gz $(man1dir)
+
 version:
 	@echo $(VERSION)
 
