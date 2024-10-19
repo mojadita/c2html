@@ -171,109 +171,47 @@ for the case it is different than the default. (\c
 allows configuration parameters to be defined in file
 .Ar configure.mk .
 These parameters (and their default configured values) are:
-\" TODO Sat Oct 19 17:48:58 EEST 2024
-\" terminar esto.
-.Bl -tag
-.It
-.Ar PACKAGE
-(@PACKAGE@)
-.It
-.Ar PACKAGE_URL
-(@PACKAGE_URL@)
-.It
-.Ar PROGNAME
-(@PROGNAME@)
-.It
-.Ar AUTHOR_NAME
-(@AUTHOR_NAME@)
-.It
-.Ar AUTHOR_EMAIL
-(@AUTHOR_EMAIL@)
-.It
-.Ar BUILD_DATE
-(@BUILD_DATE@)
-.It
-.Ar YEAR
-(@YEAR@)
-.It
-.Ar PVERSION
-(@PVERSION@)
-.It
-.Ar VERSION
-(@VERSION@)
-.It
-.Ar EX_PATH
-(@EX_PATH@)
-.It
-.Ar UQ_DEFAULT_FLAGS
-(@UQ_DEFAULT_FLAGS@)
-.It
-.Ar DEFAULT_MENU_BASE
-(@DEFAULT_MENU_BASE@)
-.It
-.Ar DEFAULT_TAG_FILE
-(@DEFAULT_TAG_FILE@)
-.It
-.Ar DEFAULT_OUTPUT
-(@DEFAULT_OUTPUT@)
-.It
-.Ar UQ_DEFAULT_BASE_DIR
-(@UQ_DEFAULT_BASE_DIR@)
-.It
-.Ar DEFAULT_BASE_DIR_STR
-(@DEFAULT_BASE_DIR_STR@)
-.It
-.Ar DEFAULT_STYLE_FILE
-(@DEFAULT_STYLE_FILE@)
-.It
-.Ar DEFAULT_JS_FILE
-(@DEFAULT_JS_FILE@)
-.It
-.Ar DEFAULT_LEFT_BGFILE
-(@DEFAULT_LEFT_BGFILE@)
-.It
-.Ar DEFAULT_JS_FILE
-(@DEFAULT_JS_FILE@)
-.It
-.Ar DEFAULT_RIGHT_BGFILE
-(@DEFAULT_RIGHT_BGFILE@)
-.It
-.Ar DEFAULT_BGFILE
-(@DEFAULT_BGFILE@)
-.It
-.Ar prefix
-(@prefix@)
-.It
-.Ar exec_prefix
-(@exec_prefix@)
-.It
-.Ar bindir
-(@bindir@)
-.It
-.Ar datadir
-(@datadir@)
-.It
-.Ar mandir
-(@mandir@)
-.It
-.Ar man1dir
-(@man1dir@)
-.It
-.Ar OWN
-(@OWN@)
-.It
-.Ar GRP
-(@GRP@)
-.It
-.Ar XMOD
-(@XMOD@)
-.It
-.Ar FMOD
-(@FMOD@)
-.It
-.Ar DMOD
-(@DMOD@)
-.El
+.TS
+tab(");
+rb lb
+rf(CW) l
+.
+Parameter name"Default value
+_
+PACKAGE"@PACKAGE@
+PACKAGE_URL"@PACKAGE_URL@
+PROGNAME"@PROGNAME@
+AUTHOR_NAME"@AUTHOR_NAME@
+AUTHOR_EMAIL"@AUTHOR_EMAIL@
+BUILD_DATE"@BUILD_DATE@
+YEAR"@YEAR@
+PVERSION"@PVERSION@
+VERSION"@VERSION@
+EX_PATH"@EX_PATH@
+UQ_DEFAULT_FLAGS"@UQ_DEFAULT_FLAGS@
+DEFAULT_MENU_BASE"@DEFAULT_MENU_BASE@
+DEFAULT_TAG_FILE"@DEFAULT_TAG_FILE@
+DEFAULT_OUTPUT"@DEFAULT_OUTPUT@
+UQ_DEFAULT_BASE_DIR"@UQ_DEFAULT_BASE_DIR@
+DEFAULT_BASE_DIR_STR"@DEFAULT_BASE_DIR_STR@
+DEFAULT_STYLE_FILE"@DEFAULT_STYLE_FILE@
+DEFAULT_JS_FILE"@DEFAULT_JS_FILE@
+DEFAULT_LEFT_BGFILE"@DEFAULT_LEFT_BGFILE@
+DEFAULT_JS_FILE"@DEFAULT_JS_FILE@
+DEFAULT_RIGHT_BGFILE"@DEFAULT_RIGHT_BGFILE@
+DEFAULT_BGFILE"@DEFAULT_BGFILE@
+prefix"@prefix@
+exec_prefix"@exec_prefix@
+bindir"@bindir@
+datadir"@datadir@
+mandir"@mandir@
+man1dir"@man1dir@
+OWN"@OWN@
+GRP"@GRP@
+XMOD"@XMOD@
+FMOD"@FMOD@
+DMOD"@DMOD@
+.TE
 .Sh AUTHOR
 .An "@AUTHOR_NAME@" Aq Mt @AUTHOR_EMAIL@ .
 .Sh COPYRIGHT
