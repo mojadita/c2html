@@ -17,4 +17,5 @@ w
 q
 EOF
 git commit -asv
+git tag $(make version)
 git push --tags
