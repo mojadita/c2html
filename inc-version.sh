@@ -16,3 +16,5 @@ ed Makefile <<EOF
 w
 q
 EOF
+git commit -asv
+git push --tags
