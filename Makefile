@@ -17,7 +17,7 @@ AUTHOR_EMAIL      ?= luiscoloradourcola@gmail.com
 DEFAULT_FLAGS     ?= (FLAG_DEBUG_ALWAYS | FLAG_PROGRESS)
 DEFAULT_MENU_BASE ?= 00-Index
 
-VERSION           ?= 3.2.17-2024.10.18 # PREV: 3.2.16-2024.10.18
+VERSION           ?= 3.2.18-2024.10.19 # PREV: 3.2.17-2024.10.18
 RM                ?= rm -f
 INSTALL           ?= install
 EX_PATH           ?= /usr/bin/vim -e
