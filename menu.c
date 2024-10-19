@@ -19,8 +19,8 @@
 
 #include "menu.h"
 
-AVL_TREE db_menus = NULL;
-char *default_menu_name = DEFAULT_MENU_BASE;
+AVL_TREE db_menus          = NULL;
+char    *default_menu_name = DEFAULT_MENU_BASE;
 
 tag_menu *
 lookup_menu(
@@ -96,8 +96,6 @@ lookup_menu(
 
     return res;
 } /* lookup_menu */
-
-
 
 void fprint_menu(FILE *f, const tag_menu *m)
 {

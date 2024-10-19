@@ -40,10 +40,11 @@
 
 /* variables */
 
-int flags              = DEFAULT_FLAGS;
+int flags              = UQ_DEFAULT_FLAGS;
 const char *tag_file   = DEFAULT_TAG_FILE;
 const char *output     = DEFAULT_OUTPUT;
-const char *base_dir   = DEFAULT_BASE_DIR;
+const char *base_dir   = UQ_DEFAULT_BASE_DIR;
+char       *style_css  = DEFAULT_JS_FILE;
 
 const char *style_file = DEFAULT_STYLE_FILE;
 node *style_node       = NULL;
@@ -176,8 +177,8 @@ write_entry_on_parent(node *entry,
             label, entry->name);
         fprintf(parent->index_f,
             "      <li><span class=\"%s\">"
-            "<a href=\"%s\">%s</a> %s."
-            "</span></li>\n",
+            "<a href=\"%s\">%s</a></span> %s."
+            "</li>\n",
             cl,
             rp, entry->name, label);
     } /* if */
@@ -457,7 +458,7 @@ void do_usage (int code)
 "Options:\n"
 "  -b <base_dir>  Base directory for URL composition\n"
 "       This causes to generate <BASE> tags. (default: "
-"       " DEFAULT_BASE_DIR_STRING ")\n"
+"       " DEFAULT_BASE_DIR_STR ")\n"
 "  -d <debug_options>  Debug options can be several of:\n"
 "         1  process1 debug.\n"
 "         c  ctags debug.\n"
@@ -493,39 +494,39 @@ int main (int argc, char **argv)
 
     while ((opt = getopt(argc, argv, "b:d:hj:m:no:prs:Tt:")) != EOF) {
         switch(opt) {
-        case 'b': base_dir = intern(optarg);                     break;
+        case 'b': base_dir = intern(optarg);                        break;
         case 'd': { char *p; /* debug */
                 for (p = optarg; *p; p++) {
                     switch(*p) {
-                    case '1': flags ^= FLAG_DEBUG_PROCESS1;      break;
-                    case '2': flags ^= FLAG_DEBUG_PROCESS2;      break;
-                    case 'a': flags ^= FLAG_DEBUG_ALL;           break;
-                    case 'c': flags ^= FLAG_DEBUG_CTAGS;         break;
-                    case 'D': flags ^= FLAG_DEBUG_DB;            break;
-                    case 'd': flags ^= FLAG_DEBUG_PROCESS_DIR;   break;
-                    case 'f': flags ^= FLAG_DEBUG_PROCESS_FILE;  break;
-                    case 'I': flags ^= FLAG_DEBUG_INTERN;        break;
-                    case 'i': flags ^= FLAG_DEBUG_PROCESS_IDENT; break;
-                    case 'l': flags ^= FLAG_DEBUG_LEX;           break;
-                    case 'M': flags ^= FLAG_DEBUG_CREATE_MENU;   break;
-                    case 'm': flags ^= FLAG_DEBUG_PROCESS_MENU;  break;
-                    case 'n': flags ^= FLAG_DEBUG_NODES;         break;
-                    case 's': flags ^= FLAG_DEBUG_SCANFILE;      break;
-                    case 'x': flags ^= FLAG_DEBUG_EX;            break;
+                    case '1': flags ^= FLAG_DEBUG_PROCESS1;         break;
+                    case '2': flags ^= FLAG_DEBUG_PROCESS2;         break;
+                    case 'a': flags ^= FLAG_DEBUG_ALL;              break;
+                    case 'c': flags ^= FLAG_DEBUG_CTAGS;            break;
+                    case 'D': flags ^= FLAG_DEBUG_DB;               break;
+                    case 'd': flags ^= FLAG_DEBUG_PROCESS_DIR;      break;
+                    case 'f': flags ^= FLAG_DEBUG_PROCESS_FILE;     break;
+                    case 'I': flags ^= FLAG_DEBUG_INTERN;           break;
+                    case 'i': flags ^= FLAG_DEBUG_PROCESS_IDENT;    break;
+                    case 'l': flags ^= FLAG_DEBUG_LEX;              break;
+                    case 'M': flags ^= FLAG_DEBUG_CREATE_MENU;      break;
+                    case 'm': flags ^= FLAG_DEBUG_PROCESS_MENU;     break;
+                    case 'n': flags ^= FLAG_DEBUG_NODES;            break;
+                    case 's': flags ^= FLAG_DEBUG_SCANFILE;         break;
+                    case 'x': flags ^= FLAG_DEBUG_EX;               break;
                     } /* switch */
                 } /* for */
             } /* block */
             break;
-        case 'h': do_usage(EXIT_SUCCESS);                break;
-        case 'j': js_file = intern(optarg);              break;
-        case 'm': default_menu_name = optarg;            break;
-        case 'n': flags ^= FLAG_LINENUMBERS;             break;
-        case 'o': output = intern(optarg);               break;
-        case 'p': flags ^= FLAG_PROGRESS;                break;
-        case 's': style_file = intern(optarg);           break;
-        case 't': tag_file = intern(optarg);             break;
-        case 'T': flags ^= FLAG_DONT_DELETE_TEMPORARIES; break;
-        default: do_usage(EXIT_FAILURE);                 break;
+        case 'h': do_usage(EXIT_SUCCESS);                           break;
+        case 'j': js_file           = intern(optarg);               break;
+        case 'm': default_menu_name = optarg;                       break;
+        case 'n': flags            ^= FLAG_LINENUMBERS;             break;
+        case 'o': output            = intern(optarg);               break;
+        case 'p': flags            ^= FLAG_PROGRESS;                break;
+        case 's': style_file        = intern(optarg);               break;
+        case 't': tag_file          = intern(optarg);               break;
+        case 'T': flags            ^= FLAG_DONT_DELETE_TEMPORARIES; break;
+        default: do_usage(EXIT_FAILURE);                            break;
         } /* switch */
     } /* while */
 
@@ -541,8 +542,6 @@ int main (int argc, char **argv)
 
     /* this process constructs the file node hierarchy of source file pages */
     process1(tag_file);
-
-    //print_menus();
 
     D(do_recur(db_root_node,
         process_dir_pre,

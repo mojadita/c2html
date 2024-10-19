@@ -49,22 +49,7 @@
 #define TRUE    (!FALSE)
 #endif
 
-#define DEFAULT_BUFSIZE 4096
-#define EXT1            ".temp"
-#define EXT2            ".html"
-#define PFX1            "ta-"
-#define PFX2            "i-"
-
-#undef TRACEON      /* 1 */
-
 /* variables */
-
-#define DEFAULT_TAG_FILE        "tags"
-#define DEFAULT_OUTPUT          "html"
-#define DEFAULT_BASE_DIR        NULL
-#define DEFAULT_BASE_DIR_STRING "<NULL>"
-#define DEFAULT_STYLE_FILE      "style.css"
-#define DEFAULT_JS_FILE         "javascript.js"
 
 extern int          flags;
 extern const char   *tag_file;

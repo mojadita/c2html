@@ -11,8 +11,9 @@ export OLD_VERSION=$(make version)
 export NEW_VERSION=$(echo "$OLD_VERSION" \
 | sed -e 's/[.-]/ /g' \
 | awk '{ printf("%d.%d.%d-%s\n", $1, $2, $3 + 1, "'"${DATE}"'"); }')
-ed Makefile <<EOF
-/^\(VERSION[	 ][	 ]*?=\).*/s//\1 ${NEW_VERSION} # PREV: ${OLD_VERSION}/
+ed configure.mk <<EOF
+/^\(VERSION[	 ][	 ]*?=\).*/s//\1 ${NEW_VERSION}/
+/^\(PVERSION[	 ][	 ]*?=\).*/s//\1 ${OLD_VERSION}/
 w
 q
 EOF
