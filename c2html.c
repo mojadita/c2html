@@ -44,7 +44,6 @@ int flags              = UQ_DEFAULT_FLAGS;
 const char *tag_file   = DEFAULT_TAG_FILE;
 const char *output     = DEFAULT_OUTPUT;
 const char *base_dir   = UQ_DEFAULT_BASE_DIR;
-char       *style_css  = DEFAULT_JS_FILE;
 
 const char *style_file = DEFAULT_STYLE_FILE;
 node *style_node       = NULL;
@@ -537,7 +536,7 @@ int main (int argc, char **argv)
             strerror(errno));
         /* NOTREACHED */
     }
-    style_node = new_node(style_css, db_root_node, TYPE_HTML);
+    style_node = new_node(style_file, db_root_node, TYPE_HTML);
     js_node    = new_node(js_file,   db_root_node, TYPE_HTML);
 
     /* this process constructs the file node hierarchy of source file pages */
