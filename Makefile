@@ -63,3 +63,6 @@ c2html.1: c2html.1.in
 
 c2html.1.gz: c2html.1
 	gzip $(GZFLAGS) < $? > $@
+
+c2html.1.pdf: c2html.1
+	groff -mandoc -Tpdf c2html.1 > $@

@@ -2,19 +2,19 @@
 .\" ** The above line should force tbl to be a preprocessor **
 .\" Man page for c2html
 .\"
-.\" Copyright (C), 1999 Luis Colorado <Luis.Colorado@SLUG.HispaLinux.ES>
+.\" Copyright (C), @YEAR@ @AUTHOR_NAME@ <@AUTHOR_EMAIL@>
 .\"
 .\" You may distribute under the terms of the GNU General Public
 .\" License as specified in the file COPYING that comes with the
 .\" c2html distribution.
 .\"
-.\" Wed Jun 23 20:56:55 MEST 1999
+.\" Sat Oct 19 17:01:47 EEST 2024
 .\" 
-.Dd $Ndocdate$
-.Dt C2HTML 1 URM
+.Dd @BUILD_DATE@
+.Dt @PROGNAME@ 1 URM
 .Os 
 .Sh NAME
-.Nm c2html
+.Nm @PROGNAME@
 .Nd A program to get HTML, cross referenced pages from a tags file \
 and C source code.
 .Sh SYNOPSIS
@@ -25,6 +25,7 @@ and C source code.
 .Op Fl d Op Ar 12acDdfIilMmnsx
 .Op Fl j Ar javascript_file_name
 .Op Fl m Ar default_menu_name
+.Op Fl o Ar output
 .Op Fl s Ar style_file_name
 .Op Fl t Ar tag_file_name
 .Sh DESCRIPTION
@@ -41,9 +42,9 @@ constructs a database from the contents of the tags files
 referenced in the command line, and then goes along, scanning all the source
 files referenced in the database, and HTML formatting the sources,
 interspreading
-.Cm "<A HREF>
+.Cm "<a href>
 and
-.Cm "<A NAME>
+.Cm "<a name>
 tags.
 It also constructs an
 .Cm "index.html
@@ -56,7 +57,7 @@ It uses
 to resolve the
 .Cm tags
 locations, and to edit and insert the 
-.Cm "<A NAME...>
+.Cm "<a name...>
 tags.
 .Sh OPTIONS
 Several options can modify the behaviour of
@@ -66,7 +67,8 @@ Several options can modify the behaviour of
 This option allows to specify a
 .Ar base_dir
 to be used in the html output, so all files are made relative to this base
-directory.
+directory.  By default it generates all paths relative to the file in which
+the tag is found.
 .It Fl d
 This option activates verbose debug mode.
 It uses a set of flags as subarguments to indicate the debug output to be
@@ -76,12 +78,12 @@ The flags are:
 .Bl -tag
 .It Cm 1
 Output verbose info about what is happening on the first pass to the
-.Cm tags
+.Cm @DEFAULT_TAG_FILE@
 file.
 .It Cm 2
 Output verbose info (unimplemented yet) about what is happening in the second
 pass to the
-.Cm tags
+.Ar tags
 database.
 In this second pass an index file is constructed to allow to search definitions
 without knowing the file they are defined in.
@@ -112,9 +114,11 @@ Nodes construction output.
 .It Cm s
 File scanning output.
 .It Cm x
-.Cm ex
 commands issued to
-.Xr ex 1
+.Xr vim 1
+(in
+.Ar ex
+mode)
 .El
 .It Fl h
 .Nm 
@@ -122,42 +126,157 @@ outputs a help screen, showing the command line syntax and options help.
 .It Fl j
 Allows to specify a
 .Ar javascript_file_name
-(not implemented yet)
+(not implemented yet) Defaults to
+.Cm @DEFAULT_JS_FILE@.
 .It Fl m
 Permits to specify a
 .Ar menu_name
 for the index files.
 It defaults to
-.Cm 00-Index .
+.Cm @DEFAULT_MENU_BASE@ .
 .It Fl p
 Shows a progress line on
 .Cm stdout ,
-showing the file being processed at any time.
+showing the file being processed at any time.  It is active by default.
 .It Fl s
 Allows to specify a
 .Ar style_file_name .
 By default it uses
-.Cm style.css .
+.Cm @DEFAULT_STYLE_FILE@ .
 .It Fl T
 Avoids erasing the
-.Cm .c
+.Ar .c
 files that are generated as temporary files.
+By default these files are erased.
 These files have tags encoded as
-.Ds -literal
+.Bd -literal
 (@a name="tag-name" @)(@/a@)
-.De
+.Ed
 .Pp
-in front of lines that define a symbol.  
-These files are not needed, once the source file has been scanned.
+in front of lines that define a symbol.
+Later, these pseudotags are converted into:
+.Bd -literal
+<a name="tag-name" ></a>
+.Ed
+.Pp
+These files are not needed anymore, once the source file has been scanned.
 .It Fl t
 Allows to specify a
 .Ar tags_file_name ,
 for the case it is different than the default. (\c
-.Cm tags )
+.Cm @DEFAULT_TAG_FILE@ )
+.El
+.Sh CONFIGURATION PARAMETERS
+.Nm
+allows configuration parameters to be defined in file
+.Ar configure.mk .
+These parameters (and their default configured values) are:
+\" TODO Sat Oct 19 17:48:58 EEST 2024
+\" terminar esto.
+.Bl -tag
+.It
+.Ar PACKAGE
+(@PACKAGE@)
+.It
+.Ar PACKAGE_URL
+(@PACKAGE_URL@)
+.It
+.Ar PROGNAME
+(@PROGNAME@)
+.It
+.Ar AUTHOR_NAME
+(@AUTHOR_NAME@)
+.It
+.Ar AUTHOR_EMAIL
+(@AUTHOR_EMAIL@)
+.It
+.Ar BUILD_DATE
+(@BUILD_DATE@)
+.It
+.Ar YEAR
+(@YEAR@)
+.It
+.Ar PVERSION
+(@PVERSION@)
+.It
+.Ar VERSION
+(@VERSION@)
+.It
+.Ar EX_PATH
+(@EX_PATH@)
+.It
+.Ar UQ_DEFAULT_FLAGS
+(@UQ_DEFAULT_FLAGS@)
+.It
+.Ar DEFAULT_MENU_BASE
+(@DEFAULT_MENU_BASE@)
+.It
+.Ar DEFAULT_TAG_FILE
+(@DEFAULT_TAG_FILE@)
+.It
+.Ar DEFAULT_OUTPUT
+(@DEFAULT_OUTPUT@)
+.It
+.Ar UQ_DEFAULT_BASE_DIR
+(@UQ_DEFAULT_BASE_DIR@)
+.It
+.Ar DEFAULT_BASE_DIR_STR
+(@DEFAULT_BASE_DIR_STR@)
+.It
+.Ar DEFAULT_STYLE_FILE
+(@DEFAULT_STYLE_FILE@)
+.It
+.Ar DEFAULT_JS_FILE
+(@DEFAULT_JS_FILE@)
+.It
+.Ar DEFAULT_LEFT_BGFILE
+(@DEFAULT_LEFT_BGFILE@)
+.It
+.Ar DEFAULT_JS_FILE
+(@DEFAULT_JS_FILE@)
+.It
+.Ar DEFAULT_RIGHT_BGFILE
+(@DEFAULT_RIGHT_BGFILE@)
+.It
+.Ar DEFAULT_BGFILE
+(@DEFAULT_BGFILE@)
+.It
+.Ar prefix
+(@prefix@)
+.It
+.Ar exec_prefix
+(@exec_prefix@)
+.It
+.Ar bindir
+(@bindir@)
+.It
+.Ar datadir
+(@datadir@)
+.It
+.Ar mandir
+(@mandir@)
+.It
+.Ar man1dir
+(@man1dir@)
+.It
+.Ar OWN
+(@OWN@)
+.It
+.Ar GRP
+(@GRP@)
+.It
+.Ar XMOD
+(@XMOD@)
+.It
+.Ar FMOD
+(@FMOD@)
+.It
+.Ar DMOD
+(@DMOD@)
 .El
 .Sh AUTHOR
 .An "@AUTHOR_NAME@" Aq Mt @AUTHOR_EMAIL@ .
 .Sh COPYRIGHT
-Copyright (C) 1999\(em2022, @AUTHOR_NAME@.
+Copyright (C) 1999\(em@YEAR@, @AUTHOR_NAME@.  All rights reserved.
 .Sh LICENSE
 BSD v2.
