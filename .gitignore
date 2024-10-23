@@ -2,6 +2,7 @@ c2html.1.pdf
 c2html
 *.o
 configure.h
+configure.1
 lexical.c
 tags
 *.html

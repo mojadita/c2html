@@ -160,17 +160,19 @@ ident       ({alpha}{alnum}*)
 <indirective>line       |
 <indirective>error      |
 <indirective>warning    |
-<indirective>include    |
 <indirective>pragma     |
 <indirective>defined    {   fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); COL(); }
 <indirective>{alpha}{alnum} { process_identifier(yytext, fin, OUTPUT); COL(); }
-<indirective>"<"[^>\n\ \t]*">"  { fputs("<span class=\"standardinclude\">", OUTPUT);
-                                    fprintf_html(OUTPUT, "%s", yytext);
-                                    fputs("</span>", OUTPUT); COL(); }
-<indirective>\"[^\"\n\ \t]*\"   { fputs("<span class=\"nonstandardinclude\">", OUTPUT);
-                                    fprintf_html(OUTPUT, "%s", yytext);
-                                    fputs("</span>", OUTPUT); COL(); }
 <indirective>\n         {   fputs("</span>\n", OUTPUT); newline(FALSE); POP(); COL(); }
+<indirective>include    {   fprintf(OUTPUT, "<span class=\"resvword\">%s</span>", yytext); COL(); BEGIN ininclude; }
+<ininclude>"<"(\\.|[^>\n\ \t])*">"  { fputs("<span class=\"standardinclude\">", OUTPUT);
+                                    fprintf_html(OUTPUT, "%s", yytext);
+                                    fputs("</span>", OUTPUT); COL(); BEGIN indirective;
+                              }
+<ininclude>\"(\\.|[^\"\n\ \t])*\"   { fputs("<span class=\"nonstandardinclude\">", OUTPUT);
+                                    fprintf_html(OUTPUT, "%s", yytext);
+                                    fputs("</span>", OUTPUT); COL(); BEGIN indirective;
+                              }
 
 auto                    |
 break                   |
@@ -288,6 +290,7 @@ while                   {   fprintf(OUTPUT, "<span class=\"resvword\">%s</span>"
 <instring>.             {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
 <inchar>.               {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
 <inATAG>.               {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
+<ininclude>.            {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
 .                       {   fprintf_html(OUTPUT, "%s", yytext); COL(); }
 
 %%
