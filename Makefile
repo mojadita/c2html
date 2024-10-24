@@ -47,9 +47,9 @@ install: $(all)
 	$(INSTALL) -o $(OWN) -g $(GRP) -m $(XMOD) c2html $(bindir)
 	$(INSTALL) -o $(OWN) -g $(GRP) -m $(FMOD) c2html.1.gz $(man1dir)
 uninstall:
-	$(RM) $(bindir)/c2html
-	$(RM) -rf $(datadir)
-	$(RM) $(man1dir)/c2html.1.gz
+	-$(RM) $(bindir)/c2html
+	-$(RM) -rf $(datadir)
+	-$(RM) $(man1dir)/c2html.1.gz
 
 version:
 	@echo $(VERSION)
