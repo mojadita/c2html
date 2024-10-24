@@ -58,6 +58,7 @@ configure.h: configure.mk mk-configure.h.in.sh Makefile
 
 configure.1: configure.mk mk-configure.1.sh Makefile
 	./mk-configure.1.sh <configure.mk | sed $(SEDFLAGS) > $@
+toclean += configure.1 configure.h
 
 c2html.1: c2html.1.in
 	sed $(SEDFLAGS) < $@.in > $@
