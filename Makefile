@@ -29,7 +29,7 @@ c2html_objs        = c2html.o \
      			     menu.o \
      			     node.o
 c2html_ldfl        = 
-c2html_libs        = -lavl
+c2html_libs        = -lavl_c
 toclean           += $(c2html_objs) lexical.c configure.h
 
 .PHONY: all clean distclean install version
@@ -55,14 +55,15 @@ c2html: $(c2html_deps) $(c2html_objs)
 
 configure.h: configure.mk mk-configure.h.in.sh Makefile
 	./mk-configure.h.in.sh <configure.mk | sed $(SEDFLAGS) > $@
+
 configure.1: configure.mk mk-configure.1.sh Makefile
 	./mk-configure.1.sh <configure.mk | sed $(SEDFLAGS) > $@
 
 c2html.1: c2html.1.in
 	sed $(SEDFLAGS) < $@.in > $@
 
-c2html.1.gz: c2html.1 
-	soelim $^ | gzip $(GZFLAGS) > $@
+c2html.1.gz: c2html.1 configure.1
+	soelim c2html.1 | gzip $(GZFLAGS) > $@
 
 c2html.1.pdf: c2html.1 configure.1
 	groff -s -t -mandoc -Tpdf $^ > $@
